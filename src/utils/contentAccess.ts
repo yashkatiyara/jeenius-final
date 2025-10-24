@@ -28,14 +28,14 @@ export const canAccessChapter = async (
 ): Promise<AccessResult> => {
   try {
     // 1. Get chapter info
-    const { data: chapter, error: chapterError } = await supabase
+    const { data: chapter } = await supabase
       .from('chapters')
-      .select('*')
+      .select('id, is_free')
       .eq('subject', subject)
-      .eq('chapter_name', chapterName)
-      .single();
+      .eq('title', chapterName)
+      .maybeSingle();
 
-    if (chapterError || !chapter) {
+    if (!chapter) {
       return {
         allowed: false,
         reason: 'chapter_not_found',
@@ -69,11 +69,13 @@ export const canAccessChapter = async (
       .single();
 
     // Get all chapters user has accessed
-    const { data: accessedChapters } = await supabase
+    const accessedResult = await supabase
       .from('user_content_access')
       .select('content_identifier, subject')
       .eq('user_id', userId)
-      .eq('content_type', 'chapter');
+      .eq('access_type', 'chapter');
+    
+    const accessedChapters = accessedResult.data || [];
 
     // Count unique chapters accessed across all subjects
     const uniqueChapters = new Set(
@@ -142,12 +144,14 @@ export const canAttemptQuestion = async (userId: string): Promise<AccessResult> 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const { data: todayAttempts } = await supabase
+    const attemptsResult = await supabase
       .from('user_content_access')
       .select('id')
       .eq('user_id', userId)
-      .eq('content_type', 'question')
+      .eq('access_type', 'question')
       .gte('accessed_at', today.toISOString());
+    
+    const todayAttempts = attemptsResult.data || [];
 
     const { data: limit } = await supabase
       .from('free_content_limits')
@@ -223,12 +227,14 @@ export const canUseAI = async (userId: string): Promise<AccessResult> => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const { data: todayQueries } = await supabase
+    const queriesResult = await supabase
       .from('user_content_access')
       .select('id')
       .eq('user_id', userId)
-      .eq('content_type', 'ai_query')
+      .eq('access_type', 'ai_query')
       .gte('accessed_at', today.toISOString());
+    
+    const todayQueries = queriesResult.data || [];
 
     const { data: limit } = await supabase
       .from('free_content_limits')
@@ -328,31 +334,37 @@ export const getUserUsageStats = async (userId: string): Promise<UsageStats> => 
     }, {} as Record<string, number>) || {};
 
     // Chapters accessed (all time, unique)
-    const { data: chaptersAccessed } = await supabase
+    const chaptersResult = await supabase
       .from('user_content_access')
       .select('content_identifier, subject')
       .eq('user_id', userId)
-      .eq('content_type', 'chapter');
+      .eq('access_type', 'chapter');
+    
+    const chaptersAccessed = chaptersResult.data || [];
 
     const uniqueChapters = new Set(
       chaptersAccessed?.map(c => `${c.subject}-${c.content_identifier}`) || []
     );
 
     // Questions attempted today
-    const { data: questionsToday } = await supabase
+    const questionsTodayResult = await supabase
       .from('user_content_access')
       .select('id')
       .eq('user_id', userId)
-      .eq('content_type', 'question')
+      .eq('access_type', 'question')
       .gte('accessed_at', today.toISOString());
+    
+    const questionsToday = questionsTodayResult.data || [];
 
     // AI queries today
-    const { data: aiQueriesToday } = await supabase
+    const aiQueriesTodayResult = await supabase
       .from('user_content_access')
       .select('id')
       .eq('user_id', userId)
-      .eq('content_type', 'ai_query')
+      .eq('access_type', 'ai_query')
       .gte('accessed_at', today.toISOString());
+    
+    const aiQueriesToday = aiQueriesTodayResult.data || [];
 
     return {
       chaptersAccessed: uniqueChapters.size,
@@ -415,11 +427,13 @@ export const getAccessibleChapters = async (
     const { data: allChapters } = await query;
 
     // Get accessed chapters
-    const { data: accessedChapters } = await supabase
+    const accessedChaptersResult = await supabase
       .from('user_content_access')
       .select('content_identifier, subject')
       .eq('user_id', userId)
-      .eq('content_type', 'chapter');
+      .eq('access_type', 'chapter');
+    
+    const accessedChapters = accessedChaptersResult.data || [];
 
     const accessedSet = new Set(
       accessedChapters?.map(a => `${a.subject}-${a.content_identifier}`) || []
@@ -435,7 +449,7 @@ export const getAccessibleChapters = async (
     const limitValue = freeLimit?.limit_value || 5;
 
     return allChapters?.map(chapter => {
-      const key = `${chapter.subject}-${chapter.chapter_name}`;
+      const key = `${chapter.subject}-${chapter.title}`;
       const alreadyAccessed = accessedSet.has(key);
       const canAccess = chapter.is_free || alreadyAccessed || accessedSet.size < limitValue;
 

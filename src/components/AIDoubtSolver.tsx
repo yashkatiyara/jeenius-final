@@ -31,16 +31,15 @@ const AIDoubtSolver = ({ question, isOpen, onClose }) => {
           .select('expires_at')
           .eq('user_id', user.id)
           .eq('is_active', true)
-          .single();
+          .maybeSingle();
         setIsPro(sub && new Date(sub.expires_at) > new Date());
         
-        const { data: usage } = await supabase
+        const { count } = await supabase
           .from('ai_usage_log')
-          .select('count')
+          .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id)
-          .eq('date', new Date().toISOString().split('T')[0])
-          .single();
-        setDailyAIUsage(usage?.count || 0);
+          .gte('created_at', `${new Date().toISOString().split('T')[0]}T00:00:00`);
+        setDailyAIUsage(count || 0);
       } catch (e) { setIsPro(false); }
     };
     checkSub();
