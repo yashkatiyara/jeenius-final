@@ -22,27 +22,6 @@ const FloatingAIButton = () => {
       if (!isLoggedIn) setShowAI(false);
       console.log('🔐 Auth state updated:', isLoggedIn ? '✅ LOGGED IN' : '❌ LOGGED OUT');
     };
-
-    useEffect(() => {
-      const checkSub = async () => {
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) return;
-          
-          const { data: sub } = await supabase
-            .from('user_subscriptions')
-            .select('expires_at')
-            .eq('user_id', user.id)
-            .eq('is_active', true)
-            .single();
-          
-          setIsPro(sub && new Date(sub.expires_at) > new Date());
-        } catch (e) {
-          setIsPro(false);
-        }
-      };
-      checkSub();
-    }, [isAuthenticated]);
   
     // 1️⃣ Check initial session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
@@ -62,6 +41,30 @@ const FloatingAIButton = () => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Check subscription status
+  useEffect(() => {
+    const checkSub = async () => {
+      if (!isAuthenticated) return;
+      
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        const { data: sub } = await supabase
+          .from('user_subscriptions')
+          .select('expires_at')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .maybeSingle();
+        
+        setIsPro(sub && new Date(sub.expires_at) > new Date());
+      } catch (e) {
+        setIsPro(false);
+      }
+    };
+    checkSub();
+  }, [isAuthenticated]);
 
   
   // Dummy question for general doubts (outside practice mode)
