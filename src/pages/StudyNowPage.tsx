@@ -668,13 +668,13 @@ const StudyNowPage = () => {
           isOpen={showAIModal}
           onClose={() => setShowAIModal(false)}
         />
-      </div>
-      {/* Upgrade Modal */}
+        {/* Upgrade Modal */}
         <PricingModal 
           isOpen={dailyQuestionsUsed >= DAILY_LIMIT_FREE}
           onClose={() => navigate('/pricing')}
           limitType="daily_limit"
         />
+      </div>
     );
   }
 
