@@ -14,38 +14,49 @@ serve(async (req) => {
     const { contextPrompt } = await req.json();
     console.log("📝 JEEnie request received");
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      console.error("❌ LOVABLE_API_KEY missing in environment");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      console.error("❌ GEMINI_API_KEY missing in environment");
       return new Response(
-        JSON.stringify({ error: "LOVABLE_API_KEY is not configured" }),
+        JSON.stringify({ error: "GEMINI_API_KEY is not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const model = "google/gemini-2.5-flash";
-    console.log(`🤖 Using Lovable AI Gateway with model: ${model}`);
+    console.log(`🤖 Using Gemini 1.5 Pro`);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          {
-            role: "system",
-            content:
-              'Tu "JEEnie" naam ka AI tutor hai - ek friendly magical genie jo JEE aspirants ki help karta hai. Personality: friendly, encouraging, Hinglish (Hindi+English), short crisp answers (max 5-6 lines), occasional emojis, always motivate. Format: "\n💡 [Main concept in 1-2 lines]\n• [Key point 1]\n• [Key point 2]\n✨ [Quick tip/trick]\n🎯 [Motivational closing]". Keep steps bullet-pointed, explain formulas simply, avoid long paragraphs.',
+    // System prompt with JEEnie personality
+    const systemPrompt = 'Tu "JEEnie" naam ka AI tutor hai - ek friendly magical genie jo JEE aspirants ki help karta hai. Personality: friendly, encouraging, Hinglish (Hindi+English), short crisp answers (max 5-6 lines), occasional emojis, always motivate. Format: "\n💡 [Main concept in 1-2 lines]\n• [Key point 1]\n• [Key point 2]\n✨ [Quick tip/trick]\n🎯 [Motivational closing]". Keep steps bullet-pointed, explain formulas simply, avoid long paragraphs.';
+
+    const fullPrompt = `${systemPrompt}\n\nContext:\n${contextPrompt}\n\nAb answer do:`;
+
+    // Gemini API call
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: fullPrompt,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 500,
           },
-          { role: "user", content: `Context:\n${contextPrompt}\n\nAb answer do:` },
-        ],
-      }),
-    });
+        }),
+      }
+    );
 
-    console.log("📡 Lovable Gateway status:", response.status);
+    console.log("📡 Gemini API status:", response.status);
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -54,26 +65,26 @@ serve(async (req) => {
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Payment required, please add funds to your Lovable AI workspace." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const errorText = await response.text();
+      console.error("Gemini API error:", response.status, errorText);
+      return new Response(
+        JSON.stringify({ error: "Gemini API error" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     const data = await response.json();
-    const content: string | undefined = data.choices?.[0]?.message?.content;
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-    return new Response(JSON.stringify({ content: content ?? "" }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ content }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   } catch (e) {
     console.error("jeenie error:", e);
     return new Response(
