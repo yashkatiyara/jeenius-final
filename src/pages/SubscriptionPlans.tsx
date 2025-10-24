@@ -75,14 +75,6 @@ const SubscriptionPlans = () => {
         {/* Hero Section */}
         <section className="py-12">
           <div className="container mx-auto px-4 text-center">
-            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
-              Choose Your Path to
-              <span className="text-green-600 block mt-2">JEE Success 🎯</span>
-            </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-              Start free, upgrade anytime. No hidden costs, no surprises.
-            </p>
-
             {/* Billing Toggle */}
             <div className="flex items-center justify-center gap-4 mb-12">
               <button
