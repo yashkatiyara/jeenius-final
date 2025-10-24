@@ -781,18 +781,17 @@ const EnhancedDashboard = () => {
               </CardContent>
             </Card>
           </div>
-
           <Leaderboard />
         </div>
+       {/* Upgrade Modal */}
+        <PricingModal 
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          limitType="daily_limit"
+        />
       </div>
     </div>
   );
-  {/* Upgrade Modal */}
-      <PricingModal 
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        limitType="daily_limit"
-      />
 };
 
 export default EnhancedDashboard;
