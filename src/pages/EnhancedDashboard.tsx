@@ -492,7 +492,7 @@ const EnhancedDashboard = () => {
                   </div>
                 </div>
                 <Button
-                  onClick={() => navigate('/pricing')}
+                  onClick={() => navigate('/subscription-plans')}
                   size="sm"
                   className="bg-white text-orange-600 hover:bg-orange-50 font-bold shrink-0"
                 >
