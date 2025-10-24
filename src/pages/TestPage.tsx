@@ -247,7 +247,7 @@ const startTest = async () => {
           isOpen={showUpgradeModal}
           onClose={() => {
             setShowUpgradeModal(false);
-            navigate('/pricing');
+            navigate('/subscription-plans');
           }}
           limitType="test_limit"
         />
