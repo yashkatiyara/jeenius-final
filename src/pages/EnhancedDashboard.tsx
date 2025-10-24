@@ -1,6 +1,8 @@
 import { UsageLimitModal } from '@/components/paywall/UsageLimitModal';
 import { UsageLimitBanner } from '@/components/paywall/UsageLimitBanner';
 import { FreemiumBadge } from '@/components/paywall/FreemiumBadge';
+import PricingModal from '@/components/PricingModal';
+import { Crown } from 'lucide-react';
 import { FREE_LIMITS } from '@/config/subscriptionPlans';
 import Leaderboard from '../components/Leaderboard';
 import React, { useState, useEffect } from "react";
@@ -36,6 +38,13 @@ const EnhancedDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
+  // Add these new state variables
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [usageStats, setUsageStats] = useState({
+    questionsToday: 0,
+    questionsThisMonth: 0,
+    testsThisMonth: 0
+  });
   const [stats, setStats] = useState<any>(null);
   const [attempts, setAttempts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,6 +77,22 @@ const EnhancedDashboard = () => {
       
       if (error) console.error('Profile fetch error:', error);
       setProfile(profileData);
+      // Fetch usage stats for free users
+      if (!profileData?.is_premium) {
+        const today = new Date().toISOString().split('T')[0];
+        const { data: usageData } = await supabase
+          .from('usage_limits')
+          .select('*')
+          .eq('user_id', user?.id)
+          .eq('last_reset_date', today)
+          .single();
+        
+        setUsageStats({
+          questionsToday: usageData?.questions_today || 0,
+          questionsThisMonth: usageData?.questions_this_month || 0,
+          testsThisMonth: usageData?.mock_tests_this_month || 0
+        });
+      }
       
        // Fetch all attempts
       const { data: allAttempts, error: attemptsError } = await supabase
@@ -446,29 +471,32 @@ const EnhancedDashboard = () => {
           </div>
         )}
 
-        {/* Compact Usage Banner - Only for Free Users */}
+        {/* Usage Banner - Only for Free Users */}
         {!profile?.is_premium && (
           <div className="mb-4">
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl p-4 shadow-lg">
+            <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl p-4 shadow-lg">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1">
                   <div className="bg-white/20 p-2 rounded-lg">
                     <Star className="w-5 h-5" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-bold text-sm">Free Plan - Limited Access</p>
-                    <div className="flex items-center gap-3 mt-1 text-xs">
-                      <span>📚 {stats?.questionsToday || 0}/50 today</span>
+                    <p className="font-bold text-sm">Starter Plan - Limited Access</p>
+                    <div className="flex items-center gap-4 mt-1 text-xs">
+                      <span>📚 {usageStats.questionsToday}/25 today</span>
                       <span>•</span>
-                      <span>📖 2/5 chapters</span>
+                      <span>📊 {usageStats.questionsThisMonth}/150 this month</span>
+                      <span>•</span>
+                      <span>📝 {usageStats.testsThisMonth}/2 tests</span>
                     </div>
                   </div>
                 </div>
                 <Button
-                  onClick={() => navigate('/subscription-plans')}
+                  onClick={() => navigate('/pricing')}
                   size="sm"
-                  className="bg-white text-blue-600 hover:bg-blue-50 font-bold shrink-0"
+                  className="bg-white text-orange-600 hover:bg-orange-50 font-bold shrink-0"
                 >
+                  <Crown className="w-4 h-4 mr-1" />
                   Upgrade
                 </Button>
               </div>
@@ -759,6 +787,12 @@ const EnhancedDashboard = () => {
       </div>
     </div>
   );
+  {/* Upgrade Modal */}
+      <PricingModal 
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        limitType="daily_limit"
+      />
 };
 
 export default EnhancedDashboard;
