@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import PricingModal from '@/components/PricingModal';
 import Header from '@/components/Header';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import {
@@ -668,6 +669,12 @@ const StudyNowPage = () => {
           onClose={() => setShowAIModal(false)}
         />
       </div>
+      {/* Upgrade Modal */}
+        <PricingModal 
+          isOpen={dailyQuestionsUsed >= DAILY_LIMIT_FREE}
+          onClose={() => navigate('/pricing')}
+          limitType="daily_limit"
+        />
     );
   }
 
