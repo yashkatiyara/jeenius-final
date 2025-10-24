@@ -38,17 +38,16 @@ const AuthCallback = () => {
        if (sessionData.session?.user) {
         console.log('✅ User authenticated successfully');
         
-        // Check if user profile exists (name, class, exam)
+        // Check if user has completed profile (grade + exam selection)
         const { data: profile } = await supabase
           .from('profiles')
-          .select('full_name, target_exam, grade')
+          .select('full_name, target_exam, grade, goals_set')
           .eq('id', sessionData.session.user.id)
           .maybeSingle();
-      
-        // If profile is complete (has name, grade, and exam), go to dashboard
-        if (profile && profile.full_name && profile.grade && profile.target_exam) {
-            console.log('🎯 User has goals, redirecting to dashboard');
-            navigate('/dashboard');
+        
+        if (profile?.goals_set && profile?.target_exam && profile?.grade) {
+          console.log('✅ Profile complete, redirecting to dashboard');
+          navigate('/dashboard');
           } else {
             console.log('🎯 No goals found, redirecting to goal selection');
             navigate('/goal-selection');
