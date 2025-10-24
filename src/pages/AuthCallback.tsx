@@ -35,21 +35,18 @@ const AuthCallback = () => {
           }
         }
 
-        if (sessionData.session?.user) {
-          console.log('✅ User authenticated successfully');
-          
-          // Check if user has completed goal selection
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('goals_set, target_exam, grade')
-            .eq('id', sessionData.session.user.id)
-            .maybeSingle();
-
-          // Also check localStorage for goals
-          const savedGoals = localStorage.getItem('userGoals');
-          const hasGoals = savedGoals && JSON.parse(savedGoals).goal;
-
-          if (profile?.goals_set || hasGoals) {
+       if (sessionData.session?.user) {
+        console.log('✅ User authenticated successfully');
+        
+        // Check if user profile exists (name, class, exam)
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, target_exam, grade')
+          .eq('id', sessionData.session.user.id)
+          .maybeSingle();
+      
+        // If profile is complete (has name, grade, and exam), go to dashboard
+        if (profile && profile.full_name && profile.grade && profile.target_exam) {
             console.log('🎯 User has goals, redirecting to dashboard');
             navigate('/dashboard');
           } else {
