@@ -14,7 +14,7 @@ const AIDoubtSolver = ({ question, isOpen, onClose }) => {
   const navigate = useNavigate();
   const [isPro, setIsPro] = useState(false);
   const [dailyAIUsage, setDailyAIUsage] = useState(0);
-  const AI_LIMIT_FREE = 5; // Free users: 5 AI queries/day
+  const AI_LIMIT_FREE = 0; // Free users: 0 AI queries/day
   
   // Check subscription status
   useEffect(() => {
@@ -82,7 +82,7 @@ const AIDoubtSolver = ({ question, isOpen, onClose }) => {
       if (isGeneralDoubt) {
         setMessages([{
           role: 'assistant',
-          content: `🧞‍♂️ **Namaste! Main JEEnie hun - tumhara AI genie!**
+          content: `🧞‍♂️ **Namaste! Main JEEnie hun!**
 **Ab bolo, kya doubt hai?** 🎯`
         }]);
       } else {
@@ -305,7 +305,6 @@ Instructions:
               </div>
               <div>
                 <h3 className="font-bold text-white text-xl">JEEnie</h3>
-                <p className="text-xs text-purple-100">Powered by Gemini 1.5 Pro</p>
               </div>
             </div>
             <button
