@@ -414,40 +414,42 @@ const StudyNowPage = () => {
       });
 
       if (!isPro) {
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        
-        // Upsert usage limits
-        const { error: usageError } = await supabase
-          .from('usage_limits')
-          .upsert({
-            user_id: user.id,
-            questions_today: dailyQuestionsUsed + 1,
-            mock_tests_this_month: 0, // Keep existing value
-            last_reset_date: today
-          }, {
-            onConflict: 'user_id,last_reset_date',
-            ignoreDuplicates: false
-          });
-        
-        if (usageError) {
-          console.error('Error updating usage limits:', usageError);
-        } else {
-          // Update local state
-          setDailyQuestionsUsed(prev => prev + 1);
+        try {
+          // Get current usage or create new record
+          const today = new Date().toISOString().split('T')[0];
+          const { data: existingUsage } = await supabase
+            .from('usage_limits')
+            .select('questions_today')
+            .eq('user_id', user.id)
+            .single();
+
+          const newCount = (existingUsage?.questions_today || 0) + 1;
+
+          // Upsert usage limits
+          const { error: usageError } = await supabase
+            .from('usage_limits')
+            .upsert({
+              user_id: user.id,
+              questions_today: newCount,
+              last_reset_date: today
+            });
           
-          // Show warning when approaching limit
-          if (dailyQuestionsUsed + 1 >= DAILY_LIMIT_FREE - 3) {
-            toast.info(
-              `${DAILY_LIMIT_FREE - (dailyQuestionsUsed + 1)} questions left today`,
-              { duration: 2000 }
-            );
+          if (usageError) {
+            console.error('Error updating usage limits:', usageError);
+          } else {
+            setDailyQuestionsUsed(newCount);
+            
+            if (newCount >= DAILY_LIMIT_FREE - 3) {
+              toast.info(
+                `${DAILY_LIMIT_FREE - newCount} questions left today`,
+                { duration: 2000 }
+              );
+            }
           }
+        } catch (updateError) {
+          console.error('Failed to update usage:', updateError);
         }
-      } catch (updateError) {
-        console.error('Failed to update usage:', updateError);
       }
-    }
       
       if (selectedTopic) {
         await supabase.functions.invoke('calculate-topic-mastery', {
@@ -481,6 +483,9 @@ const StudyNowPage = () => {
     } else {
       const accuracy = (sessionStats.correct / sessionStats.total) * 100;
       toast.success(`🎉 Session Completed! Score: ${sessionStats.correct}/${sessionStats.total} (${accuracy.toFixed(0)}%)`);
+      
+      // Refresh data to update dashboard
+      fetchSubjects();
       setView('topics');
     }
   };
@@ -577,7 +582,11 @@ const StudyNowPage = () => {
                     )}
                   </div>
                 </div>
-                <Progress value={progress} className="h-2" />
+                <Progress 
+                  key={`progress-${currentQuestionIndex}`} 
+                  value={progress} 
+                  className="h-2 transition-all duration-300" 
+                />
               </CardContent>
             </Card>
 

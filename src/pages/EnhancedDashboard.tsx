@@ -65,6 +65,18 @@ const EnhancedDashboard = () => {
     }
   }, [user, isClient]);
 
+  // Refresh data when user returns to dashboard
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user && isClient) {
+        loadUserData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user, isClient]);
+
   const loadUserData = async () => {
     try {
       setIsLoading(true);
