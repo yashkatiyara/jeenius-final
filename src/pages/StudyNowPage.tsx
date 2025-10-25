@@ -388,7 +388,7 @@ const StudyNowPage = () => {
   // 🚨 CHECK DAILY LIMIT FOR FREE USERS
   if (!isPro && dailyQuestionsUsed >= DAILY_LIMIT_FREE) {
     toast.error('Daily limit reached! Upgrade to Pro for unlimited practice.');
-    setTimeout(() => navigate('/subscription-plans'), 2000);
+    setTimeout(() => navigate('/subscription-plans'), 500);
     return;
   }
     if (showResult) return;
