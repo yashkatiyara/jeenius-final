@@ -596,8 +596,9 @@ const StudyNowPage = () => {
                   {['option_a', 'option_b', 'option_c', 'option_d'].map((key, idx) => {
                     const letter = String.fromCharCode(65 + idx);
                     const isSelected = selectedAnswer === letter;
-                    const isCorrect = letter === question.correct_option;
-                    
+                    const correctLetter = question.correct_option.replace('option_', '').toUpperCase();
+                    const isCorrect = letter === correctLetter;
+        
                     let buttonClass = 'w-full text-left p-4 rounded-xl border-2 transition-all ';
                     if (showResult) {
                       if (isCorrect) {
