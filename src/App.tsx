@@ -24,7 +24,6 @@ import Login from "./pages/Login";
 import AuthCallback from '@/pages/AuthCallback';
 
 // Feature pages
-import FeaturesPage from "./pages/FeaturesPage";
 import LessonBuilderPage from "./pages/LessonBuilderPage";
 import WhyUsPage from "./pages/WhyUsPage";
 import GoalSelectionPage from '@/pages/GoalSelectionPage';
