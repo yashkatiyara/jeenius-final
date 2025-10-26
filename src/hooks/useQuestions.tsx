@@ -10,7 +10,7 @@ export interface Question {
   subject: string;
   topic: string;
   difficulty_level: number;
-  chapter: string | number;
+  chapter: number;
 }
 
 export interface QuestionAttempt {
