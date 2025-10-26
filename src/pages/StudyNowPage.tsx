@@ -477,7 +477,7 @@ const StudyNowPage = () => {
 
     setTimeout(() => {
       nextQuestion();
-    }, 100);
+    }, 800);
   };
 
   const nextQuestion = () => {
@@ -577,7 +577,6 @@ const StudyNowPage = () => {
                     )}
                   </div>
                 </div>
-                <Progress value={progress} className="h-2" />
               </CardContent>
             </Card>
 
