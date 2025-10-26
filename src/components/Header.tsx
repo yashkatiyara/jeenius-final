@@ -167,7 +167,7 @@ const Header = () => {
             onClick={() => navigate(isAuthenticated ? '/dashboard' : '/')}
           >
           <img 
-            src="/logo.png" 
+            src="logo.png" 
             alt="JEEnius Logo" 
             className="w-10 h-10 object-contain rounded-lg"
           />
