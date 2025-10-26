@@ -3,7 +3,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, Loader2, Sparkles, Flame } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { usePremium } from "@/hooks/usePremium";
 
 const AIDoubtSolver = ({ question, isOpen, onClose }) => {
   const [input, setInput] = useState('');
@@ -13,27 +12,68 @@ const AIDoubtSolver = ({ question, isOpen, onClose }) => {
   const messagesEndRef = useRef(null);
 
   const navigate = useNavigate();
-  const { isPremium } = usePremium();
+  const [isPro, setIsPro] = useState(false);
   const [dailyAIUsage, setDailyAIUsage] = useState(0);
-  const AI_LIMIT_FREE = 0;
+  const AI_LIMIT_FREE = 0; // Free users: 0 AI queries/day
+  
+  // Check subscription status
+  useEffect(() => {
+    checkSubscription();
+  }, []);
 
   useEffect(() => {
-    const loadUsage = async () => {
+    const checkSub = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
+        const { data: sub } = await supabase
+          .from('user_subscriptions')
+          .select('expires_at')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .maybeSingle();
+        setIsPro(sub && new Date(sub.expires_at) > new Date());
+        
         const { count } = await supabase
           .from('ai_usage_log')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id)
           .gte('created_at', `${new Date().toISOString().split('T')[0]}T00:00:00`);
         setDailyAIUsage(count || 0);
-      } catch (e) {
-        console.error('Error loading usage:', e);
-      }
+      } catch (e) { setIsPro(false); }
     };
-    loadUsage();
+    checkSub();
   }, []);
+    
+  const checkSubscription = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: subscription } = await supabase
+        .from('user_subscriptions')
+        .select('*, subscription_plans(*)')
+        .eq('user_id', user?.id)
+        .eq('is_active', true)
+        .single();
+      
+      const isProUser = subscription && 
+        new Date(subscription.expires_at) > new Date();
+      setIsPro(isProUser);
+  
+      // Get today's AI usage count
+      const today = new Date().toISOString().split('T')[0];
+      const { count } = await supabase
+        .from('ai_usage_log')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user?.id)
+        .gte('created_at', `${today}T00:00:00`)
+        .lte('created_at', `${today}T23:59:59`);
+      
+      setDailyAIUsage(count || 0);
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+      setIsPro(false); // Default to free if error
+    }
+  };
   // Initialize welcome message
   useEffect(() => {
     if (isOpen && messages.length === 0) {
@@ -77,7 +117,7 @@ ${question.option_d ? `D) ${question.option_d}` : ''}
     if (!input.trim()) return;
   
     // 🚨 CHECK LIMIT FOR FREE USERS
-    if (!isPremium && dailyAIUsage >= AI_LIMIT_FREE) {
+    if (!isPro && dailyAIUsage >= AI_LIMIT_FREE) {
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: `🔒 **Daily Limit Reached!**
@@ -166,7 +206,7 @@ Instructions:
           content: cleaned
         }]);
         // Log AI usage
-        if (!isPremium) {
+        if (!isPro) {
           const userId = (await supabase.auth.getUser()).data.user?.id;
           if (userId) {
             await supabase.from('ai_usage_log').insert({
@@ -359,7 +399,7 @@ Instructions:
           </div>
           <div className="flex items-center justify-between mt-2">
             <div className="flex items-center justify-between">
-              {!isPremium && (
+              {!isPro && (
                 <span className="text-xs text-orange-600 font-bold flex items-center gap-1">
                   {dailyAIUsage}/{AI_LIMIT_FREE} queries used today
                 </span>
