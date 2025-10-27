@@ -133,6 +133,7 @@ ${question.option_d ? `D) ${question.option_d}` : ''}
       }, 3000);
       return;
     }
+  
     const now = Date.now();
     if (now - lastRequestTime < 2000) {
       setMessages(prev => [...prev, {
@@ -142,12 +143,12 @@ ${question.option_d ? `D) ${question.option_d}` : ''}
       return;
     }
     setLastRequestTime(now);
-
+  
     const userMessage = { role: 'user', content: input };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setLoading(true);
-
+  
     try {
       // Build JEE-specific context prompt
       const isGeneralDoubt = !question?.option_a || question?.question?.includes("koi bhi");
@@ -156,33 +157,33 @@ ${question.option_d ? `D) ${question.option_d}` : ''}
       
       if (isGeneralDoubt) {
         contextPrompt = `You are JEEnie, a friendly AI tutor for JEE/NEET students in India. Student asks: "${input}"
-
-Reply in simple Hinglish (mix of Hindi and English), keep it short (3-5 lines max), friendly, and exam-focused. Use emojis occasionally. Be encouraging!`;
+  
+  Reply in simple Hinglish (mix of Hindi and English), keep it short (3-5 lines max), friendly, and exam-focused. Use emojis occasionally. Be encouraging!`;
       } else {
         contextPrompt = `You are JEEnie, an AI tutor for JEE/NEET preparation. 
-
-Question: ${question.question}
-
-Options:
-A) ${question.option_a}
-B) ${question.option_b}
-C) ${question.option_c}
-D) ${question.option_d}
-
-Correct Answer: ${question.correct_option}
-
-Student's doubt: "${input}"
-
-Instructions:
-- Reply in simple Hinglish (Hindi + English mix)
-- Keep response short (4-6 lines)
-- Focus on clarifying the doubt
-- Use emojis occasionally
-- Be friendly and encouraging
-- If formula needed, explain it simply
-- If shortcut exists, mention it`;
+  
+  Question: ${question.question}
+  
+  Options:
+  A) ${question.option_a}
+  B) ${question.option_b}
+  C) ${question.option_c}
+  D) ${question.option_d}
+  
+  Correct Answer: ${question.correct_option}
+  
+  Student's doubt: "${input}"
+  
+  Instructions:
+  - Reply in simple Hinglish (Hindi + English mix)
+  - Keep response short (4-6 lines)
+  - Focus on clarifying the doubt
+  - Use emojis occasionally
+  - Be friendly and encouraging
+  - If formula needed, explain it simply
+  - If shortcut exists, mention it`;
       }
-
+  
       // Call Supabase Edge Function (which calls Gemini API)
       const { data: functionData, error: functionError } = await supabase.functions.invoke('jeenie', {
         body: { contextPrompt }
@@ -213,7 +214,26 @@ Instructions:
       if (!aiText || aiText.trim() === '') {
         throw new Error('Empty response from AI');
       }
-
+  
+      // ✅ 🎯 FIX: AI response ko messages me add karo!
+      const formattedResponse = cleanAndFormatJeenieText(aiText);
+      
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: formattedResponse
+      }]);
+  
+      // ✅ Log AI usage for free users
+      if (!isPro) {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from('ai_usage_log').insert({
+          user_id: user.id,
+          query: input,
+          response: aiText
+        });
+        setDailyAIUsage(prev => prev + 1);
+      }
+  
     } catch (error) {
       console.error('🔥 JEEnie Error:', error);
       
@@ -222,41 +242,41 @@ Instructions:
       // Detailed error messages
       if (error.message?.includes('Rate limits exceeded') || error.message?.includes('429')) {
         errorMsg = `⚠️ **Gemini API ka rate limit hit ho gaya!**
-
-**Solutions:**
-1. 1-2 minute wait karo
-2. Free tier: 15 requests/minute limit hai
-3. Supabase Dashboard me check karo billing status`;
+  
+  **Solutions:**
+  1. 1-2 minute wait karo
+  2. Free tier: 15 requests/minute limit hai
+  3. Supabase Dashboard me check karo billing status`;
       } else if (error.message?.includes('quota') || error.message?.includes('exhausted')) {
         errorMsg = `⚠️ **API quota khatam ho gaya!**
-
-**Solutions:**
-1. Thoda wait karo (1-2 min)
-2. Google AI Studio me billing check karo
-3. Supabase secrets me API key verify karo`;
+  
+  **Solutions:**
+  1. Thoda wait karo (1-2 min)
+  2. Google AI Studio me billing check karo
+  3. Supabase secrets me API key verify karo`;
       } else if (error.message?.includes('invalid') || error.message?.includes('API key')) {
         errorMsg = `🔑 **API Key issue hai!**
-
-**Fix:**
-1. Supabase Dashboard → Settings → Edge Functions → Secrets
-2. Check GEMINI_API_KEY valid hai ya nahi
-3. Google AI Studio se naya key generate karo`;
+  
+  **Fix:**
+  1. Supabase Dashboard → Settings → Edge Functions → Secrets
+  2. Check GEMINI_API_KEY valid hai ya nahi
+  3. Google AI Studio se naya key generate karo`;
       } else if (error.message?.includes('Failed to fetch') || error.message?.includes('Network')) {
         errorMsg = '🌐 **Network issue!** Internet connection check karo.';
       } else if (error.message?.includes('FunctionsRelayError') || error.message?.includes('not found')) {
         errorMsg = `🔧 **Edge Function setup nahi hua!**
-
-**Setup Steps:**
-1. Supabase Dashboard me jao
-2. Edge Functions section me 'jeenie' function create karo
-3. Ya developer se setup karwao`;
+  
+  **Setup Steps:**
+  1. Supabase Dashboard me jao
+  2. Edge Functions section me 'jeenie' function create karo
+  3. Ya developer se setup karwao`;
       } else {
         errorMsg = `❌ **Error:** ${error.message}
-
-**Try:**
-1. Page refresh karo
-2. Supabase Dashboard me Edge Function check karo
-3. Browser console me detailed error dekho`;
+  
+  **Try:**
+  1. Page refresh karo
+  2. Supabase Dashboard me Edge Function check karo
+  3. Browser console me detailed error dekho`;
       }
       
       setMessages(prev => [...prev, {
@@ -267,7 +287,6 @@ Instructions:
       setLoading(false);
     }
   };
-
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
