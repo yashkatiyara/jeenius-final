@@ -45,26 +45,16 @@ const FloatingAIButton = () => {
 
   // Check subscription status
   useEffect(() => {
-    const checkSub = async () => {
-      if (!isAuthenticated) return;
-      
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        
-        const { data: sub } = await supabase
-          .from('user_subscriptions')
-          .select('expires_at')
-          .eq('user_id', user.id)
-          .eq('is_active', true)
-          .maybeSingle();
-        
-        setIsPro(sub && new Date(sub.expires_at) > new Date());
-      } catch (e) {
+    const checkPremium = async () => {
+      if (!isAuthenticated) {
         setIsPro(false);
+        return;
       }
+      
+      const isPremium = await checkIsPremium();
+      setIsPro(isPremium);
     };
-    checkSub();
+    checkPremium();
   }, [isAuthenticated]);
 
   
