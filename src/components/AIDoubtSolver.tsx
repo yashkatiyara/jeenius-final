@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import React, { useState, useRef, useEffect } from 'react';
+import { checkIsPremium } from '@/utils/premiumChecker';
 import { X, Send, Loader2, Sparkles, Flame } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,29 +23,24 @@ const AIDoubtSolver = ({ question, isOpen, onClose }) => {
   }, []);
 
   useEffect(() => {
-    const checkSub = async () => {
-      try {
+    const checkPremium = async () => {
+      const isPremium = await checkIsPremium();
+      setIsPro(isPremium);
+      
+      if (!isPremium) {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const { data: sub } = await supabase
-          .from('user_subscriptions')
-          .select('expires_at')
-          .eq('user_id', user.id)
-          .eq('is_active', true)
-          .maybeSingle();
-        setIsPro(sub && new Date(sub.expires_at) > new Date());
-        
+        const today = new Date().toISOString().split('T')[0];
         const { count } = await supabase
           .from('ai_usage_log')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id)
-          .gte('created_at', `${new Date().toISOString().split('T')[0]}T00:00:00`);
+          .gte('created_at', `${today}T00:00:00`);
         setDailyAIUsage(count || 0);
-      } catch (e) { setIsPro(false); }
+      }
     };
-    checkSub();
+    checkPremium();
   }, []);
-    
+  
   const checkSubscription = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
