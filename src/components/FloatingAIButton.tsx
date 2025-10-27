@@ -3,6 +3,7 @@ import { Bot, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import AIDoubtSolver from './AIDoubtSolver';
 import { useNavigate } from 'react-router-dom';
+import { checkIsPremium } from '@/utils/premiumChecker';
 
 const FloatingAIButton = () => {
   const [showAI, setShowAI] = useState(false);
