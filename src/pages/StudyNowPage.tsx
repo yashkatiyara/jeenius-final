@@ -44,6 +44,8 @@ const StudyNowPage = () => {
 
   useEffect(() => {
     checkSubscriptionStatus();
+    loadProfile();
+    fetchSubjects();
   }, []);
 
   const checkSubscriptionStatus = async () => {
