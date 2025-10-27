@@ -187,34 +187,31 @@ Instructions:
       const { data: functionData, error: functionError } = await supabase.functions.invoke('jeenie', {
         body: { contextPrompt }
       });
-
+      
+      // ✅ IMPROVED ERROR HANDLING
       if (functionError) {
-        console.error('Edge Function Error:', functionError);
-        throw new Error(functionError.message || 'Edge function failed');
+        console.error('🔥 Network/Function Error:', functionError);
+        throw new Error(functionError.message || 'Function invocation failed');
       }
-
+      
+      // ✅ CHECK FOR API ERRORS IN RESPONSE BODY
+      if (functionData?.error) {
+        console.error('🔥 API Error in response:', functionData.error);
+        
+        // Handle specific errors
+        if (functionData.error.includes('Rate limits exceeded') || functionData.error.includes('429')) {
+          throw new Error('Rate limits exceeded');
+        } else if (functionData.error.includes('GEMINI_API_KEY')) {
+          throw new Error('API key not configured');
+        } else {
+          throw new Error(functionData.error);
+        }
+      }
+      
       const aiText = functionData?.content;
       
-      if (aiText) {
-        const cleaned = cleanAndFormatJeenieText(aiText);
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: cleaned
-        }]);
-        // Log AI usage
-        if (!isPro) {
-          const userId = (await supabase.auth.getUser()).data.user?.id;
-          if (userId) {
-            await supabase.from('ai_usage_log').insert({
-              user_id: userId,
-              feature_type: 'doubt_solver',
-              tokens_used: 0
-            });
-          }
-          setDailyAIUsage(prev => prev + 1);
-        }
-      } else {
-        throw new Error('No response from AI');
+      if (!aiText || aiText.trim() === '') {
+        throw new Error('Empty response from AI');
       }
 
     } catch (error) {
