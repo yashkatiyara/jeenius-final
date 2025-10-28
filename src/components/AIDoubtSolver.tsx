@@ -22,40 +22,14 @@ const AIDoubtSolver = ({ question, isOpen, onClose }) => {
     checkSubscription();
   }, []);
 
-  useEffect(() => {
-    const checkPremium = async () => {
-      const isPremium = await checkIsPremium();
-      setIsPro(isPremium);
-      
-      if (!isPremium) {
-        const { data: { user } } = await supabase.auth.getUser();
-        const today = new Date().toISOString().split('T')[0];
-        const { count } = await supabase
-          .from('ai_usage_log')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .gte('created_at', `${today}T00:00:00`);
-        setDailyAIUsage(count || 0);
-      }
-    };
-    checkPremium();
-  }, []);
-  
   const checkSubscription = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: subscription } = await supabase
-        .from('user_subscriptions')
-        .select('*, subscription_plans(*)')
-        .eq('user_id', user?.id)
-        .eq('is_active', true)
-        .single();
-      
-      const isProUser = subscription && 
-        new Date(subscription.expires_at) > new Date();
-      setIsPro(isProUser);
-  
-      // Get today's AI usage count
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const isPremium = await checkIsPremium();
+    setIsPro(isPremium);
+
+    // Only get usage count for free users
+    if (!isPremium) {
       const today = new Date().toISOString().split('T')[0];
       const { count } = await supabase
         .from('ai_usage_log')
@@ -65,11 +39,13 @@ const AIDoubtSolver = ({ question, isOpen, onClose }) => {
         .lte('created_at', `${today}T23:59:59`);
       
       setDailyAIUsage(count || 0);
-    } catch (error) {
-      console.error('Error checking subscription:', error);
-      setIsPro(false); // Default to free if error
     }
-  };
+  } catch (error) {
+    console.error('Error checking subscription:', error);
+    setIsPro(false);
+  }
+};
+  
   // Initialize welcome message
   useEffect(() => {
     if (isOpen && messages.length === 0) {
