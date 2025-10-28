@@ -20,10 +20,15 @@ const PracticeSession = () => {
     total: 0,
     startTime: Date.now()
   });
+  
+  // ✅ Real weakness data state
+  const [weakAreas, setWeakAreas] = useState([]);
+  const [loadingWeakness, setLoadingWeakness] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
       loadQuestions();
+      fetchWeakAreas(); // ✅ Fetch real weakness data
     }
   }, [isAuthenticated]);
 
@@ -35,6 +40,36 @@ const PracticeSession = () => {
     }
     
     setQuestions(questionsData);
+  };
+
+  // ✅ Fetch real weakness data from database
+  const fetchWeakAreas = async () => {
+    try {
+      setLoadingWeakness(true);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch top 5 weak areas from database
+      const { data: weaknessData, error } = await supabase
+        .from('weakness_analysis')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('weakness_score', { ascending: false })
+        .limit(5);
+
+      if (error) {
+        console.error('Error fetching weakness:', error);
+        return;
+      }
+
+      console.log('📊 Fetched weakness data:', weaknessData);
+      setWeakAreas(weaknessData || []);
+    } catch (error) {
+      console.error('Error in fetchWeakAreas:', error);
+    } finally {
+      setLoadingWeakness(false);
+    }
   };
 
   const handleAnswerSelect = async (optionKey) => {
@@ -72,6 +107,11 @@ const PracticeSession = () => {
           console.error('❌ Mastery function error:', error);
         } else {
           console.log('✅ Topic mastery response:', data);
+          
+          // ✅ Refresh weakness data after mastery update
+          if (data?.success) {
+            fetchWeakAreas(); // Refresh sidebar with new data
+          }
         }
       } catch (masteryError) {
         console.error('❌ Error updating mastery:', masteryError);
@@ -163,26 +203,57 @@ const PracticeSession = () => {
               </div>
             </div>
 
-            {/* Weakness Analysis */}
+            {/* Weakness Analysis - REAL DATA */}
             <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
               <h3 className="font-semibold text-gray-900 mb-4 flex items-center space-x-2">
                 <Target className="w-5 h-5 text-red-500" />
                 <span>Focus Areas</span>
               </h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Friction Problems</span>
-                  <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">Weak</span>
+              
+              {loadingWeakness ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mx-auto"></div>
+                  <p className="text-xs text-gray-500 mt-2">Analyzing...</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Projectile Motion</span>
-                  <span className="text-xs bg-yellow-100 text-yellow-600 px-2 py-1 rounded-full">Moderate</span>
+              ) : weakAreas.length > 0 ? (
+                <div className="space-y-3">
+                  {weakAreas.map((area, idx) => {
+                    const weaknessLevel = area.weakness_score >= 70 ? 'Weak' :
+                                         area.weakness_score >= 50 ? 'Moderate' :
+                                         'Strong';
+                    const badgeColor = area.weakness_score >= 70 ? 'bg-red-100 text-red-600' :
+                                      area.weakness_score >= 50 ? 'bg-yellow-100 text-yellow-600' :
+                                      'bg-green-100 text-green-600';
+                    
+                    return (
+                      <div key={idx} className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-gray-900 block">{area.topic}</span>
+                          <span className="text-xs text-gray-500">
+                            {area.subject} • {area.accuracy_percentage?.toFixed(0)}% accuracy
+                          </span>
+                        </div>
+                        <span className={`text-xs px-2 py-1 rounded-full ${badgeColor} whitespace-nowrap ml-2`}>
+                          {weaknessLevel}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Work & Energy</span>
-                  <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">Strong</span>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-500">Keep practicing!</p>
+                  <p className="text-xs text-gray-400 mt-1">Weakness data will appear here</p>
                 </div>
-              </div>
+              )}
+              
+              {weakAreas.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <p className="text-xs text-gray-600 text-center">
+                    🎯 Focus on these topics to improve faster
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Session Stats */}
