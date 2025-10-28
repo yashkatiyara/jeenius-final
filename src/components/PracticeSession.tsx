@@ -30,9 +30,9 @@ const PracticeSession = () => {
   const loadQuestions = async () => {
     const questionsData = await getRandomQuestions(null, null, null, 10);
 
-      if (questionsData.length === 0) {
-        toast.info('No new questions available. All questions attempted!');
-      }
+    if (questionsData.length === 0) {
+      toast.info('No new questions available. All questions attempted!');
+    }
     
     setQuestions(questionsData);
   };
@@ -45,62 +45,39 @@ const PracticeSession = () => {
     try {
       const timeSpent = Math.floor((Date.now() - sessionStats.startTime) / 1000);
       const result = await submitAnswer(questions[currentQuestion].id, optionKey, timeSpent);
-
-      const handleAnswerSelect = async (optionKey) => {
-  if (!questions[currentQuestion]) return;
-  
-  setSelectedAnswer(optionKey);
-  
-  try {
-    const timeSpent = Math.floor((Date.now() - sessionStats.startTime) / 1000);
-    const result = await submitAnswer(questions[currentQuestion].id, optionKey, timeSpent);
-    
-    // Store validation result to show correct answer and explanation
-    setValidationResult(result);
-    setShowExplanation(true);
-    
-    // Update topic mastery after each attempt
-    try {
-    const currentQ = questions[currentQuestion];
-    
-    console.log('🔍 Calling mastery function for:', {
-      subject: currentQ.subject,
-      chapter: currentQ.chapter || currentQ.topic,
-      topic: currentQ.topic
-    });
-    
-    const { data, error } = await supabase.functions.invoke('calculate-topic-mastery', {
-      body: {
-        subject: currentQ.subject,
-        chapter: currentQ.chapter || currentQ.topic,
-        topic: currentQ.topic
-      }
-    });
-    
-    if (error) {
-      console.error('❌ Mastery function error:', error);
-    } else {
-      console.log('✅ Topic mastery response:', data);
-    }
-  } catch (masteryError) {
-    console.error('❌ Error updating mastery:', masteryError);
-  }
-    // END OF NEW BLOCK ⬆️
-    
-    setSessionStats(prev => ({
-      ...prev,
-      correct: prev.correct + (result.isCorrect ? 1 : 0),
-      total: prev.total + 1
-    }));
-  } catch (error) {
-    console.error('Error submitting answer:', error);
-  }
-};
       
       // Store validation result to show correct answer and explanation
       setValidationResult(result);
       setShowExplanation(true);
       
+      // ✅ Update topic mastery after each attempt
+      try {
+        const currentQ = questions[currentQuestion];
+        
+        console.log('🔍 Calling mastery function for:', {
+          subject: currentQ.subject,
+          chapter: currentQ.chapter || currentQ.topic,
+          topic: currentQ.topic
+        });
+        
+        const { data, error } = await supabase.functions.invoke('calculate-topic-mastery', {
+          body: {
+            subject: currentQ.subject,
+            chapter: currentQ.chapter || currentQ.topic,
+            topic: currentQ.topic
+          }
+        });
+        
+        if (error) {
+          console.error('❌ Mastery function error:', error);
+        } else {
+          console.log('✅ Topic mastery response:', data);
+        }
+      } catch (masteryError) {
+        console.error('❌ Error updating mastery:', masteryError);
+      }
+      
+      // Update session stats
       setSessionStats(prev => ({
         ...prev,
         correct: prev.correct + (result.isCorrect ? 1 : 0),
