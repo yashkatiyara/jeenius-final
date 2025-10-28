@@ -51,7 +51,7 @@ const Header = () => {
   const protectedNavItems = [
     { name: 'Dashboard', href: '/dashboard', path: '/dashboard', icon: BarChart3 },
     { name: 'Study Now', href: '/study-now', path: '/study-now', icon: BookOpen, highlight: false },
-    { name: 'AI Study Planner', href: '/ai-planner', path: '/ai-planner', icon: Brain, highlight: false },
+    ...(isPro ? [{ name: 'AI Study Planner', href: '/ai-planner', path: '/ai-planner', icon: Brain, highlight: false }] : []),
     { name: 'Tests', href: '/tests', path: '/tests', icon: Target },
   ];
 
