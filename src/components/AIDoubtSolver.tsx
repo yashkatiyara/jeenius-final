@@ -185,27 +185,39 @@ ${question.option_d ? `D) ${question.option_d}` : ''}
       }
   
       // Call Supabase Edge Function (which calls Gemini API)
-      const { data: functionData, error: functionError } = await supabase.functions.invoke('jeenie', {
+      const response = await supabase.functions.invoke('jeenie', {
         body: { contextPrompt }
       });
       
+      console.log('📡 Full Edge Function Response:', response);
+      
       // ✅ IMPROVED ERROR HANDLING
-      if (functionError) {
-        console.error('🔥 Network/Function Error:', functionError);
-        throw new Error(functionError.message || 'Function invocation failed');
+      if (response.error) {
+        console.error('🔥 Network/Function Error:', response.error);
+        
+        // Check for network errors
+        if (response.error.message?.includes('FunctionsRelayError') || 
+            response.error.message?.includes('ERR_NAME_NOT_RESOLVED')) {
+          throw new Error('Edge Function not found. Check Supabase dashboard.');
+        }
+        
+        throw new Error(response.error.message || 'Function invocation failed');
       }
       
+      const functionData = response.data;
+      
       // ✅ CHECK FOR API ERRORS IN RESPONSE BODY
-      if (functionData?.error) {
-        console.error('🔥 API Error in response:', functionData.error);
+      if (!functionData || functionData.error) {
+        console.error('🔥 API Error in response:', functionData?.error);
         
         // Handle specific errors
-        if (functionData.error.includes('Rate limits exceeded') || functionData.error.includes('429')) {
+        if (functionData?.error?.includes('Rate limits exceeded') || 
+            functionData?.error?.includes('429')) {
           throw new Error('Rate limits exceeded');
-        } else if (functionData.error.includes('GEMINI_API_KEY')) {
+        } else if (functionData?.error?.includes('GEMINI_API_KEY')) {
           throw new Error('API key not configured');
         } else {
-          throw new Error(functionData.error);
+          throw new Error(functionData?.error || 'Empty response from Edge Function');
         }
       }
       
