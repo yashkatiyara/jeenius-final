@@ -20,29 +20,8 @@ const Header = () => {
   });
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, signOut } = useAuth();
-  const [isPro, setIsPro] = useState(false);
+  const { isAuthenticated, signOut, isPremium } = useAuth();
 
-  useEffect(() => {
-    const checkSub = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        
-        const { data: sub } = await supabase
-          .from('user_subscriptions')
-          .select('expires_at')
-          .eq('user_id', user.id)
-          .eq('is_active', true)
-          .single();
-        
-        setIsPro(sub && new Date(sub.expires_at) > new Date());
-      } catch (e) {
-        setIsPro(false);
-      }
-    };
-    checkSub();
-  }, []);
   const publicNavItems = [
     { name: 'Home', href: '/', path: '/', icon: null, highlight: false },
     { name: 'Why Us', href: '/why-us', path: '/why-us', icon: null, highlight: false },
@@ -55,8 +34,7 @@ const Header = () => {
   const navItems = isAuthenticated ? [
     { name: 'Dashboard', href: '/dashboard', path: '/dashboard', icon: BarChart3 },
     { name: 'Study Now', href: '/study-now', path: '/study-now', icon: BookOpen, highlight: false },
-    ...(isPro ? [{ name: 'AI Study Planner', href: '/ai-planner', path: '/ai-planner', icon: Brain, highlight: false }] : []),
-    { name: 'Tests', href: '/tests', path: '/tests', icon: Target },
+    ...(isPremium ? [{ name: 'AI Study Planner', href: '/ai-planner', path: '/ai-planner', icon: Brain, highlight: false }] : []),    { name: 'Tests', href: '/tests', path: '/tests', icon: Target },
   ] : publicNavItems;
     const handleNavigation = (path: string) => {
       navigate(path);
