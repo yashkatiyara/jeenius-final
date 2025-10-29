@@ -400,8 +400,22 @@ const StudyNowPage = () => {
         console.log('💾 Saving attempt:', attemptPayload);
 
         const { data: attemptData, error: attemptError } = await supabase
-          .from('question_attempts')
-          .insert(attemptPayload);
+        .from('question_attempts')
+        .upsert(
+          {
+            user_id: user.id,
+            question_id: question.id,
+            selected_option: `option_${answer.toLowerCase()}`,
+            is_correct: isCorrect,
+            time_taken: 30,
+            mode: 'study'
+          },
+          {
+            onConflict: 'user_id,question_id',
+            ignoreDuplicates: false
+          }
+        )
+        .select();
 
         if (attemptError) {
           console.error('❌ Database error:', attemptError);
