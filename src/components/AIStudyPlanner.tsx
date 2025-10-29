@@ -57,33 +57,47 @@ export default function EnhancedAIStudyPlanner() {
         setLoading(false);
         return;
       }
-
+  
+      // ✅ Initialize student if needed
+      try {
+        const { data: initData } = await supabase.functions.invoke('initialize-student');
+        console.log('🚀 Student initialization check:', initData);
+      } catch (initError) {
+        console.log('⚠️ Initialize function not available or already initialized');
+      }
+  
       // Fetch user profile for exam date and study hours
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('target_exam_date, daily_study_hours')
         .eq('user_id', user.id)
-        .single();
-
-      if (profile) {
+        .maybeSingle(); // ✅ Changed from .single()
+  
+      if (profile && !profileError) {
         setExamDate(profile.target_exam_date || '2026-05-24');
         setDailyHours(profile.daily_study_hours || 4);
+      } else {
+        console.log('⚠️ Profile not found, using defaults');
       }
-
-      // Fetch weak areas
-      await fetchWeakAreas(user.id);
-
-      // Fetch syllabus progress
-      await fetchSyllabusProgress(user.id);
-
+  
+      // Fetch weak areas (with error handling)
+      await fetchWeakAreas(user.id).catch(err => {
+        console.error('Non-critical: weakness fetch failed', err);
+      });
+  
+      // Fetch syllabus progress (with error handling)
+      await fetchSyllabusProgress(user.id).catch(err => {
+        console.error('Non-critical: progress fetch failed', err);
+      });
+  
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error('Failed to load study plan');
+      toast.error('Failed to load some data. Please refresh.');
     } finally {
       setLoading(false);
     }
   };
-
+  
   const fetchWeakAreas = async (userId) => {
     try {
       const { data, error } = await supabase
@@ -107,14 +121,14 @@ export default function EnhancedAIStudyPlanner() {
 
   const fetchSyllabusProgress = async (userId) => {
     try {
-      // Try to fetch from study_plan_metadata
+      // Method 1: Try to fetch from study_plan_metadata
       const { data: metadata, error: metaError } = await supabase
         .from('study_plan_metadata')
         .select('*')
         .eq('user_id', userId)
-        .single();
-
-      if (metadata) {
+        .maybeSingle(); // ✅ Changed from .single() to .maybeSingle()
+  
+      if (metadata && !metaError) {
         console.log('📈 Syllabus progress from metadata:', metadata);
         setSyllabusProgress({
           total: metadata.total_topics || 0,
@@ -127,31 +141,81 @@ export default function EnhancedAIStudyPlanner() {
         });
         return;
       }
-
-      // Fallback: Calculate from topic_priorities
+  
+      // Method 2: Calculate from topic_priorities directly
+      console.log('📊 Calculating from topic_priorities...');
+      
       const { data: priorities, error: prioError } = await supabase
         .from('topic_priorities')
         .select('status')
         .eq('user_id', userId);
-
+  
+      if (prioError) {
+        console.error('Error fetching priorities:', prioError);
+        return;
+      }
+  
       if (priorities && priorities.length > 0) {
         const total = priorities.length;
         const completed = priorities.filter(p => p.status === 'completed').length;
         const inProgress = priorities.filter(p => p.status === 'in_progress').length;
         const pending = priorities.filter(p => p.status === 'pending').length;
-
-        console.log('📈 Calculated syllabus progress:', { total, completed, inProgress, pending });
+  
+        console.log('📈 Calculated syllabus progress:', { 
+          total, 
+          completed, 
+          inProgress, 
+          pending 
+        });
         
         setSyllabusProgress({
           total,
           completed,
           inProgress,
           pending,
-          percentage: Math.round((completed / total) * 100)
+          percentage: total > 0 ? Math.round((completed / total) * 100) : 0
+        });
+  
+        // ✅ Auto-create metadata entry for future use
+        try {
+          await supabase
+            .from('study_plan_metadata')
+            .upsert({
+              user_id: userId,
+              total_topics: total,
+              completed_topics: completed,
+              in_progress_topics: inProgress,
+              pending_topics: pending,
+              daily_target_topics: pending / Math.max(daysRemaining, 1),
+              last_generated_at: new Date().toISOString()
+            }, {
+              onConflict: 'user_id'
+            });
+          
+          console.log('✅ Created study_plan_metadata entry');
+        } catch (insertError) {
+          console.error('Error creating metadata:', insertError);
+        }
+      } else {
+        console.log('⚠️ No topic priorities found - user needs to start practicing');
+        setSyllabusProgress({
+          total: 0,
+          completed: 0,
+          inProgress: 0,
+          pending: 0,
+          percentage: 0
         });
       }
     } catch (error) {
       console.error('Error fetching syllabus progress:', error);
+      // Set empty state on error
+      setSyllabusProgress({
+        total: 0,
+        completed: 0,
+        inProgress: 0,
+        pending: 0,
+        percentage: 0
+      });
     }
   };
 
