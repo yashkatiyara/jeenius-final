@@ -29,14 +29,14 @@ export default function EnhancedAIStudyPlanner() {
   
   // Real data states
   const [weakAreas, setWeakAreas] = useState([]);
-  const [weekSchedule, setWeekSchedule] = useState([]);
   const [syllabusProgress, setSyllabusProgress] = useState(null);
   const [expandedDay, setExpandedDay] = useState(0);
-  const [timeAllocation, setTimeAllocation] = useState({
+  
+  const timeAllocation = {
     study: 60,
     revision: 25,
     mockTests: 15
-  });
+  };
 
   const daysRemaining = Math.ceil(
     (new Date(examDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
@@ -54,6 +54,7 @@ export default function EnhancedAIStudyPlanner() {
       
       if (!user) {
         toast.error('Please login to view study plan');
+        setLoading(false);
         return;
       }
 
@@ -75,9 +76,6 @@ export default function EnhancedAIStudyPlanner() {
       // Fetch syllabus progress
       await fetchSyllabusProgress(user.id);
 
-      // Fetch 7-day schedule
-      await fetchWeekSchedule(user.id);
-
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load study plan');
@@ -95,7 +93,10 @@ export default function EnhancedAIStudyPlanner() {
         .order('weakness_score', { ascending: false })
         .limit(5);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching weak areas:', error);
+        return;
+      }
 
       console.log('📊 Weak areas fetched:', data);
       setWeakAreas(data || []);
@@ -106,71 +107,51 @@ export default function EnhancedAIStudyPlanner() {
 
   const fetchSyllabusProgress = async (userId) => {
     try {
-      const { data, error } = await supabase
+      // Try to fetch from study_plan_metadata
+      const { data: metadata, error: metaError } = await supabase
         .from('study_plan_metadata')
         .select('*')
         .eq('user_id', userId)
         .single();
 
-      if (error) throw error;
-
-      if (data) {
-        console.log('📈 Syllabus progress:', data);
+      if (metadata) {
+        console.log('📈 Syllabus progress from metadata:', metadata);
         setSyllabusProgress({
-          total: data.total_topics,
-          completed: data.completed_topics,
-          inProgress: data.in_progress_topics,
-          pending: data.pending_topics,
-          percentage: Math.round((data.completed_topics / data.total_topics) * 100)
+          total: metadata.total_topics || 0,
+          completed: metadata.completed_topics || 0,
+          inProgress: metadata.in_progress_topics || 0,
+          pending: metadata.pending_topics || 0,
+          percentage: metadata.total_topics 
+            ? Math.round((metadata.completed_topics / metadata.total_topics) * 100) 
+            : 0
+        });
+        return;
+      }
+
+      // Fallback: Calculate from topic_priorities
+      const { data: priorities, error: prioError } = await supabase
+        .from('topic_priorities')
+        .select('status')
+        .eq('user_id', userId);
+
+      if (priorities && priorities.length > 0) {
+        const total = priorities.length;
+        const completed = priorities.filter(p => p.status === 'completed').length;
+        const inProgress = priorities.filter(p => p.status === 'in_progress').length;
+        const pending = priorities.filter(p => p.status === 'pending').length;
+
+        console.log('📈 Calculated syllabus progress:', { total, completed, inProgress, pending });
+        
+        setSyllabusProgress({
+          total,
+          completed,
+          inProgress,
+          pending,
+          percentage: Math.round((completed / total) * 100)
         });
       }
     } catch (error) {
       console.error('Error fetching syllabus progress:', error);
-    }
-  };
-
-  const fetchWeekSchedule = async (userId) => {
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const weekLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split('T')[0];
-
-      const { data, error } = await supabase
-        .from('study_schedule')
-        .select('*')
-        .eq('user_id', userId)
-        .gte('date', today)
-        .lte('date', weekLater)
-        .order('date', { ascending: true });
-
-      if (error) throw error;
-
-      console.log('📅 Schedule fetched:', data);
-
-      // Group by date
-      const grouped = {};
-      data?.forEach((activity) => {
-        if (!grouped[activity.date]) {
-          grouped[activity.date] = [];
-        }
-        grouped[activity.date].push(activity);
-      });
-
-      const weekData = Object.keys(grouped).map((date, idx) => ({
-        day: idx,
-        date: new Date(date).toLocaleDateString('en-US', {
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric',
-        }),
-        rawDate: date,
-        activities: grouped[date],
-      }));
-
-      setWeekSchedule(weekData);
-    } catch (error) {
-      console.error('Error fetching schedule:', error);
     }
   };
 
@@ -185,7 +166,7 @@ export default function EnhancedAIStudyPlanner() {
       }
 
       // Update profile with new settings
-      await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({
           target_exam_date: examDate,
@@ -193,49 +174,21 @@ export default function EnhancedAIStudyPlanner() {
         })
         .eq('user_id', user.id);
 
-      // Call edge function to regenerate plan
-      const { data, error } = await supabase.functions.invoke('generate-dynamic-plan', {
-        body: { regenerate: true },
-      });
+      if (updateError) {
+        console.error('Error updating profile:', updateError);
+        toast.error('Failed to update settings');
+        return;
+      }
 
-      if (error) throw error;
-
-      console.log('✅ Plan regenerated:', data);
-      toast.success('Study plan regenerated successfully!');
-
-      // Refresh all data
+      toast.success('Settings updated! Plan will be regenerated automatically.');
+      
+      // Refresh data
       await fetchAllData();
     } catch (error) {
-      console.error('Error regenerating plan:', error);
-      toast.error('Failed to regenerate plan');
+      console.error('Error updating settings:', error);
+      toast.error('Failed to update settings');
     } finally {
       setRefreshing(false);
-    }
-  };
-
-  const markActivityComplete = async (activity) => {
-    try {
-      const { error } = await supabase
-        .from('study_schedule')
-        .update({
-          status: 'completed',
-          completed_minutes: activity.allocated_minutes,
-        })
-        .eq('id', activity.id);
-
-      if (error) throw error;
-
-      toast.success('Activity marked as complete!');
-      
-      // Refresh schedule
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await fetchWeekSchedule(user.id);
-        await fetchSyllabusProgress(user.id);
-      }
-    } catch (error) {
-      console.error('Error marking complete:', error);
-      toast.error('Failed to update activity');
     }
   };
 
@@ -250,8 +203,8 @@ export default function EnhancedAIStudyPlanner() {
     );
   }
 
-  const topicsPerDay = syllabusProgress
-    ? (syllabusProgress.pending + syllabusProgress.inProgress) / Math.max(daysRemaining, 1)
+  const topicsPerDay = syllabusProgress && syllabusProgress.total > 0
+    ? ((syllabusProgress.pending + syllabusProgress.inProgress) / Math.max(daysRemaining, 1))
     : 0;
 
   return (
@@ -348,7 +301,7 @@ export default function EnhancedAIStudyPlanner() {
       </div>
 
       {/* Syllabus Progress */}
-      {syllabusProgress && (
+      {syllabusProgress && syllabusProgress.total > 0 ? (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -385,13 +338,33 @@ export default function EnhancedAIStudyPlanner() {
                   <p className="text-xs text-orange-600">⏳ Pending</p>
                 </div>
               </div>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-4">
-                <p className="text-sm text-yellow-800">
-                  <AlertTriangle className="w-4 h-4 inline mr-2" />
-                  Daily target: {topicsPerDay.toFixed(1)} topics/day to complete on time
-                </p>
-              </div>
+              {topicsPerDay > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-4">
+                  <p className="text-sm text-yellow-800">
+                    <AlertTriangle className="w-4 h-4 inline mr-2" />
+                    Daily target: {topicsPerDay.toFixed(1)} topics/day to complete on time
+                  </p>
+                </div>
+              )}
             </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-2 border-dashed border-slate-300">
+          <CardContent className="p-8 text-center">
+            <BookOpen className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+            <h3 className="text-lg font-semibold text-slate-700 mb-2">
+              No Syllabus Data Yet
+            </h3>
+            <p className="text-sm text-slate-500 mb-4">
+              Start practicing questions to initialize your progress tracking
+            </p>
+            <Button 
+              onClick={() => window.location.href = '/study-now'}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Start Practicing
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -428,156 +401,17 @@ export default function EnhancedAIStudyPlanner() {
                     <p className="text-xs text-slate-600">
                       Weakness Score: {area.weakness_score?.toFixed(0)}/100
                     </p>
-                    <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white">
+                    <Button 
+                      size="sm" 
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                      onClick={() => window.location.href = '/study-now'}
+                    >
                       Practice Now
                     </Button>
                   </div>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 7-Day Rolling Schedule - REAL DATA */}
-      {weekSchedule.length > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-600" />
-                7-Day Rolling Schedule
-              </CardTitle>
-              <Button onClick={handleRegeneratePlan} size="sm" variant="outline" disabled={refreshing}>
-                <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-                Regenerate
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {weekSchedule.map((day, dayIdx) => (
-                <div key={dayIdx} className="border rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => setExpandedDay(expandedDay === dayIdx ? -1 : dayIdx)}
-                    className="w-full p-4 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Badge className={dayIdx === 0 ? 'bg-blue-600' : 'bg-slate-600'}>
-                        {dayIdx === 0 ? 'TODAY' : `Day ${dayIdx + 1}`}
-                      </Badge>
-                      <span className="font-semibold">{day.date}</span>
-                      <span className="text-sm text-slate-600">
-                        {day.activities.length} activities
-                      </span>
-                    </div>
-                    {expandedDay === dayIdx ? (
-                      <ChevronUp className="w-5 h-5" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5" />
-                    )}
-                  </button>
-
-                  {expandedDay === dayIdx && (
-                    <div className="p-4 space-y-3 bg-white">
-                      {day.activities.map((activity, actIdx) => (
-                        <div
-                          key={actIdx}
-                          className={`p-4 rounded-lg border-l-4 ${
-                            activity.status === 'completed'
-                              ? 'bg-green-50 border-green-500 opacity-60'
-                              : activity.activity_type === 'study'
-                              ? 'bg-blue-50 border-blue-500'
-                              : activity.activity_type === 'revision'
-                              ? 'bg-green-50 border-green-500'
-                              : activity.activity_type === 'mock_test'
-                              ? 'bg-red-50 border-red-500'
-                              : 'bg-purple-50 border-purple-500'
-                          }`}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <Badge
-                                  className={
-                                    activity.activity_type === 'study'
-                                      ? 'bg-blue-200 text-blue-800'
-                                      : activity.activity_type === 'revision'
-                                      ? 'bg-green-200 text-green-800'
-                                      : activity.activity_type === 'mock_test'
-                                      ? 'bg-red-200 text-red-800'
-                                      : 'bg-purple-200 text-purple-800'
-                                  }
-                                >
-                                  {activity.activity_type.replace('_', ' ').toUpperCase()}
-                                </Badge>
-                                {activity.priority === 'high' && (
-                                  <Badge className="bg-orange-200 text-orange-800">
-                                    <Zap className="w-3 h-3 mr-1" />
-                                    Priority
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="font-bold text-sm text-slate-900">{activity.topic}</p>
-                              <p className="text-xs text-slate-600">{activity.subject}</p>
-                              <p className="text-xs text-slate-500 mt-1">
-                                <Brain className="w-3 h-3 inline mr-1" />
-                                {activity.reason}
-                              </p>
-                            </div>
-                            <div className="text-right ml-3">
-                              <p className="text-xl font-bold text-slate-700">
-                                {activity.allocated_minutes}
-                              </p>
-                              <p className="text-xs text-slate-500">min</p>
-                              {dayIdx === 0 && activity.status !== 'completed' && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => markActivityComplete(activity)}
-                                  className="mt-2 bg-green-600 hover:bg-green-700 text-xs"
-                                >
-                                  <CheckCircle className="w-3 h-3 mr-1" />
-                                  Done
-                                </Button>
-                              )}
-                              {activity.status === 'completed' && (
-                                <Badge className="mt-2 bg-green-600 text-xs">
-                                  <CheckCircle className="w-3 h-3 mr-1" />
-                                  Done
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Empty State */}
-      {weekSchedule.length === 0 && !loading && (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Brain className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-slate-900 mb-2">
-              No Study Plan Yet
-            </h3>
-            <p className="text-slate-600 mb-4">
-              Generate your personalized AI study plan to get started
-            </p>
-            <Button
-              onClick={handleRegeneratePlan}
-              className="bg-gradient-to-r from-blue-600 to-purple-600"
-              disabled={refreshing}
-            >
-              <Brain className="w-4 h-4 mr-2" />
-              {refreshing ? 'Generating...' : 'Generate Study Plan'}
-            </Button>
           </CardContent>
         </Card>
       )}
@@ -613,8 +447,26 @@ export default function EnhancedAIStudyPlanner() {
               disabled={refreshing}
             >
               <Brain className="w-4 h-4 mr-2" />
-              {refreshing ? 'Regenerating...' : 'Regenerate Plan with AI'}
+              {refreshing ? 'Updating...' : 'Update Settings'}
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Info Banner */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <Brain className="w-5 h-5 text-blue-600 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-blue-900 mb-1">
+                AI Study Planner - Beta Version
+              </p>
+              <p className="text-xs text-blue-700">
+                Currently showing real-time progress tracking. Advanced features like automated daily schedules 
+                and revision planning will be available soon. Keep practicing to build your weakness analysis!
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
