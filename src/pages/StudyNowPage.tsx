@@ -16,9 +16,7 @@ import LoadingScreen from '@/components/ui/LoadingScreen';
 import {
   Flame, ArrowLeft, Lightbulb, XCircle, CheckCircle2, Trophy, Target,
   Sparkles, Zap, Play, Lock
-} from "lucide-react";
-
-const startPractice = async (topic = null) => {
+} from "lucconst startPractice = async (topic = null) => {
   setLoading(true);
   setSelectedTopic(topic);
   
