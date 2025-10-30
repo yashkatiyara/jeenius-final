@@ -79,26 +79,25 @@ export default function AIStudyPlanner() {
       }
 
       // Fetch all attempts with question details
-      const { data: attempts } = await supabase
+      const { data: attempts, error: attemptsError } = await supabase
         .from('question_attempts')
-        .select(`
-          id,
-          is_correct,
-          time_taken_seconds,
-          created_at,
-          questions (
-            subject,
-            chapter,
-            topic,
-            difficulty
-          )
-        `)
+        .select('*, questions(subject, chapter, topic, difficulty)')
         .eq('user_id', user.id);
 
-      if (!attempts || attempts.length === 0) {
+      if (attemptsError) {
+        console.error('❌ Attempts fetch error:', attemptsError);
+        toast.error('Failed to fetch attempts');
         setLoading(false);
         return;
       }
+
+      if (!attempts || attempts.length === 0) {
+        console.log('⚠️ No attempts found for user');
+        setLoading(false);
+        return;
+      }
+
+      console.log('✅ Fetched attempts:', attempts.length);
 
       setTotalAttempts(attempts.length);
       const correct = attempts.filter(a => a.is_correct).length;
