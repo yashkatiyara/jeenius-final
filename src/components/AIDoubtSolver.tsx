@@ -23,28 +23,28 @@ const AIDoubtSolver = ({ question, isOpen, onClose }) => {
   }, []);
 
   const checkSubscription = async () => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    const isPremium = await checkIsPremium();
-    setIsPro(isPremium);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const isPremium = await checkIsPremium();
+      setIsPro(isPremium);
 
-    // Only get usage count for free users
-    if (!isPremium) {
-      const today = new Date().toISOString().split('T')[0];
-      const { count } = await supabase
-        .from('ai_usage_log')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user?.id)
-        .gte('created_at', `${today}T00:00:00`)
-        .lte('created_at', `${today}T23:59:59`);
-      
-      setDailyAIUsage(count || 0);
+      // Only get usage count for free users
+      if (!isPremium) {
+        const today = new Date().toISOString().split('T')[0];
+        const { count } = await supabase
+          .from('ai_usage_log')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user?.id)
+          .gte('created_at', `${today}T00:00:00`)
+          .lte('created_at', `${today}T23:59:59`);
+        
+        setDailyAIUsage(count || 0);
+      }
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+      setIsPro(false);
     }
-  } catch (error) {
-    console.error('Error checking subscription:', error);
-    setIsPro(false);
-  }
-};
+  };
   
   // Initialize welcome message
   useEffect(() => {
@@ -94,14 +94,14 @@ ${question.option_d ? `D) ${question.option_d}` : ''}
         role: 'assistant',
         content: `🔒 **Daily Limit Reached!**
   
-  You've used all **${AI_LIMIT_FREE} free AI queries** for today! 😊
+You've used all **${AI_LIMIT_FREE} free AI queries** for today! 😊
   
-  **Upgrade to Pro for:**
-  ✅ Unlimited AI doubt solving
-  ✅ Advanced analytics
-  ✅ Priority support
+**Upgrade to Pro for:**
+✅ Unlimited AI doubt solving
+✅ Advanced analytics
+✅ Priority support
   
-  💎 Just ₹49/month!`
+💎 Just ₹49/month!`
       }]);
       
       setTimeout(() => {
@@ -134,141 +134,133 @@ ${question.option_d ? `D) ${question.option_d}` : ''}
       if (isGeneralDoubt) {
         contextPrompt = `You are JEEnie, a friendly AI tutor for JEE/NEET students in India. Student asks: "${input}"
   
-  Reply in simple Hinglish (mix of Hindi and English), keep it short (3-5 lines max), friendly, and exam-focused. Use emojis occasionally. Be encouraging!`;
+Reply in simple Hinglish (mix of Hindi and English), keep it short (3-5 lines max), friendly, and exam-focused. Use emojis occasionally. Be encouraging!`;
       } else {
         contextPrompt = `You are JEEnie, an AI tutor for JEE/NEET preparation. 
   
-  Question: ${question.question}
+Question: ${question.question}
   
-  Options:
-  A) ${question.option_a}
-  B) ${question.option_b}
-  C) ${question.option_c}
-  D) ${question.option_d}
+Options:
+A) ${question.option_a}
+B) ${question.option_b}
+C) ${question.option_c}
+D) ${question.option_d}
   
-  Correct Answer: ${question.correct_option}
+Correct Answer: ${question.correct_option}
   
-  Student's doubt: "${input}"
+Student's doubt: "${input}"
   
-  Instructions:
-  - Reply in simple Hinglish (Hindi + English mix)
-  - Keep response short (4-6 lines)
-  - Focus on clarifying the doubt
-  - Use emojis occasionally
-  - Be friendly and encouraging
-  - If formula needed, explain it simply
-  - If shortcut exists, mention it`;
+Instructions:
+- Reply in simple Hinglish (Hindi + English mix)
+- Keep response short (4-6 lines)
+- Focus on clarifying the doubt
+- Use emojis occasionally
+- Be friendly and encouraging
+- If formula needed, explain it simply
+- If shortcut exists, mention it`;
       }
   
-      // Call Supabase Edge Function (which calls Gemini API)
+      console.log('📡 Calling Edge Function...');
+      
+      // Call Edge Function
       const response = await supabase.functions.invoke('jeenie', {
         body: { contextPrompt }
       });
       
-      console.log('📡 Full Edge Function Response:', response);
+      console.log('📡 Response:', response);
       
-      // ✅ IMPROVED ERROR HANDLING
+      // ✅ Step 1: Check for transport/network errors
       if (response.error) {
-        console.error('🔥 Network/Function Error:', response.error);
-        
-        // Check for network errors
-        if (response.error.message?.includes('FunctionsRelayError') || 
-            response.error.message?.includes('ERR_NAME_NOT_RESOLVED')) {
-          throw new Error('Edge Function not found. Check Supabase dashboard.');
-        }
-        
-        throw new Error(response.error.message || 'Function invocation failed');
+        console.error('🔥 Transport Error:', response.error);
+        throw new Error('NETWORK_ERROR');
       }
       
-      const functionData = response.data;
-      
-      // ✅ CHECK FOR API ERRORS IN RESPONSE BODY
-      if (!functionData || functionData.error) {
-        console.error('🔥 API Error in response:', functionData?.error);
-        
-        // Handle specific errors
-        if (functionData?.error?.includes('Rate limits exceeded') || 
-            functionData?.error?.includes('429')) {
-          throw new Error('Rate limits exceeded');
-        } else if (functionData?.error?.includes('GEMINI_API_KEY')) {
-          throw new Error('API key not configured');
-        } else {
-          throw new Error(functionData?.error || 'Empty response from Edge Function');
-        }
+      // ✅ Step 2: Check if data exists
+      if (!response.data) {
+        console.error('🔥 No data in response');
+        throw new Error('EMPTY_RESPONSE');
       }
       
-      const aiText = functionData?.content;
+      const { data } = response;
       
-      if (!aiText || aiText.trim() === '') {
-        throw new Error('Empty response from AI');
+      // ✅ Step 3: Check for application errors
+      if (data.error) {
+        console.error('🔥 API Error:', data.error);
+        throw new Error(data.error); // Will be caught below with specific handling
       }
-  
-      // ✅ 🎯 FIX: AI response ko messages me add karo!
-      const formattedResponse = cleanAndFormatJeenieText(aiText);
+      
+      // ✅ Step 4: Check for empty content
+      if (!data.content || data.content.trim() === '') {
+        console.error('🔥 Empty content');
+        throw new Error('EMPTY_CONTENT');
+      }
+      
+      console.log('✅ AI Response received');
+      
+      // Format and add response
+      const formattedResponse = cleanAndFormatJeenieText(data.content);
       
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: formattedResponse
       }]);
   
-      // ✅ Log AI usage for free users (TODO: Fix table structure)
+      // Log usage for free users
       if (!isPro) {
         setDailyAIUsage(prev => prev + 1);
       }
   
     } catch (error) {
-      console.error('🔥 JEEnie Error:', error);
+      console.error('🔥 Error:', error);
       
-      let errorMsg = '❌ **Oops!** Kuch technical problem aa gayi.';
+      // User-friendly error messages
+      let errorMsg = '';
       
-      // Detailed error messages
-      if (error.message?.includes('Rate limits exceeded') || error.message?.includes('429')) {
-        errorMsg = `⚠️ **Gemini API ka rate limit hit ho gaya!**
-  
-  **Solutions:**
-  1. 1-2 minute wait karo
-  2. Free tier: 15 requests/minute limit hai
-  3. Supabase Dashboard me check karo billing status`;
-      } else if (error.message?.includes('quota') || error.message?.includes('exhausted')) {
-        errorMsg = `⚠️ **API quota khatam ho gaya!**
-  
-  **Solutions:**
-  1. Thoda wait karo (1-2 min)
-  2. Google AI Studio me billing check karo
-  3. Supabase secrets me API key verify karo`;
-      } else if (error.message?.includes('invalid') || error.message?.includes('API key')) {
-        errorMsg = `🔑 **API Key issue hai!**
-  
-  **Fix:**
-  1. Supabase Dashboard → Settings → Edge Functions → Secrets
-  2. Check GEMINI_API_KEY valid hai ya nahi
-  3. Google AI Studio se naya key generate karo`;
-      } else if (error.message?.includes('Failed to fetch') || error.message?.includes('Network')) {
-        errorMsg = '🌐 **Network issue!** Internet connection check karo.';
-      } else if (error.message?.includes('FunctionsRelayError') || error.message?.includes('not found')) {
-        errorMsg = `🔧 **Edge Function setup nahi hua!**
-  
-  **Setup Steps:**
-  1. Supabase Dashboard me jao
-  2. Edge Functions section me 'jeenie' function create karo
-  3. Ya developer se setup karwao`;
+      if (error.message === 'NETWORK_ERROR') {
+        errorMsg = `🌐 **Network issue!**
+        
+Internet connection check karo aur retry karo.`;
+        
+      } else if (error.message === 'RATE_LIMIT_EXCEEDED') {
+        errorMsg = `⏳ **Rate limit hit!**
+        
+1-2 minute wait karo phir retry karo. 
+Gemini API ka free tier limit hai.`;
+        
+      } else if (error.message === 'QUOTA_EXCEEDED') {
+        errorMsg = `📊 **API quota finish!**
+        
+Thoda wait karo (5-10 min).
+Admin se contact karo agar persist kare.`;
+        
+      } else if (error.message === 'API_KEY_MISSING') {
+        errorMsg = `🔑 **Setup issue!**
+        
+API key configure nahi hai.
+Admin ko batao - Supabase secrets check karna padega.`;
+        
+      } else if (error.message === 'EMPTY_RESPONSE' || error.message === 'EMPTY_CONTENT') {
+        errorMsg = `😕 **AI ne kuch nahi bola!**
+        
+Question thoda aur clear karke phir poocho.`;
+        
       } else {
-        errorMsg = `❌ **Error:** ${error.message}
-  
-  **Try:**
-  1. Page refresh karo
-  2. Supabase Dashboard me Edge Function check karo
-  3. Browser console me detailed error dekho`;
+        errorMsg = `❌ **Kuch technical issue aa gaya!**
+        
+**Retry karo ya admin ko batao.**
+Error: ${error.message}`;
       }
       
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: errorMsg
       }]);
+      
     } finally {
       setLoading(false);
     }
   };
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
