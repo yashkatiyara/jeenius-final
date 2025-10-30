@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { checkIsPremium } from '@/utils/premiumChecker';
 import { X, Send, Loader2, Sparkles, Flame } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -10,14 +10,13 @@ const AIDoubtSolver = ({ question, isOpen, onClose }) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [lastRequestTime, setLastRequestTime] = useState(0);
-  const messagesEndRef = useRef(null);
-
-  const navigate = useNavigate();
   const [isPro, setIsPro] = useState(false);
   const [dailyAIUsage, setDailyAIUsage] = useState(0);
-  const AI_LIMIT_FREE = 0; // Free users: 0 AI queries/day
-  
-  // Check subscription status
+  const messagesEndRef = useRef(null);
+  const navigate = useNavigate();
+
+  const AI_LIMIT_FREE = 3; // ✅ allow some free queries
+
   useEffect(() => {
     checkSubscription();
   }, []);
@@ -28,258 +27,116 @@ const AIDoubtSolver = ({ question, isOpen, onClose }) => {
       const isPremium = await checkIsPremium();
       setIsPro(isPremium);
 
-      // Only get usage count for free users
-      if (!isPremium) {
+      if (!isPremium && user) {
         const today = new Date().toISOString().split('T')[0];
         const { count } = await supabase
           .from('ai_usage_log')
           .select('*', { count: 'exact', head: true })
-          .eq('user_id', user?.id)
+          .eq('user_id', user.id)
           .gte('created_at', `${today}T00:00:00`)
           .lte('created_at', `${today}T23:59:59`);
-        
+
         setDailyAIUsage(count || 0);
       }
     } catch (error) {
       console.error('Error checking subscription:', error);
-      setIsPro(false);
     }
   };
-  
-  // Initialize welcome message
+
   useEffect(() => {
     if (isOpen && messages.length === 0) {
-      const isGeneralDoubt = !question?.option_a || question?.question?.includes("koi bhi");
-      
-      if (isGeneralDoubt) {
-        setMessages([{
-          role: 'assistant',
-          content: `🧞‍♂️ **Namaste! Main JEEnie hun!**
-**Ab bolo, kya doubt hai?** 🎯`
-        }]);
+      const isGeneral = !question?.option_a || question?.question?.includes("koi bhi");
+      if (isGeneral) {
+        setMessages([{ role: 'assistant', content: `🧞‍♂️ **Namaste! Main JEEnie hun!**\n**Kya doubt hai aaj?** 🎯` }]);
       } else {
         setMessages([{
           role: 'assistant',
-          content: `🧞‍♂️ **Hey! Main JEEnie hun!**
-
-**Tumhara question:**
-"${question.question}"
-
-**Options:**
-${question.option_a ? `A) ${question.option_a}` : ''}
-${question.option_b ? `B) ${question.option_b}` : ''}
-${question.option_c ? `C) ${question.option_c}` : ''}
-${question.option_d ? `D) ${question.option_d}` : ''}
-
-💬 **Kya doubt hai? Poocho!**`
+          content: `🧞‍♂️ **Hey! Main JEEnie hun!**\n\n**Question:** ${question.question}\n\n${question.option_a ? `A) ${question.option_a}` : ''}\n${question.option_b ? `B) ${question.option_b}` : ''}\n${question.option_c ? `C) ${question.option_c}` : ''}\n${question.option_d ? `D) ${question.option_d}` : ''}\n\n💬 **Kya doubt hai?**`
         }]);
       }
     }
   }, [isOpen, question]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
-  
-    // 🚨 CHECK LIMIT FOR FREE USERS
+
+    // ✅ Free limit check
     if (!isPro && dailyAIUsage >= AI_LIMIT_FREE) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `🔒 **Daily Limit Reached!**
-  
-You've used all **${AI_LIMIT_FREE} free AI queries** for today! 😊
-  
-**Upgrade to Pro for:**
-✅ Unlimited AI doubt solving
-✅ Advanced analytics
-✅ Priority support
-  
-💎 Just ₹49/month!`
+        content: `🔒 **Daily Limit Reached!**\n\nUpgrade to Pro for unlimited AI help 💎`
       }]);
-      
-      setTimeout(() => {
-        navigate('/subscription-plans');
-      }, 3000);
+      setTimeout(() => navigate('/subscription-plans'), 2000);
       return;
     }
-  
+
     const now = Date.now();
     if (now - lastRequestTime < 2000) {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: '⏳ **Ek second ruko bhai!** Main thoda busy hun... 2 seconds wait karo! 😅'
-      }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: '⏳ Ruko bhai, thoda wait karo! 😅' }]);
       return;
     }
+
     setLastRequestTime(now);
-  
-    const userMessage = { role: 'user', content: input };
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
     setLoading(true);
-  
+    const userMsg = { role: 'user', content: input };
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+
     try {
-      // Build JEE-specific context prompt
-      const isGeneralDoubt = !question?.option_a || question?.question?.includes("koi bhi");
-      
+      const isGeneral = !question?.option_a || question?.question?.includes("koi bhi");
       let contextPrompt = '';
-      
-      if (isGeneralDoubt) {
-        contextPrompt = `You are JEEnie, a friendly AI tutor for JEE/NEET students in India. Student asks: "${input}"
-  
-Reply in simple Hinglish (mix of Hindi and English), keep it short (3-5 lines max), friendly, and exam-focused. Use emojis occasionally. Be encouraging!`;
+
+      if (isGeneral) {
+        contextPrompt = `You are JEEnie, a friendly AI tutor for JEE/NEET students. Student asks: "${input}". Reply shortly in Hinglish with emojis.`;
       } else {
-        contextPrompt = `You are JEEnie, an AI tutor for JEE/NEET preparation. 
-  
-Question: ${question.question}
-  
-Options:
-A) ${question.option_a}
-B) ${question.option_b}
-C) ${question.option_c}
-D) ${question.option_d}
-  
-Correct Answer: ${question.correct_option}
-  
-Student's doubt: "${input}"
-  
-Instructions:
-- Reply in simple Hinglish (Hindi + English mix)
-- Keep response short (4-6 lines)
-- Focus on clarifying the doubt
-- Use emojis occasionally
-- Be friendly and encouraging
-- If formula needed, explain it simply
-- If shortcut exists, mention it`;
+        contextPrompt = `You are JEEnie, an AI tutor for JEE/NEET prep.\n\nQuestion: ${question.question}\nA) ${question.option_a}\nB) ${question.option_b}\nC) ${question.option_c}\nD) ${question.option_d}\n\nStudent doubt: "${input}"\n\nKeep response short, Hinglish, exam-focused, friendly.`;
       }
-  
-      console.log('📡 Calling Edge Function...');
-      
-      // ✅ Call Edge Function with timeout
+
+      // ✅ Proper timeout + signal
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
-      
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
       const response = await supabase.functions.invoke('jeenie', {
-        body: { contextPrompt }
+        body: { contextPrompt },
+        signal: controller.signal
       });
-      
+
       clearTimeout(timeoutId);
-      
-      console.log('📡 Full Response:', response);
-      console.log('📡 Response Data:', response.data);
-      console.log('📡 Response Error:', response.error);
-      
-      // ✅ Critical: Edge function always returns 200, so check response.data
-      if (response.error) {
-        console.error('🔥 Transport Error:', response.error);
-        // Check specific error types
-        if (response.error.message?.includes('FunctionsHttpError')) {
-          throw new Error('FUNCTION_ERROR');
-        }
-        throw new Error('NETWORK_ERROR');
-      }
-      
-      // ✅ Check if data exists
-      if (!response.data) {
-        console.error('🔥 No data in response');
-        throw new Error('EMPTY_RESPONSE');
-      }
-      
-      const { data } = response;
-      
-      // ✅ Check for application-level errors (returned in body)
-      if (data.error) {
-        console.error('🔥 API Error:', data.error);
-        throw new Error(data.error);
-      }
-      
-      // ✅ Check for empty content
-      if (!data.content || data.content.trim() === '') {
-        console.error('🔥 Empty content');
-        throw new Error('EMPTY_CONTENT');
-      }
-      
-      console.log('✅ AI Response received:', data.content.substring(0, 100));
-      
-      // Format and add response
-      const formattedResponse = cleanAndFormatJeenieText(data.content);
-      
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: formattedResponse
-      }]);
-  
-      // Log usage for free users
-      if (!isPro) {
-        setDailyAIUsage(prev => prev + 1);
-      }
-  
+      console.log('JEEnie response:', response);
+
+      if (!response.data) throw new Error('EMPTY_RESPONSE');
+      const res = response.data;
+      if (res.error) throw new Error(res.error);
+      if (!res.content) throw new Error('EMPTY_CONTENT');
+
+      const formatted = cleanAndFormatJeenieText(res.content);
+      setMessages(prev => [...prev, { role: 'assistant', content: formatted }]);
+      if (!isPro) setDailyAIUsage(prev => prev + 1);
+
     } catch (error) {
-      console.error('🔥 Error:', error);
-      
-      // User-friendly error messages
-      let errorMsg = '';
-      
-      if (error.message === 'NETWORK_ERROR') {
-        errorMsg = `🌐 **Network issue!**
-        
-Internet connection check karo aur retry karo.`;
-        
-      } else if (error.message === 'RATE_LIMIT_EXCEEDED') {
-        errorMsg = `⏳ **Rate limit hit!**
-        
-1-2 minute wait karo phir retry karo. 
-Gemini API ka free tier limit hai.`;
-        
-      } else if (error.message === 'QUOTA_EXCEEDED') {
-        errorMsg = `📊 **API quota finish!**
-        
-Thoda wait karo (5-10 min).
-Admin se contact karo agar persist kare.`;
-        
-      } else if (error.message === 'API_KEY_MISSING') {
-        errorMsg = `🔑 **Setup issue!**
-        
-API key configure nahi hai.
-Admin ko batao - Supabase secrets check karna padega.`;
-        
-      } else if (error.message === 'EMPTY_RESPONSE' || error.message === 'EMPTY_CONTENT') {
-        errorMsg = `😕 **AI ne kuch nahi bola!**
-        
-Question thoda aur clear karke phir poocho.`;
-        
-      } else {
-        errorMsg = `❌ **Kuch technical issue aa gaya!**
-        
-**Retry karo ya admin ko batao.**
-Error: ${error.message}`;
-      }
-      
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: errorMsg
-      }]);
-      
+      console.error('Error:', error);
+      let msg = '❌ Technical issue! Retry later.';
+      if (error.message === 'API_KEY_MISSING') msg = '🔑 API key missing — contact admin.';
+      if (error.message === 'RATE_LIMIT_EXCEEDED') msg = '⏳ API rate limit reached, wait a minute.';
+      if (error.message === 'QUOTA_EXCEEDED') msg = '📊 API quota finished temporarily.';
+      if (error.message === 'EMPTY_RESPONSE' || error.message === 'EMPTY_CONTENT') msg = '😕 AI didn’t respond. Try again.';
+      setMessages(prev => [...prev, { role: 'assistant', content: msg }]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress = e => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
-  // JEE-specific quick doubts
   const quickDoubts = [
     "📐 Formula explain karo",
     "💡 Shortcut trick batao",
@@ -292,124 +149,79 @@ Error: ${error.message}`;
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col">
-        
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 rounded-t-2xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-xl animate-pulse">
-                <Flame className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="font-bold text-white text-xl">JEEnie</h3>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-white/80 hover:text-white hover:bg-white/20 transition-all p-2 rounded-lg"
-            >
-              <X className="w-5 h-5" />
-            </button>
+        <div className="p-4 border-b bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 rounded-t-2xl flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 p-2 rounded-xl animate-pulse"><Flame className="w-6 h-6 text-white" /></div>
+            <h3 className="font-bold text-white text-xl">JEEnie</h3>
           </div>
+          <button onClick={onClose} className="text-white/80 hover:text-white p-2 rounded-lg"><X className="w-5 h-5" /></button>
         </div>
 
-        {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-purple-50 to-white">
           {messages.length === 1 && (
-            <div className="mb-3">
+            <div>
               <p className="text-xs text-gray-600 mb-2 text-center font-semibold">⚡ Quick doubts:</p>
               <div className="grid grid-cols-2 gap-2">
-                {quickDoubts.map((doubt, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setInput(doubt.split(' ').slice(1).join(' '))}
-                    className="text-xs p-2.5 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 border border-purple-200 rounded-lg text-left text-purple-700 transition-all hover:scale-105"
-                  >
-                    {doubt}
-                  </button>
+                {quickDoubts.map((d, i) => (
+                  <button key={i} onClick={() => setInput(d.split(' ').slice(1).join(' '))} className="text-xs p-2.5 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 border border-purple-200 rounded-lg text-left text-purple-700 transition-all hover:scale-105">{d}</button>
                 ))}
               </div>
             </div>
           )}
 
-          {messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[85%] p-3 rounded-2xl shadow-md ${
-                  msg.role === 'user'
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
-                    : 'bg-white border-2 border-purple-100 text-gray-800'
-                }`}
-              >
+          {messages.map((msg, i) => (
+            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[85%] p-3 rounded-2xl shadow-md ${msg.role === 'user'
+                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
+                : 'bg-white border-2 border-purple-100 text-gray-800'}`}>
                 {msg.role === 'assistant' && (
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-4 h-4 text-purple-600" />
                     <span className="text-xs font-bold text-purple-600">JEEnie 🧞‍♂️</span>
                   </div>
                 )}
-                <div
-                  className="jeenius-ai"
-                  dangerouslySetInnerHTML={{ __html: msg.content }}
-                />
+                <div className="jeenius-ai" dangerouslySetInnerHTML={{ __html: msg.content }} />
               </div>
             </div>
           ))}
-          
+
           {loading && (
             <div className="flex justify-start">
-              <div className="bg-white border-2 border-purple-200 p-3 rounded-2xl shadow-md">
-                <div className="flex items-center gap-2">
-                  <Loader2 className="animate-spin text-purple-600" size={18} />
-                  <span className="text-sm text-gray-700 font-medium">JEEnie soch raha hai... 🤔</span>
-                </div>
+              <div className="bg-white border-2 border-purple-200 p-3 rounded-2xl shadow-md flex items-center gap-2">
+                <Loader2 className="animate-spin text-purple-600" size={18} />
+                <span className="text-sm text-gray-700 font-medium">JEEnie soch raha hai... 🤔</span>
               </div>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
-        <div className="p-4 border-t border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50">
+        <div className="p-4 border-t bg-gradient-to-r from-purple-50 to-pink-50">
           <div className="flex gap-2">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Apna doubt yaha type karo... (Enter to send)"
+              placeholder="Apna doubt yaha type karo..."
               className="flex-1 px-4 py-3 border-2 border-purple-300 rounded-xl focus:border-purple-500 focus:outline-none text-sm"
               disabled={loading}
             />
-            <Button
-              onClick={handleSendMessage}
-              disabled={loading || !input.trim()}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 shadow-lg px-6"
-            >
-              {loading ? (
-                <Loader2 className="animate-spin" size={20} />
-              ) : (
-                <Send size={20} />
-              )}
+            <Button onClick={handleSendMessage} disabled={loading || !input.trim()} className="bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg px-6">
+              {loading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
             </Button>
           </div>
-          <div className="flex items-center justify-between mt-2">
-            <div className="flex items-center justify-between">
-              {!isPro && (
-                <span className="text-xs text-orange-600 font-bold flex items-center gap-1">
-                  {dailyAIUsage}/{AI_LIMIT_FREE} queries used today
-                </span>
-              )}
+          {!isPro && (
+            <div className="mt-2 text-xs text-orange-600 font-bold">
+              {dailyAIUsage}/{AI_LIMIT_FREE} queries used today
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-function cleanAndFormatJeenieText(text: string) {
+function cleanAndFormatJeenieText(text) {
   return text
     .replace(/\$(.*?)\$/g, '<span class="jeenius-formula">$1</span>')
     .replace(/\\frac{(.*?)}{(.*?)}/g, '<span class="jeenius-formula">($1)/($2)</span>')
@@ -417,7 +229,7 @@ function cleanAndFormatJeenieText(text: string) {
     .replace(/\\sin/g, 'sin')
     .replace(/\\cos/g, 'cos')
     .replace(/\\tan/g, 'tan')
-    .replace(/\*\*(.*?)\*\*/g, '<strong class="jeenius-strong">$1</strong>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/\n{2,}/g, '<br><br>')
     .replace(/\n/g, '<br>')
