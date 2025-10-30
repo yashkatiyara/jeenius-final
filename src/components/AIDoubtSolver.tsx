@@ -162,20 +162,31 @@ Instructions:
   
       console.log('📡 Calling Edge Function...');
       
-      // Call Edge Function
+      // ✅ Call Edge Function with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+      
       const response = await supabase.functions.invoke('jeenie', {
         body: { contextPrompt }
       });
       
-      console.log('📡 Response:', response);
+      clearTimeout(timeoutId);
       
-      // ✅ Step 1: Check for transport/network errors
+      console.log('📡 Full Response:', response);
+      console.log('📡 Response Data:', response.data);
+      console.log('📡 Response Error:', response.error);
+      
+      // ✅ Critical: Edge function always returns 200, so check response.data
       if (response.error) {
         console.error('🔥 Transport Error:', response.error);
+        // Check specific error types
+        if (response.error.message?.includes('FunctionsHttpError')) {
+          throw new Error('FUNCTION_ERROR');
+        }
         throw new Error('NETWORK_ERROR');
       }
       
-      // ✅ Step 2: Check if data exists
+      // ✅ Check if data exists
       if (!response.data) {
         console.error('🔥 No data in response');
         throw new Error('EMPTY_RESPONSE');
@@ -183,19 +194,19 @@ Instructions:
       
       const { data } = response;
       
-      // ✅ Step 3: Check for application errors
+      // ✅ Check for application-level errors (returned in body)
       if (data.error) {
         console.error('🔥 API Error:', data.error);
-        throw new Error(data.error); // Will be caught below with specific handling
+        throw new Error(data.error);
       }
       
-      // ✅ Step 4: Check for empty content
+      // ✅ Check for empty content
       if (!data.content || data.content.trim() === '') {
         console.error('🔥 Empty content');
         throw new Error('EMPTY_CONTENT');
       }
       
-      console.log('✅ AI Response received');
+      console.log('✅ AI Response received:', data.content.substring(0, 100));
       
       // Format and add response
       const formattedResponse = cleanAndFormatJeenieText(data.content);
