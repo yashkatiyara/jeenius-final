@@ -190,109 +190,99 @@ const TestAttemptPage = () => {
   };
 
   const handleSubmitTest = async () => {
-    if (!testSession || !user) return;
+  if (!testSession || !user) return;
 
-    try {
-      setTestSubmitted(true);
+  try {
+    setTestSubmitted(true);
 
-      // Calculate results using secure server-side validation
-      let correctAnswers = 0;
-      let totalAnswered = 0;
-      let totalTimeSpent = 0;
+    let correctAnswers = 0;
+    let totalAnswered = 0;
+    let totalTimeSpent = 0;
 
-      const results = [];
+    const results = [];
+    
+    // Validate each question
+    for (const question of testSession.questions) {
+      const userAnswer = userAnswers[question.id];
       
-      // Validate each answered question using the secure function
-      for (const question of testSession.questions) {
-        const userAnswer = userAnswers[question.id];
+      let isCorrect = false;
+      let correctOption = question.correct_option; // ✅ Always get from question object
+      
+      if (userAnswer?.selectedOption) {
+        // Check if answer is correct
+        isCorrect = userAnswer.selectedOption === question.correct_option;
         
-        let isCorrect = false;
-        let correctOption = "";
-        
-        if (userAnswer?.selectedOption) {
-          try {
-            // Use secure server-side validation
-            const { data, error } = await supabase.rpc('validate_question_answer', {
-              _question_id: question.id,
-              _user_answer: userAnswer.selectedOption
-            });
+        totalAnswered++;
+        totalTimeSpent += userAnswer.timeSpent;
+        if (isCorrect) correctAnswers++;
 
-            if (!error && data) {
-              const validationResult = data as {
-                attempt_id: string;
-                is_correct: boolean;
-                correct_option: string;
-                explanation: string;
-              };
-              
-              isCorrect = validationResult.is_correct;
-              correctOption = validationResult.correct_option;
-              
-              totalAnswered++;
-              totalTimeSpent += userAnswer.timeSpent;
-              if (isCorrect) correctAnswers++;
-            }
-          } catch (validationError) {
-            console.error('Error validating answer:', validationError);
-          }
+        // Save to database using secure validation
+        try {
+          await supabase.rpc('validate_question_answer', {
+            _question_id: question.id,
+            _user_answer: userAnswer.selectedOption
+          });
+        } catch (validationError) {
+          console.error('Error saving answer:', validationError);
         }
-
-        results.push({
-          questionId: question.id,
-          selectedOption: userAnswer?.selectedOption || "",
-          correctOption: correctOption,
-          isCorrect,
-          timeSpent: userAnswer?.timeSpent || 0,
-          isMarkedForReview: userAnswer?.isMarkedForReview || false,
-        });
       }
 
-      const percentage =
-        totalAnswered > 0 ? (correctAnswers / totalAnswered) * 100 : 0;
-
-      // Save test session (attempts are already saved by validation function)
-      try {
-        await supabase.from("test_sessions").insert([{
-          user_id: user.id,
-          test_type: testSession.title.split(' - ')[0] || "General",
-          total_questions: testSession.questions.length,
-          score: correctAnswers,
-          time_taken: Math.round(testSession.duration * 60),
-          completed_at: new Date().toISOString()
-        }]);
-
-        console.log('✅ Test results saved to database');
-      } catch (error) {
-        console.error("Error saving test results:", error);
-        toast.error("Failed to save results to database, but test completed");
-      }
-
-      // Clear localStorage
-      localStorage.removeItem("currentTest");
-
-      // Store results for result page
-      localStorage.setItem(
-        "testResults",
-        JSON.stringify({
-          testTitle: testSession.title,
-          totalQuestions: testSession.questions.length,
-          answeredQuestions: totalAnswered,
-          correctAnswers,
-          percentage: percentage.toFixed(1),
-          timeSpent: totalTimeSpent,
-          results,
-        })
-      );
-
-      toast.success("Test submitted successfully!");
-      navigate("/test-results");
-    } catch (error) {
-      console.error("Error submitting test:", error);
-      toast.error("Failed to submit test");
-      setTestSubmitted(false);
+      results.push({
+        questionId: question.id,
+        selectedOption: userAnswer?.selectedOption || "",
+        correctOption: correctOption, // ✅ Always has the correct answer
+        isCorrect,
+        timeSpent: userAnswer?.timeSpent || 0,
+        isMarkedForReview: userAnswer?.isMarkedForReview || false,
+      });
     }
-  };
 
+    const percentage =
+      totalAnswered > 0 ? (correctAnswers / totalAnswered) * 100 : 0;
+
+    // Save test session
+    try {
+      await supabase.from("test_sessions").insert([{
+        user_id: user.id,
+        test_type: testSession.title.split(' - ')[0] || "General",
+        total_questions: testSession.questions.length,
+        score: correctAnswers,
+        time_taken: Math.round(testSession.duration * 60),
+        completed_at: new Date().toISOString()
+      }]);
+
+      console.log('✅ Test results saved to database');
+    } catch (error) {
+      console.error("Error saving test results:", error);
+      toast.error("Failed to save results to database, but test completed");
+    }
+
+    // Clear localStorage
+    localStorage.removeItem("currentTest");
+
+    // Store results for result page
+    localStorage.setItem(
+      "testResults",
+      JSON.stringify({
+        testTitle: testSession.title,
+        totalQuestions: testSession.questions.length,
+        answeredQuestions: totalAnswered,
+        correctAnswers,
+        percentage: percentage.toFixed(1),
+        timeSpent: totalTimeSpent,
+        results,
+      })
+    );
+
+    toast.success("Test submitted successfully!");
+    navigate("/test-results");
+  } catch (error) {
+    console.error("Error submitting test:", error);
+    toast.error("Failed to submit test");
+    setTestSubmitted(false);
+  }
+};
+  
   const getQuestionStatus = (questionIndex: number) => {
     if (!testSession) return "not-visited";
 
