@@ -124,20 +124,31 @@ const AIDoubtSolver: React.FC<AIDoubtSolverProps> = ({ question, isOpen, onClose
     // Get the current session
     const { data: { session } } = await supabase.auth.getSession();
     
-  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/jeenie`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token || ''}`
-      },
-      body: JSON.stringify({ prompt }),
-    });
+    if (!session) {
+      throw new Error('NO_SESSION');
+    }
+
+    console.log('📤 Calling edge function: jeenie');
+    console.log('🔗 URL:', `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/jeenie`);
+    
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/jeenie`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ prompt }),
+      }
+    );
 
     console.log('📊 Edge Function Response Status:', response.status);
 
     if (!response.ok) {
       const errorData = await response.json();
       console.error('Edge Function Error:', errorData);
+      
       if (response.status === 429) throw new Error('RATE_LIMIT');
       if (response.status === 400 && errorData.error === 'CONTENT_BLOCKED') throw new Error('SAFETY_BLOCK');
       if (response.status === 500 && errorData.error === 'API_KEY_MISSING') throw new Error('API_KEY_MISSING_BACKEND');
@@ -156,7 +167,7 @@ const AIDoubtSolver: React.FC<AIDoubtSolverProps> = ({ question, isOpen, onClose
     return content.trim();
 
   } catch (error: any) {
-    console.error('❌ Error calling Edge Function:', error.message);
+    console.error('❌ Error calling Edge Function:', error);
     throw error;
   }
 };
