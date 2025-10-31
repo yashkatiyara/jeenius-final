@@ -120,46 +120,46 @@ const AIDoubtSolver: React.FC<AIDoubtSolverProps> = ({ question, isOpen, onClose
    * @returns The AI's response text.
    */
   const callEdgeFunction = async (prompt: string): Promise<string> => {
-    try {
-      // ⚠️ Use the name of your Edge Function here (e.g., 'gemini-doubtsolver')
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-doubtsolver`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`
-        },
-        body: JSON.stringify({ prompt }), // Send the prompt payload to the edge function
-      });
+  try {
+    // Get the current session
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-doubtsolver`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token || ''}`
+      },
+      body: JSON.stringify({ prompt }),
+    });
 
-      console.log('📊 Edge Function Response Status:', response.status);
+    console.log('📊 Edge Function Response Status:', response.status);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Edge Function Error:', errorData);
-        // Map common errors from backend to custom errors
-        if (response.status === 429) throw new Error('RATE_LIMIT');
-        if (response.status === 400 && errorData.error === 'CONTENT_BLOCKED') throw new Error('SAFETY_BLOCK');
-        if (response.status === 500 && errorData.error === 'API_KEY_MISSING') throw new Error('API_KEY_MISSING_BACKEND');
-        
-        throw new Error('BACKEND_ERROR');
-      }
-
-      const data = await response.json();
-      const content = data?.response_text;
-
-      if (!content || content.trim() === '') {
-        throw new Error('EMPTY_RESPONSE');
-      }
-
-      console.log('✅ Success with Edge Function');
-      return content.trim();
-
-    } catch (error: any) {
-      console.error('❌ Error calling Edge Function:', error.message);
-      // Re-throw the error to be caught in handleSendMessage
-      throw error;
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Edge Function Error:', errorData);
+      if (response.status === 429) throw new Error('RATE_LIMIT');
+      if (response.status === 400 && errorData.error === 'CONTENT_BLOCKED') throw new Error('SAFETY_BLOCK');
+      if (response.status === 500 && errorData.error === 'API_KEY_MISSING') throw new Error('API_KEY_MISSING_BACKEND');
+      
+      throw new Error('BACKEND_ERROR');
     }
-  };
+
+    const data = await response.json();
+    const content = data?.response_text;
+
+    if (!content || content.trim() === '') {
+      throw new Error('EMPTY_RESPONSE');
+    }
+
+    console.log('✅ Success with Edge Function');
+    return content.trim();
+
+  } catch (error: any) {
+    console.error('❌ Error calling Edge Function:', error.message);
+    throw error;
+  }
+};
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
