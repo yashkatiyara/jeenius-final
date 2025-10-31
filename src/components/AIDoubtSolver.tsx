@@ -16,6 +16,7 @@ const AIDoubtSolver = ({ question, isOpen, onClose }) => {
   const navigate = useNavigate();
 
   const AI_LIMIT_FREE = 5;
+  const GEMINI_API_KEY = "AIzaSyCdBpYBvYdwZMJ9D_rh_vRlZLhfvTaDRts"; // Direct key
 
   useEffect(() => {
     checkSubscription();
@@ -94,52 +95,50 @@ const AIDoubtSolver = ({ question, isOpen, onClose }) => {
 
     try {
       const isGeneral = !question?.option_a || question?.question?.includes("koi bhi");
-      let contextPrompt = '';
+      let prompt = '';
 
       if (isGeneral) {
-        contextPrompt = `Student asks: "${input}". Give a helpful, short answer in Hinglish with emojis.`;
+        prompt = `Tu JEEnie hai, friendly AI tutor for JEE students. Student asks: "${input}". Reply in Hinglish (Hindi+English mix), short (4-5 lines), use emojis, be encouraging.`;
       } else {
-        contextPrompt = `Question: ${question.question}\nOptions: A) ${question.option_a}, B) ${question.option_b}, C) ${question.option_c}, D) ${question.option_d}\n\nStudent's doubt: "${input}"\n\nHelp clarify this doubt in Hinglish, keep it short and focused.`;
+        prompt = `Tu JEEnie hai. Question: ${question.question}\nOptions: A) ${question.option_a}, B) ${question.option_b}, C) ${question.option_c}, D) ${question.option_d}\n\nStudent doubt: "${input}"\n\nReply in Hinglish, short answer, help clarify doubt.`;
       }
 
-      console.log('🚀 Sending to JEEnie:', contextPrompt.substring(0, 100));
+      console.log('🚀 Calling Gemini directly...');
 
-      const response = await supabase.functions.invoke('jeenie', {
-        body: { contextPrompt }
-      });
+      // Direct Gemini API call
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 400
+            }
+          })
+        }
+      );
 
-      console.log('📥 JEEnie raw response:', response);
+      console.log('📡 Response status:', response.status);
 
-      // Check for transport error
-      if (response.error) {
-        console.error('❌ Transport error:', response.error);
-        throw new Error('NETWORK_ERROR');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ API Error:', errorText);
+        throw new Error('GEMINI_API_ERROR');
       }
 
-      // Check for empty response
-      if (!response.data) {
-        console.error('❌ No data in response');
+      const data = await response.json();
+      const content = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+      if (!content.trim()) {
         throw new Error('EMPTY_RESPONSE');
       }
 
-      const data = response.data;
-      console.log('📦 Response data:', data);
+      console.log('✅ Success!');
 
-      // Check for API errors
-      if (data.error) {
-        console.error('❌ API error:', data.error);
-        throw new Error(data.error);
-      }
-
-      // Check for content
-      if (!data.content || !data.content.trim()) {
-        console.error('❌ Empty content');
-        throw new Error('EMPTY_CONTENT');
-      }
-
-      console.log('✅ Success! Content:', data.content.substring(0, 100));
-
-      const formatted = cleanAndFormatJeenieText(data.content);
+      const formatted = cleanAndFormatJeenieText(content);
       setMessages(prev => [...prev, { role: 'assistant', content: formatted }]);
       
       if (!isPro) {
@@ -147,24 +146,14 @@ const AIDoubtSolver = ({ question, isOpen, onClose }) => {
       }
 
     } catch (error) {
-      console.error('🔥 Error in handleSendMessage:', error);
+      console.error('🔥 Error:', error);
       
-      let errorMsg = '❌ **Kuch issue aa gaya!**\n\nRetry karo ya admin ko batao.';
+      let errorMsg = '❌ **Kuch issue aa gaya!** Retry karo.';
       
-      if (error.message === 'NETWORK_ERROR') {
-        errorMsg = '🌐 **Network issue!**\n\nInternet check karo aur retry karo.';
-      } else if (error.message === 'API_KEY_MISSING') {
-        errorMsg = '🔑 **Setup issue!**\n\nAPI key missing hai. Admin ko batao.';
-      } else if (error.message === 'RATE_LIMIT_EXCEEDED') {
-        errorMsg = '⏳ **Rate limit!**\n\n1-2 minute wait karo phir retry karo.';
-      } else if (error.message === 'QUOTA_EXCEEDED') {
-        errorMsg = '📊 **Quota finished!**\n\nThoda wait karo ya admin se poocho.';
-      } else if (error.message === 'GEMINI_API_ERROR') {
-        errorMsg = '⚠️ **Gemini API issue!**\n\nAPI key ya setup me problem hai.\n\n**Check:** Supabase Edge Function logs me exact error dekho.';
-      } else if (error.message === 'EMPTY_RESPONSE' || error.message === 'EMPTY_CONTENT') {
-        errorMsg = '😕 **AI ne response nahi diya!**\n\nQuestion clear karke phir poocho.';
-      } else if (error.message.includes('EXCEPTION')) {
-        errorMsg = `🔧 **Technical error!**\n\n${error.message}\n\nAdmin ko batao.`;
+      if (error.message === 'GEMINI_API_ERROR') {
+        errorMsg = '⚠️ **AI API issue!** Thoda wait karke retry karo.';
+      } else if (error.message === 'EMPTY_RESPONSE') {
+        errorMsg = '😕 **AI ne response nahi diya!** Question clear karke retry karo.';
       }
       
       setMessages(prev => [...prev, { role: 'assistant', content: errorMsg }]);
