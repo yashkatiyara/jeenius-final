@@ -157,8 +157,7 @@ const AIDoubtSolver: React.FC<AIDoubtSolverProps> = ({ question, isOpen, onClose
     }
 
     const data = await response.json();
-    const content = data?.response_text;
-
+    const content = data?.content;
     if (!content || content.trim() === '') {
       throw new Error('EMPTY_RESPONSE');
     }
