@@ -116,13 +116,13 @@ export default function AIStudyPlanner() {
         questions: questions?.find(q => q.id === attempt.question_id) || null
       }));
 
-      setTotalAttempts(attempts.length);
-      const correct = attempts.filter(a => a.is_correct).length;
+      setTotalAttempts(enrichedAttempts.length);
+      const correct = enrichedAttempts.filter(a => a.is_correct).length;
       setCorrectAnswers(correct);
 
       // Subject-wise Analysis
       const subjectStats = {};
-      attempts.forEach(att => {
+      enrichedAttempts.forEach(att => {
         const subject = att.questions?.subject || 'Unknown';
         if (!subjectStats[subject]) {
           subjectStats[subject] = { total: 0, correct: 0, time: 0 };
@@ -144,7 +144,7 @@ export default function AIStudyPlanner() {
 
       // Chapter-wise Analysis (weakest chapters)
       const chapterStats = {};
-      attempts.forEach(att => {
+      enrichedAttempts.forEach(att => {
         const key = `${att.questions?.subject}-${att.questions?.chapter}`;
         if (!chapterStats[key]) {
           chapterStats[key] = { 
@@ -170,7 +170,7 @@ export default function AIStudyPlanner() {
 
       // Topic-wise Analysis (weakest topics)
       const topicStats = {};
-      attempts.forEach(att => {
+      enrichedAttempts.forEach(att => {
         const topic = att.questions?.topic || 'Unknown';
         if (!topicStats[topic]) {
           topicStats[topic] = { 
@@ -214,7 +214,7 @@ export default function AIStudyPlanner() {
         const nextDate = new Date(date);
         nextDate.setDate(nextDate.getDate() + 1);
 
-        const dayAttempts = attempts.filter(a => {
+        const dayAttempts = enrichedAttempts.filter(a => {
           const attemptDate = new Date(a.created_at);
           return attemptDate >= date && attemptDate < nextDate;
         });
@@ -232,10 +232,10 @@ export default function AIStudyPlanner() {
       setWeeklyTrend(last7Days);
 
       // Generate AI Study Plan
-      generateIntelligentStudyPlan(subjectArray, chapterArray, topicArray, attempts.length, correct);
+      generateIntelligentStudyPlan(subjectArray, chapterArray, topicArray, enrichedAttempts.length, correct);
 
       // Rank Predictor
-      calculatePredictedRank(correct, attempts.length, subjectArray);
+      calculatePredictedRank(correct, enrichedAttempts.length, subjectArray);
 
     } catch (error) {
       console.error('Error:', error);
@@ -248,34 +248,48 @@ export default function AIStudyPlanner() {
   const generateIntelligentStudyPlan = (subjects, chapters, topics, totalAttempts, correct) => {
     const overallAccuracy = Math.round((correct / totalAttempts) * 100);
     
+    // AI determines study hours based on days remaining + accuracy
     let recommendedHours = 6;
-    if (daysRemaining < 60 && overallAccuracy < 50) recommendedHours = 10;
-    else if (daysRemaining < 120 && overallAccuracy < 65) recommendedHours = 8;
-    else if (overallAccuracy > 80) recommendedHours = 5;
+    if (daysRemaining < 30 && overallAccuracy < 60) recommendedHours = 12;
+    else if (daysRemaining < 60 && overallAccuracy < 50) recommendedHours = 10;
+    else if (daysRemaining < 90 && overallAccuracy < 65) recommendedHours = 8;
+    else if (daysRemaining < 180 && overallAccuracy < 70) recommendedHours = 7;
+    else if (overallAccuracy > 85) recommendedHours = 5;
     
     setAiRecommendedHours(recommendedHours);
 
+    // Calculate time allocation based on actual performance
     const plan = subjects.map(subject => {
       let recommendedTime = 0;
       let priority = 'MEDIUM';
       let strategy = '';
 
-      if (subject.accuracy < 40) {
-        recommendedTime = Math.round(recommendedHours * 0.35);
+      const accuracyGap = 80 - subject.accuracy; // Target is 80%
+      const attemptsRatio = subject.attempted / totalAttempts;
+
+      // CRITICAL: Very poor performance or not enough attempts
+      if (subject.accuracy < 40 || (subject.accuracy < 60 && subject.attempted < 20)) {
+        recommendedTime = Math.round(recommendedHours * 0.4);
         priority = 'CRITICAL';
-        strategy = '🚨 Emergency focus! Start from fundamentals.';
-      } else if (subject.accuracy < 60) {
-        recommendedTime = Math.round(recommendedHours * 0.25);
+        strategy = `🚨 Urgent! Master basics first. Target: 50+ questions this week.`;
+      } 
+      // HIGH: Below average performance
+      else if (subject.accuracy < 60) {
+        recommendedTime = Math.round(recommendedHours * 0.3);
         priority = 'HIGH';
-        strategy = '⚡ Practice weak chapters daily.';
-      } else if (subject.accuracy < 75) {
-        recommendedTime = Math.round(recommendedHours * 0.2);
+        strategy = `⚡ Focus on weak chapters. Solve 30+ questions daily.`;
+      } 
+      // MEDIUM: Average performance, needs consistency
+      else if (subject.accuracy < 75) {
+        recommendedTime = Math.round(recommendedHours * 0.25);
         priority = 'MEDIUM';
-        strategy = '✅ Maintain consistency with advanced problems.';
-      } else {
+        strategy = `✅ Good progress! Practice advanced problems daily.`;
+      } 
+      // LOW: Strong subject, maintenance mode
+      else {
         recommendedTime = Math.round(recommendedHours * 0.15);
         priority = 'LOW';
-        strategy = '🏆 Excellent! Quick daily revisions.';
+        strategy = `🏆 Excellent! Maintain with 15-20 questions daily.`;
       }
 
       return {
@@ -288,32 +302,67 @@ export default function AIStudyPlanner() {
       };
     });
 
+    // Sort by priority (Critical → High → Medium → Low)
+    const priorityOrder = { 'CRITICAL': 1, 'HIGH': 2, 'MEDIUM': 3, 'LOW': 4 };
+    plan.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+
     setStudyPlan(plan);
   };
 
   const calculatePredictedRank = (correct, total, subjects) => {
+    if (total < 10) {
+      // Not enough data
+      setPredictedRank(null);
+      return;
+    }
+
     const overallAccuracy = (correct / total) * 100;
     
+    // Real JEE rank calculation based on accuracy
     let estimatedScore = 0;
+    let subjectCount = 0;
+    
     subjects.forEach(subject => {
-      if (subject.subject === 'Physics') estimatedScore += subject.accuracy * 1.2;
-      if (subject.subject === 'Chemistry') estimatedScore += subject.accuracy * 1.0;
-      if (subject.subject === 'Mathematics') estimatedScore += subject.accuracy * 1.3;
+      if (subject.subject === 'Physics') {
+        estimatedScore += subject.accuracy * 1.2; // Physics weightage
+        subjectCount++;
+      }
+      if (subject.subject === 'Chemistry') {
+        estimatedScore += subject.accuracy * 1.0; // Chemistry weightage
+        subjectCount++;
+      }
+      if (subject.subject === 'Mathematics') {
+        estimatedScore += subject.accuracy * 1.3; // Maths weightage (highest)
+        subjectCount++;
+      }
     });
 
-    const predictedScore = Math.round(estimatedScore / subjects.length);
-    let rank = 500000;
+    const predictedScore = subjectCount > 0 ? Math.round(estimatedScore / subjectCount) : overallAccuracy;
+    
+    // Realistic rank mapping based on JEE statistics
+    let rank;
+    if (predictedScore >= 95) rank = Math.floor(500 + (100 - predictedScore) * 100);
+    else if (predictedScore >= 90) rank = Math.floor(1000 + (95 - predictedScore) * 400);
+    else if (predictedScore >= 85) rank = Math.floor(3000 + (90 - predictedScore) * 800);
+    else if (predictedScore >= 80) rank = Math.floor(8000 + (85 - predictedScore) * 1500);
+    else if (predictedScore >= 75) rank = Math.floor(15000 + (80 - predictedScore) * 2500);
+    else if (predictedScore >= 70) rank = Math.floor(30000 + (75 - predictedScore) * 4000);
+    else if (predictedScore >= 65) rank = Math.floor(50000 + (70 - predictedScore) * 6000);
+    else if (predictedScore >= 60) rank = Math.floor(80000 + (65 - predictedScore) * 8000);
+    else if (predictedScore >= 50) rank = Math.floor(120000 + (60 - predictedScore) * 12000);
+    else rank = Math.floor(200000 + (50 - predictedScore) * 15000);
 
-    if (predictedScore > 85) rank = Math.floor(Math.random() * 5000) + 1000;
-    else if (predictedScore > 75) rank = Math.floor(Math.random() * 15000) + 5000;
-    else if (predictedScore > 65) rank = Math.floor(Math.random() * 50000) + 20000;
-    else if (predictedScore > 50) rank = Math.floor(Math.random() * 150000) + 70000;
-    else rank = Math.floor(Math.random() * 300000) + 200000;
+    // Confidence based on total attempts
+    let confidence;
+    if (total >= 200) confidence = 'High';
+    else if (total >= 100) confidence = 'Medium';
+    else confidence = 'Low';
 
     setPredictedRank({ 
-      rank, 
+      rank: Math.min(rank, 1200000), // Cap at total JEE aspirants
       score: predictedScore, 
-      confidence: total > 100 ? 'High' : total > 50 ? 'Medium' : 'Low' 
+      confidence,
+      totalAttempts: total
     });
   };
 
@@ -512,7 +561,7 @@ export default function AIStudyPlanner() {
       </div>
 
       {/* Rank Predictor */}
-      {predictedRank && (
+      {predictedRank && predictedRank.totalAttempts >= 10 && (
         <Card className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 border-0 shadow-2xl">
           <CardContent className="p-8">
             <div className="flex items-center justify-between text-white">
@@ -527,13 +576,52 @@ export default function AIStudyPlanner() {
                       {predictedRank.confidence} Confidence
                     </Badge>
                   </p>
+                  <p className="text-sm text-white/90 mt-2">
+                    📊 Analyzed from {predictedRank.totalAttempts} attempts
+                    {predictedRank.confidence === 'Low' && ' • Solve 100+ for better accuracy'}
+                  </p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-white/80 mb-2">Keep improving to reach</p>
-                <p className="text-4xl font-black">TOP 1000</p>
+                <p className="text-sm text-white/80 mb-2">
+                  {predictedRank.rank < 10000 ? 'Target IIT Bombay!' : 
+                   predictedRank.rank < 50000 ? 'Keep pushing for Top 10K' : 
+                   'Focus on consistency'}
+                </p>
+                <p className="text-4xl font-black">
+                  {predictedRank.rank < 10000 ? 'TOP 10K' : 
+                   predictedRank.rank < 50000 ? 'TOP 50K' : 
+                   'TOP 1L+'}
+                </p>
+                {predictedRank.rank > 50000 && (
+                  <p className="text-sm mt-2 text-white/90">
+                    +{Math.round((predictedRank.rank - 10000) / 1000)}K gap to close
+                  </p>
+                )}
               </div>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Not Enough Data Warning */}
+      {(!predictedRank || predictedRank.totalAttempts < 10) && totalAttempts > 0 && (
+        <Card className="bg-gradient-to-r from-blue-100 to-indigo-100 border-2 border-blue-300 shadow-xl">
+          <CardContent className="p-6 text-center">
+            <Gauge className="w-16 h-16 text-blue-600 mx-auto mb-4" />
+            <h3 className="text-2xl font-bold text-blue-900 mb-2">
+              🎯 Rank Predictor Loading...
+            </h3>
+            <p className="text-blue-700 mb-4">
+              Solve <span className="font-bold">{10 - totalAttempts} more questions</span> to unlock accurate rank prediction!
+            </p>
+            <Button
+              onClick={() => window.location.href = '/study-now'}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+            >
+              <Rocket className="w-4 h-4 mr-2" />
+              Continue Practicing
+            </Button>
           </CardContent>
         </Card>
       )}
