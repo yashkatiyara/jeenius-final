@@ -124,7 +124,7 @@ const AIDoubtSolver: React.FC<AIDoubtSolverProps> = ({ question, isOpen, onClose
     // Get the current session
     const { data: { session } } = await supabase.auth.getSession();
     
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-doubtsolver`, {
+  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/jeenie`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
