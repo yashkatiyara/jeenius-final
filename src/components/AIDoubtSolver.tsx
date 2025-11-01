@@ -132,6 +132,7 @@ const AIDoubtSolver: React.FC<AIDoubtSolverProps> = ({ question, isOpen, onClose
    * @param prompt The full prompt to send to the AI.
    * @returns The AI's response text.
    */
+
   const callEdgeFunction = async (prompt: string): Promise<string> => {
     try {
       console.log('📤 Calling edge function: jeenie');
@@ -140,13 +141,36 @@ const AIDoubtSolver: React.FC<AIDoubtSolverProps> = ({ question, isOpen, onClose
         body: { contextPrompt: prompt }
       });
 
+      console.log('📥 Response received:', response);
+
+      // Check for HTTP errors
       if (response.error) {
         console.error('Edge Function Error:', response.error);
+        
+        // Parse specific error types
+        const errorData = response.error as any;
+        if (errorData?.message?.includes('API_KEY_MISSING')) {
+          throw new Error('API_KEY_MISSING_BACKEND');
+        }
+        if (errorData?.message?.includes('RATE_LIMIT')) {
+          throw new Error('RATE_LIMIT');
+        }
+        if (errorData?.message?.includes('SAFETY')) {
+          throw new Error('SAFETY_BLOCK');
+        }
         throw new Error('BACKEND_ERROR');
       }
 
-      const content = response.data?.content;
+      // Check response data
+      if (!response.data) {
+        console.error('No data in response');
+        throw new Error('EMPTY_RESPONSE');
+      }
+
+      // Extract content
+      const content = response.data.content;
       if (!content || content.trim() === '') {
+        console.error('Empty content received');
         throw new Error('EMPTY_RESPONSE');
       }
 
@@ -158,7 +182,7 @@ const AIDoubtSolver: React.FC<AIDoubtSolverProps> = ({ question, isOpen, onClose
       throw error;
     }
   };
-
+  
   const handleSendMessage = async () => {
     if (!input.trim()) return;
 
