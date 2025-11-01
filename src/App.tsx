@@ -47,6 +47,7 @@ import MobileLearning from "./pages/mobile/MobileLearning";
 import MobileStudyPlanner from "./pages/mobile/MobileStudyPlanner";
 
 import DebugSubscription from './pages/DebugSubscription';
+import GamificationPage from './pages/GamificationPage';
 
 // Create QueryClient with optimized settings for better performance
 const queryClient = new QueryClient({
@@ -93,6 +94,16 @@ const App = () => (
             <Route path="/subscription-plans" element={<SubscriptionPlans />} />
 
             <Route path="/debug-subscription" element={<DebugSubscription />} />
+            
+            {/* Gamification & AI Planner */}
+            <Route
+              path="/progress"
+              element={
+                <ProtectedRoute>
+                  <GamificationPage />
+                </ProtectedRoute>
+              }
+            />
             
             {/* Protected Routes - Main Dashboard */}
             <Route 

@@ -16,138 +16,456 @@ export type Database = {
     Tables: {
       ai_usage_log: {
         Row: {
-          created_at: string
-          feature_type: string
+          count: number | null
+          created_at: string | null
+          date: string
           id: string
-          tokens_used: number | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
-          created_at?: string
-          feature_type: string
+          count?: number | null
+          created_at?: string | null
+          date: string
           id?: string
-          tokens_used?: number | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
-          created_at?: string
-          feature_type?: string
+          count?: number | null
+          created_at?: string | null
+          date?: string
           id?: string
-          tokens_used?: number | null
-          user_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      badges: {
+        Row: {
+          category: string
+          color: string
+          created_at: string | null
+          description: string
+          icon: string
+          id: string
+          name: string
+          points_required: number
+        }
+        Insert: {
+          category?: string
+          color?: string
+          created_at?: string | null
+          description: string
+          icon: string
+          id?: string
+          name: string
+          points_required: number
+        }
+        Update: {
+          category?: string
+          color?: string
+          created_at?: string | null
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          points_required?: number
         }
         Relationships: []
       }
       chapters: {
         Row: {
+          chapter_name: string
           chapter_number: number
-          created_at: string
+          created_at: string | null
           description: string | null
+          difficulty_level: string | null
+          estimated_time: number | null
           id: string
           is_free: boolean | null
+          is_premium: boolean | null
           subject: string
-          title: string
-          updated_at: string
         }
         Insert: {
+          chapter_name: string
           chapter_number: number
-          created_at?: string
+          created_at?: string | null
           description?: string | null
+          difficulty_level?: string | null
+          estimated_time?: number | null
           id?: string
           is_free?: boolean | null
+          is_premium?: boolean | null
           subject: string
-          title: string
-          updated_at?: string
         }
         Update: {
+          chapter_name?: string
           chapter_number?: number
-          created_at?: string
+          created_at?: string | null
           description?: string | null
+          difficulty_level?: string | null
+          estimated_time?: number | null
           id?: string
           is_free?: boolean | null
+          is_premium?: boolean | null
           subject?: string
-          title?: string
-          updated_at?: string
+        }
+        Relationships: []
+      }
+      daily_challenges: {
+        Row: {
+          active: boolean | null
+          challenge_type: string | null
+          created_at: string | null
+          date: string
+          id: string
+          reward_points: number | null
+          subject: string | null
+          target_value: number | null
+        }
+        Insert: {
+          active?: boolean | null
+          challenge_type?: string | null
+          created_at?: string | null
+          date: string
+          id?: string
+          reward_points?: number | null
+          subject?: string | null
+          target_value?: number | null
+        }
+        Update: {
+          active?: boolean | null
+          challenge_type?: string | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          reward_points?: number | null
+          subject?: string | null
+          target_value?: number | null
+        }
+        Relationships: []
+      }
+      daily_performance: {
+        Row: {
+          accuracy: number | null
+          created_at: string | null
+          date: string
+          energy_level: number | null
+          id: string
+          questions_attempted: number | null
+          questions_correct: number | null
+          study_time_minutes: number | null
+          subjects_covered: string[] | null
+          topics_completed: string[] | null
+          user_id: string | null
+        }
+        Insert: {
+          accuracy?: number | null
+          created_at?: string | null
+          date: string
+          energy_level?: number | null
+          id?: string
+          questions_attempted?: number | null
+          questions_correct?: number | null
+          study_time_minutes?: number | null
+          subjects_covered?: string[] | null
+          topics_completed?: string[] | null
+          user_id?: string | null
+        }
+        Update: {
+          accuracy?: number | null
+          created_at?: string | null
+          date?: string
+          energy_level?: number | null
+          id?: string
+          questions_attempted?: number | null
+          questions_correct?: number | null
+          study_time_minutes?: number | null
+          subjects_covered?: string[] | null
+          topics_completed?: string[] | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      daily_progress_log: {
+        Row: {
+          actual_minutes: number | null
+          adherence_percentage: number | null
+          created_at: string | null
+          date: string
+          id: string
+          planned_minutes: number | null
+          topics_completed: number | null
+          topics_planned: number | null
+          user_id: string | null
+        }
+        Insert: {
+          actual_minutes?: number | null
+          adherence_percentage?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          planned_minutes?: number | null
+          topics_completed?: number | null
+          topics_planned?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          actual_minutes?: number | null
+          adherence_percentage?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          planned_minutes?: number | null
+          topics_completed?: number | null
+          topics_planned?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      daily_usage: {
+        Row: {
+          ai_queries_used: number | null
+          chapters_accessed: string[] | null
+          created_at: string | null
+          date: string
+          id: string
+          questions_attempted: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_queries_used?: number | null
+          chapters_accessed?: string[] | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          questions_attempted?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_queries_used?: number | null
+          chapters_accessed?: string[] | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          questions_attempted?: number | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
       free_content_limits: {
         Row: {
-          chapters_accessed: number | null
-          created_at: string
+          description: string | null
           id: string
-          last_reset_date: string | null
-          limit_type: string | null
-          limit_value: number | null
-          questions_attempted: number | null
-          tests_taken: number | null
-          updated_at: string
-          user_id: string
+          limit_type: string
+          limit_value: number
         }
         Insert: {
-          chapters_accessed?: number | null
-          created_at?: string
+          description?: string | null
           id?: string
-          last_reset_date?: string | null
-          limit_type?: string | null
-          limit_value?: number | null
-          questions_attempted?: number | null
-          tests_taken?: number | null
-          updated_at?: string
-          user_id: string
+          limit_type: string
+          limit_value: number
         }
         Update: {
-          chapters_accessed?: number | null
-          created_at?: string
+          description?: string | null
           id?: string
-          last_reset_date?: string | null
-          limit_type?: string | null
-          limit_value?: number | null
-          questions_attempted?: number | null
-          tests_taken?: number | null
-          updated_at?: string
-          user_id?: string
+          limit_type?: string
+          limit_value?: number
+        }
+        Relationships: []
+      }
+      mock_test_schedule: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          duration_minutes: number | null
+          id: string
+          scheduled_date: string
+          score: number | null
+          subjects: string[] | null
+          test_type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          scheduled_date: string
+          score?: number | null
+          subjects?: string[] | null
+          test_type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          scheduled_date?: string
+          score?: number | null
+          subjects?: string[] | null
+          test_type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      payment_orders: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          order_id: string
+          payment_id: string | null
+          plan_id: string
+          signature: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          order_id: string
+          payment_id?: string | null
+          plan_id: string
+          signature?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          order_id?: string
+          payment_id?: string | null
+          plan_id?: string
+          signature?: string | null
+          status?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
       payments: {
         Row: {
           amount: number
-          created_at: string
-          currency: string
+          created_at: string | null
+          currency: string | null
+          error_message: string | null
           id: string
+          payment_method: string | null
           plan_duration: number
           plan_id: string
           razorpay_order_id: string
           razorpay_payment_id: string | null
           razorpay_signature: string | null
-          status: string
-          user_id: string
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           amount: number
-          created_at?: string
-          currency?: string
+          created_at?: string | null
+          currency?: string | null
+          error_message?: string | null
           id?: string
+          payment_method?: string | null
           plan_duration: number
           plan_id: string
           razorpay_order_id: string
           razorpay_payment_id?: string | null
           razorpay_signature?: string | null
-          status: string
-          user_id: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           amount?: number
-          created_at?: string
-          currency?: string
+          created_at?: string | null
+          currency?: string | null
+          error_message?: string | null
           id?: string
+          payment_method?: string | null
           plan_duration?: number
           plan_id?: string
           razorpay_order_id?: string
           razorpay_payment_id?: string | null
           razorpay_signature?: string | null
-          status?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      performance_patterns: {
+        Row: {
+          action_taken: string | null
+          created_at: string | null
+          id: string
+          identified_date: string | null
+          pattern_type: string
+          resolved: boolean | null
+          severity: string | null
+          subject: string | null
+          topic: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          created_at?: string | null
+          id?: string
+          identified_date?: string | null
+          pattern_type: string
+          resolved?: boolean | null
+          severity?: string | null
+          subject?: string | null
+          topic?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          created_at?: string | null
+          id?: string
+          identified_date?: string | null
+          pattern_type?: string
+          resolved?: boolean | null
+          severity?: string | null
+          subject?: string | null
+          topic?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      points_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          description: string | null
+          id: string
+          points: number
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points: number
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points?: number
           user_id?: string
         }
         Relationships: []
@@ -156,90 +474,141 @@ export type Database = {
         Row: {
           avatar_url: string | null
           city: string | null
-          created_at: string
-          email: string | null
+          created_at: string | null
+          daily_goal: number | null
+          daily_study_hours: number | null
+          email: string
+          exam_mode: boolean | null
           full_name: string | null
           goals_set: boolean | null
-          grade: string | null
+          grade: number | null
           id: string
           is_premium: boolean | null
+          mobile_verified: boolean | null
+          mobile_verified_at: string | null
+          onboarding_completed: boolean | null
           phone: string | null
           premium_until: string | null
+          questions_capacity: number | null
+          razorpay_subscription_id: string | null
           state: string | null
-          subjects: Json | null
+          student_level: string | null
+          study_planner_enabled: boolean | null
+          subjects: string[] | null
           subscription_end_date: string | null
           subscription_plan: string | null
           target_exam: string | null
-          updated_at: string
+          target_exam_date: string | null
+          total_points: number | null
+          updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
           city?: string | null
-          created_at?: string
-          email?: string | null
+          created_at?: string | null
+          daily_goal?: number | null
+          daily_study_hours?: number | null
+          email: string
+          exam_mode?: boolean | null
           full_name?: string | null
           goals_set?: boolean | null
-          grade?: string | null
+          grade?: number | null
           id: string
           is_premium?: boolean | null
+          mobile_verified?: boolean | null
+          mobile_verified_at?: string | null
+          onboarding_completed?: boolean | null
           phone?: string | null
           premium_until?: string | null
+          questions_capacity?: number | null
+          razorpay_subscription_id?: string | null
           state?: string | null
-          subjects?: Json | null
+          student_level?: string | null
+          study_planner_enabled?: boolean | null
+          subjects?: string[] | null
           subscription_end_date?: string | null
           subscription_plan?: string | null
           target_exam?: string | null
-          updated_at?: string
+          target_exam_date?: string | null
+          total_points?: number | null
+          updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
           city?: string | null
-          created_at?: string
-          email?: string | null
+          created_at?: string | null
+          daily_goal?: number | null
+          daily_study_hours?: number | null
+          email?: string
+          exam_mode?: boolean | null
           full_name?: string | null
           goals_set?: boolean | null
-          grade?: string | null
+          grade?: number | null
           id?: string
           is_premium?: boolean | null
+          mobile_verified?: boolean | null
+          mobile_verified_at?: string | null
+          onboarding_completed?: boolean | null
           phone?: string | null
           premium_until?: string | null
+          questions_capacity?: number | null
+          razorpay_subscription_id?: string | null
           state?: string | null
-          subjects?: Json | null
+          student_level?: string | null
+          study_planner_enabled?: boolean | null
+          subjects?: string[] | null
           subscription_end_date?: string | null
           subscription_plan?: string | null
           target_exam?: string | null
-          updated_at?: string
+          target_exam_date?: string | null
+          total_points?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }
       question_attempts: {
         Row: {
-          attempted_at: string
-          created_at: string
+          attempted_at: string | null
+          created_at: string | null
+          difficulty_level: number | null
+          energy_state: string | null
           id: string
           is_correct: boolean
+          last_attempt_at: string | null
           mode: string | null
-          question_id: string | null
+          question_id: string
+          selected_option: string
+          time_spent: number | null
           time_taken: number | null
           user_id: string
         }
         Insert: {
-          attempted_at?: string
-          created_at?: string
+          attempted_at?: string | null
+          created_at?: string | null
+          difficulty_level?: number | null
+          energy_state?: string | null
           id?: string
           is_correct: boolean
+          last_attempt_at?: string | null
           mode?: string | null
-          question_id?: string | null
+          question_id: string
+          selected_option: string
+          time_spent?: number | null
           time_taken?: number | null
           user_id: string
         }
         Update: {
-          attempted_at?: string
-          created_at?: string
+          attempted_at?: string | null
+          created_at?: string | null
+          difficulty_level?: number | null
+          energy_state?: string | null
           id?: string
           is_correct?: boolean
+          last_attempt_at?: string | null
           mode?: string | null
-          question_id?: string | null
+          question_id?: string
+          selected_option?: string
+          time_spent?: number | null
           time_taken?: number | null
           user_id?: string
         }
@@ -251,300 +620,878 @@ export type Database = {
             referencedRelation: "questions"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      questions: {
-        Row: {
-          chapter: number | null
-          chapter_id: string | null
-          correct_answer: string
-          created_at: string
-          difficulty: string | null
-          explanation: string | null
-          id: string
-          option_a: string | null
-          option_b: string | null
-          option_c: string | null
-          option_d: string | null
-          options: Json
-          question: string | null
-          question_text: string
-          subject: string | null
-          topic: string | null
-        }
-        Insert: {
-          chapter?: number | null
-          chapter_id?: string | null
-          correct_answer: string
-          created_at?: string
-          difficulty?: string | null
-          explanation?: string | null
-          id?: string
-          option_a?: string | null
-          option_b?: string | null
-          option_c?: string | null
-          option_d?: string | null
-          options: Json
-          question?: string | null
-          question_text: string
-          subject?: string | null
-          topic?: string | null
-        }
-        Update: {
-          chapter?: number | null
-          chapter_id?: string | null
-          correct_answer?: string
-          created_at?: string
-          difficulty?: string | null
-          explanation?: string | null
-          id?: string
-          option_a?: string | null
-          option_b?: string | null
-          option_c?: string | null
-          option_d?: string | null
-          options?: Json
-          question?: string | null
-          question_text?: string
-          subject?: string | null
-          topic?: string | null
-        }
-        Relationships: [
           {
-            foreignKeyName: "questions_chapter_id_fkey"
-            columns: ["chapter_id"]
+            foreignKeyName: "question_attempts_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "chapters"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      study_plans: {
+      questions: {
         Row: {
-          created_at: string
+          chapter: string
+          correct_option: string
+          created_at: string | null
+          difficulty: string
+          explanation: string | null
           id: string
-          plan_data: Json
-          updated_at: string
-          user_id: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          question: string
+          subject: string
+          topic: string
+          year: number | null
         }
         Insert: {
-          created_at?: string
+          chapter: string
+          correct_option: string
+          created_at?: string | null
+          difficulty: string
+          explanation?: string | null
           id?: string
-          plan_data: Json
-          updated_at?: string
-          user_id: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          question: string
+          subject: string
+          topic: string
+          year?: number | null
         }
         Update: {
-          created_at?: string
+          chapter?: string
+          correct_option?: string
+          created_at?: string | null
+          difficulty?: string
+          explanation?: string | null
           id?: string
-          plan_data?: Json
-          updated_at?: string
-          user_id?: string
+          option_a?: string
+          option_b?: string
+          option_c?: string
+          option_d?: string
+          question?: string
+          subject?: string
+          topic?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string | null
+          id: string
+          referred_email: string
+          referred_user_id: string | null
+          referrer_id: string | null
+          reward_granted: boolean | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          referred_email: string
+          referred_user_id?: string | null
+          referrer_id?: string | null
+          reward_granted?: boolean | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          referred_email?: string
+          referred_user_id?: string | null
+          referrer_id?: string | null
+          reward_granted?: boolean | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      revision_queue: {
+        Row: {
+          chapter: string
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          duration_minutes: number | null
+          id: string
+          review_number: number | null
+          scheduled_date: string
+          subject: string
+          topic: string
+          user_id: string | null
+        }
+        Insert: {
+          chapter: string
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          review_number?: number | null
+          scheduled_date: string
+          subject: string
+          topic: string
+          user_id?: string | null
+        }
+        Update: {
+          chapter?: string
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          review_number?: number | null
+          scheduled_date?: string
+          subject?: string
+          topic?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      revision_schedule: {
+        Row: {
+          chapter: string | null
+          created_at: string | null
+          id: string
+          last_studied_at: string
+          next_revision_at: string
+          retention_score: number | null
+          revision_count: number | null
+          subject: string
+          topic: string | null
+          user_id: string | null
+        }
+        Insert: {
+          chapter?: string | null
+          created_at?: string | null
+          id?: string
+          last_studied_at: string
+          next_revision_at: string
+          retention_score?: number | null
+          revision_count?: number | null
+          subject: string
+          topic?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          chapter?: string | null
+          created_at?: string | null
+          id?: string
+          last_studied_at?: string
+          next_revision_at?: string
+          retention_score?: number | null
+          revision_count?: number | null
+          subject?: string
+          topic?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      student_profile: {
+        Row: {
+          average_study_time: number | null
+          created_at: string | null
+          id: string
+          learning_style: string | null
+          peak_performance_hours: string | null
+          target_exam_date: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          average_study_time?: number | null
+          created_at?: string | null
+          id?: string
+          learning_style?: string | null
+          peak_performance_hours?: string | null
+          target_exam_date?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          average_study_time?: number | null
+          created_at?: string | null
+          id?: string
+          learning_style?: string | null
+          peak_performance_hours?: string | null
+          target_exam_date?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      study_plan_metadata: {
+        Row: {
+          completed_topics: number | null
+          daily_target_topics: number | null
+          id: string
+          in_progress_topics: number | null
+          last_generated_at: string | null
+          next_update_at: string | null
+          pending_topics: number | null
+          plan_adherence_percentage: number | null
+          total_topics: number | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_topics?: number | null
+          daily_target_topics?: number | null
+          id?: string
+          in_progress_topics?: number | null
+          last_generated_at?: string | null
+          next_update_at?: string | null
+          pending_topics?: number | null
+          plan_adherence_percentage?: number | null
+          total_topics?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_topics?: number | null
+          daily_target_topics?: number | null
+          id?: string
+          in_progress_topics?: number | null
+          last_generated_at?: string | null
+          next_update_at?: string | null
+          pending_topics?: number | null
+          plan_adherence_percentage?: number | null
+          total_topics?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      study_plans: {
+        Row: {
+          ai_metrics: Json | null
+          completion_status: number | null
+          created_at: string | null
+          date: string | null
+          id: string
+          last_updated: string | null
+          next_refresh_time: string | null
+          performance: Json | null
+          plan_type: string | null
+          recommendations: Json | null
+          study_goals: Json | null
+          subjects: Json | null
+          total_study_time: number | null
+          user_id: string | null
+          version: number | null
+        }
+        Insert: {
+          ai_metrics?: Json | null
+          completion_status?: number | null
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          last_updated?: string | null
+          next_refresh_time?: string | null
+          performance?: Json | null
+          plan_type?: string | null
+          recommendations?: Json | null
+          study_goals?: Json | null
+          subjects?: Json | null
+          total_study_time?: number | null
+          user_id?: string | null
+          version?: number | null
+        }
+        Update: {
+          ai_metrics?: Json | null
+          completion_status?: number | null
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          last_updated?: string | null
+          next_refresh_time?: string | null
+          performance?: Json | null
+          plan_type?: string | null
+          recommendations?: Json | null
+          study_goals?: Json | null
+          subjects?: Json | null
+          total_study_time?: number | null
+          user_id?: string | null
+          version?: number | null
+        }
+        Relationships: []
+      }
+      study_schedule: {
+        Row: {
+          activity_type: string | null
+          allocated_minutes: number | null
+          chapter: string | null
+          completed_minutes: number | null
+          created_at: string | null
+          date: string
+          id: string
+          status: string | null
+          subject: string
+          topic: string | null
+          user_id: string | null
+        }
+        Insert: {
+          activity_type?: string | null
+          allocated_minutes?: number | null
+          chapter?: string | null
+          completed_minutes?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          status?: string | null
+          subject: string
+          topic?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          activity_type?: string | null
+          allocated_minutes?: number | null
+          chapter?: string | null
+          completed_minutes?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          status?: string | null
+          subject?: string
+          topic?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      subscription_plans: {
+        Row: {
+          duration_days: number | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price: number
+        }
+        Insert: {
+          duration_days?: number | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price: number
+        }
+        Update: {
+          duration_days?: number | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price?: number
         }
         Relationships: []
       }
       subscriptions: {
         Row: {
-          created_at: string
-          expires_at: string
+          amount_paid: number | null
+          created_at: string | null
+          end_date: string | null
           id: string
-          plan_id: string
-          status: string
-          updated_at: string
-          user_id: string
+          plan_type: string
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          razorpay_subscription_id: string | null
+          start_date: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
-          created_at?: string
-          expires_at: string
+          amount_paid?: number | null
+          created_at?: string | null
+          end_date?: string | null
           id?: string
-          plan_id: string
-          status?: string
-          updated_at?: string
-          user_id: string
+          plan_type: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_subscription_id?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
-          created_at?: string
-          expires_at?: string
+          amount_paid?: number | null
+          created_at?: string | null
+          end_date?: string | null
           id?: string
-          plan_id?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
+          plan_type?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_subscription_id?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      syllabus_master: {
+        Row: {
+          average_time_hours: number | null
+          chapter: string
+          created_at: string | null
+          difficulty: string | null
+          id: string
+          prerequisites: string | null
+          subject: string
+          topic: string
+          weightage: number | null
+        }
+        Insert: {
+          average_time_hours?: number | null
+          chapter: string
+          created_at?: string | null
+          difficulty?: string | null
+          id?: string
+          prerequisites?: string | null
+          subject: string
+          topic: string
+          weightage?: number | null
+        }
+        Update: {
+          average_time_hours?: number | null
+          chapter?: string
+          created_at?: string | null
+          difficulty?: string | null
+          id?: string
+          prerequisites?: string | null
+          subject?: string
+          topic?: string
+          weightage?: number | null
         }
         Relationships: []
       }
       test_attempts: {
         Row: {
-          answers: Json | null
-          completed_at: string | null
-          created_at: string
+          created_at: string | null
           id: string
-          score: number | null
-          test_type: string
-          total_questions: number | null
-          user_id: string
+          test_type: string | null
+          user_id: string | null
         }
         Insert: {
-          answers?: Json | null
-          completed_at?: string | null
-          created_at?: string
+          created_at?: string | null
           id?: string
-          score?: number | null
-          test_type: string
-          total_questions?: number | null
-          user_id: string
+          test_type?: string | null
+          user_id?: string | null
         }
         Update: {
-          answers?: Json | null
-          completed_at?: string | null
-          created_at?: string
+          created_at?: string | null
           id?: string
-          score?: number | null
-          test_type?: string
-          total_questions?: number | null
-          user_id?: string
+          test_type?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
       test_sessions: {
         Row: {
           completed_at: string | null
-          created_at: string
+          correct_answers: number
+          created_at: string | null
           id: string
           score: number | null
-          test_type: string
-          time_taken: number | null
-          total_questions: number | null
+          started_at: string | null
+          subject: string
+          total_questions: number
+          total_time: number | null
           user_id: string
         }
         Insert: {
           completed_at?: string | null
-          created_at?: string
+          correct_answers: number
+          created_at?: string | null
           id?: string
           score?: number | null
-          test_type: string
-          time_taken?: number | null
-          total_questions?: number | null
+          started_at?: string | null
+          subject: string
+          total_questions: number
+          total_time?: number | null
           user_id: string
         }
         Update: {
           completed_at?: string | null
-          created_at?: string
+          correct_answers?: number
+          created_at?: string | null
           id?: string
           score?: number | null
-          test_type?: string
-          time_taken?: number | null
-          total_questions?: number | null
+          started_at?: string | null
+          subject?: string
+          total_questions?: number
+          total_time?: number | null
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topic_dependencies: {
+        Row: {
+          difficulty_multiplier: number | null
+          id: string
+          requires_topics: string[] | null
+          subject: string
+          topic: string
+        }
+        Insert: {
+          difficulty_multiplier?: number | null
+          id?: string
+          requires_topics?: string[] | null
+          subject: string
+          topic: string
+        }
+        Update: {
+          difficulty_multiplier?: number | null
+          id?: string
+          requires_topics?: string[] | null
+          subject?: string
+          topic?: string
+        }
+        Relationships: []
+      }
+      topic_mastery: {
+        Row: {
+          accuracy: number | null
+          chapter: string
+          created_at: string | null
+          current_level: number | null
+          id: string
+          last_practiced: string | null
+          mastery_date: string | null
+          questions_attempted: number | null
+          stuck_days: number | null
+          subject: string
+          topic: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          accuracy?: number | null
+          chapter: string
+          created_at?: string | null
+          current_level?: number | null
+          id?: string
+          last_practiced?: string | null
+          mastery_date?: string | null
+          questions_attempted?: number | null
+          stuck_days?: number | null
+          subject: string
+          topic: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          accuracy?: number | null
+          chapter?: string
+          created_at?: string | null
+          current_level?: number | null
+          id?: string
+          last_practiced?: string | null
+          mastery_date?: string | null
+          questions_attempted?: number | null
+          stuck_days?: number | null
+          subject?: string
+          topic?: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
       topic_priorities: {
         Row: {
-          created_at: string
+          chapter: string | null
           id: string
-          priority: number | null
-          status: string
+          last_updated: string | null
+          priority_score: number | null
+          questions_completed: number | null
+          questions_required: number | null
+          reason: string | null
+          status: string | null
           subject: string
+          target_date: string | null
           topic: string
-          updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
-          created_at?: string
+          chapter?: string | null
           id?: string
-          priority?: number | null
-          status?: string
+          last_updated?: string | null
+          priority_score?: number | null
+          questions_completed?: number | null
+          questions_required?: number | null
+          reason?: string | null
+          status?: string | null
           subject: string
+          target_date?: string | null
           topic: string
-          updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
-          created_at?: string
+          chapter?: string | null
           id?: string
-          priority?: number | null
-          status?: string
+          last_updated?: string | null
+          priority_score?: number | null
+          questions_completed?: number | null
+          questions_required?: number | null
+          reason?: string | null
+          status?: string | null
           subject?: string
+          target_date?: string | null
           topic?: string
-          updated_at?: string
-          user_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      topics: {
+        Row: {
+          chapter_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_free: boolean | null
+          topic_name: string
+          topic_number: number
+        }
+        Insert: {
+          chapter_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_free?: boolean | null
+          topic_name: string
+          topic_number: number
+        }
+        Update: {
+          chapter_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_free?: boolean | null
+          topic_name?: string
+          topic_number?: number
         }
         Relationships: []
       }
       usage_limits: {
         Row: {
-          created_at: string
           id: string
           last_reset_date: string | null
+          mock_tests_this_month: number | null
           questions_today: number | null
-          updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
-          created_at?: string
           id?: string
           last_reset_date?: string | null
+          mock_tests_this_month?: number | null
           questions_today?: number | null
-          updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
-          created_at?: string
           id?: string
           last_reset_date?: string | null
+          mock_tests_this_month?: number | null
           questions_today?: number | null
-          updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
-      user_content_access: {
+      user_badges: {
         Row: {
-          access_type: string
-          accessed_at: string
-          content_identifier: string
-          created_at: string
+          badge_id: string | null
+          earned_at: string | null
           id: string
-          subject: string
           user_id: string
         }
         Insert: {
-          access_type: string
-          accessed_at?: string
-          content_identifier: string
-          created_at?: string
+          badge_id?: string | null
+          earned_at?: string | null
           id?: string
-          subject: string
           user_id: string
         }
         Update: {
-          access_type?: string
-          accessed_at?: string
-          content_identifier?: string
-          created_at?: string
+          badge_id?: string | null
+          earned_at?: string | null
           id?: string
-          subject?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_challenge_progress: {
+        Row: {
+          challenge_id: string | null
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          current_progress: number | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          challenge_id?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          current_progress?: number | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          challenge_id?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          current_progress?: number | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_challenge_progress_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "daily_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_content_access: {
+        Row: {
+          accessed_at: string | null
+          content_identifier: string
+          content_type: string
+          id: string
+          subject: string | null
+          user_id: string | null
+        }
+        Insert: {
+          accessed_at?: string | null
+          content_identifier: string
+          content_type: string
+          id?: string
+          subject?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          accessed_at?: string | null
+          content_identifier?: string
+          content_type?: string
+          id?: string
+          subject?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_energy_logs: {
+        Row: {
+          accuracy: number | null
+          auto_rest_suggested: boolean | null
+          burnout_signals: string[] | null
+          created_at: string | null
+          date: string
+          energy_score: number | null
+          id: string
+          questions_attempted: number | null
+          study_hours: number | null
+          user_id: string | null
+        }
+        Insert: {
+          accuracy?: number | null
+          auto_rest_suggested?: boolean | null
+          burnout_signals?: string[] | null
+          created_at?: string | null
+          date: string
+          energy_score?: number | null
+          id?: string
+          questions_attempted?: number | null
+          study_hours?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          accuracy?: number | null
+          auto_rest_suggested?: boolean | null
+          burnout_signals?: string[] | null
+          created_at?: string | null
+          date?: string
+          energy_score?: number | null
+          id?: string
+          questions_attempted?: number | null
+          study_hours?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_rankings: {
+        Row: {
+          accuracy: number | null
+          cohort: string | null
+          created_at: string | null
+          date: string
+          percentile: number | null
+          questions_solved: number | null
+          rank: number | null
+          study_time_minutes: number | null
+          user_id: string
+        }
+        Insert: {
+          accuracy?: number | null
+          cohort?: string | null
+          created_at?: string | null
+          date: string
+          percentile?: number | null
+          questions_solved?: number | null
+          rank?: number | null
+          study_time_minutes?: number | null
+          user_id: string
+        }
+        Update: {
+          accuracy?: number | null
+          cohort?: string | null
+          created_at?: string | null
+          date?: string
+          percentile?: number | null
+          questions_solved?: number | null
+          rank?: number | null
+          study_time_minutes?: number | null
           user_id?: string
         }
         Relationships: []
       }
       user_roles: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
-          role: Database["public"]["Enums"]["app_role"]
+          role: string
           user_id: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id?: string
-          role: Database["public"]["Enums"]["app_role"]
+          role: string
           user_id: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          role?: string
           user_id?: string
         }
         Relationships: []
@@ -552,63 +1499,133 @@ export type Database = {
       user_stats: {
         Row: {
           correct_answers: number | null
-          created_at: string
+          created_at: string | null
+          daily_streak: number | null
           id: string
-          study_streak: number | null
-          total_questions: number | null
-          total_time_spent: number | null
-          updated_at: string
+          last_activity_date: string | null
+          rank_position: number | null
+          total_points: number | null
+          total_questions_answered: number | null
+          total_study_time: number | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           correct_answers?: number | null
-          created_at?: string
+          created_at?: string | null
+          daily_streak?: number | null
           id?: string
-          study_streak?: number | null
-          total_questions?: number | null
-          total_time_spent?: number | null
-          updated_at?: string
+          last_activity_date?: string | null
+          rank_position?: number | null
+          total_points?: number | null
+          total_questions_answered?: number | null
+          total_study_time?: number | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           correct_answers?: number | null
-          created_at?: string
+          created_at?: string | null
+          daily_streak?: number | null
           id?: string
-          study_streak?: number | null
-          total_questions?: number | null
-          total_time_spent?: number | null
-          updated_at?: string
+          last_activity_date?: string | null
+          rank_position?: number | null
+          total_points?: number | null
+          total_questions_answered?: number | null
+          total_study_time?: number | null
+          updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_stats_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_subscriptions: {
         Row: {
-          created_at: string
-          expires_at: string
+          created_at: string | null
+          expires_at: string | null
           id: string
           is_active: boolean | null
-          plan_id: string
-          updated_at: string
-          user_id: string
+          payment_id: string | null
+          plan_id: string | null
+          started_at: string | null
+          user_id: string | null
         }
         Insert: {
-          created_at?: string
-          expires_at: string
+          created_at?: string | null
+          expires_at?: string | null
           id?: string
           is_active?: boolean | null
-          plan_id: string
-          updated_at?: string
-          user_id: string
+          payment_id?: string | null
+          plan_id?: string | null
+          started_at?: string | null
+          user_id?: string | null
         }
         Update: {
-          created_at?: string
-          expires_at?: string
+          created_at?: string | null
+          expires_at?: string | null
           id?: string
           is_active?: boolean | null
-          plan_id?: string
-          updated_at?: string
-          user_id?: string
+          payment_id?: string | null
+          plan_id?: string | null
+          started_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weakness_analysis: {
+        Row: {
+          accuracy_percentage: number | null
+          attempts_count: number | null
+          avg_time_seconds: number | null
+          chapter: string | null
+          id: string
+          last_attempt_at: string | null
+          last_calculated: string | null
+          subject: string
+          topic: string | null
+          user_id: string | null
+          weakness_score: number | null
+        }
+        Insert: {
+          accuracy_percentage?: number | null
+          attempts_count?: number | null
+          avg_time_seconds?: number | null
+          chapter?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          last_calculated?: string | null
+          subject: string
+          topic?: string | null
+          user_id?: string | null
+          weakness_score?: number | null
+        }
+        Update: {
+          accuracy_percentage?: number | null
+          attempts_count?: number | null
+          avg_time_seconds?: number | null
+          chapter?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          last_calculated?: string | null
+          subject?: string
+          topic?: string | null
+          user_id?: string | null
+          weakness_score?: number | null
         }
         Relationships: []
       }
@@ -617,6 +1634,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_points: {
+        Args: {
+          p_action: string
+          p_description?: string
+          p_points: number
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      check_and_award_badges: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -626,11 +1656,17 @@ export type Database = {
       }
       validate_question_answer: {
         Args: { _question_id: string; _user_answer: string }
-        Returns: Json
+        Returns: {
+          attempt_id: string
+          correct_option: string
+          explanation: string
+          is_correct: boolean
+        }[]
       }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      user_role: "admin" | "user" | "premium"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -759,6 +1795,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      user_role: ["admin", "user", "premium"],
     },
   },
 } as const
