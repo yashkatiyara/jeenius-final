@@ -3,5 +3,9 @@ project_id = "zbclponzlwulmltwkjga"
 [functions.jeenie]
 verify_jwt = true
 
-[auth.jwt]
+# Add these:
+[functions.verify-payment]
+verify_jwt = true
+
+[functions.create-razorpay-order]
 verify_jwt = true
