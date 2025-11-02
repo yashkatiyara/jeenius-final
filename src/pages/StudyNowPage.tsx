@@ -340,8 +340,23 @@ const StudyNowPage = () => {
       }
   
       const { data, error } = await query.limit(50);
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        toast.info('🎉 You\'ve completed all questions in this topic!');
+        setLoading(false);
+        return;
+      }
       
-      // ... rest of code
+      const shuffled = data.sort(() => Math.random() - 0.5);
+      const selected = shuffled.slice(0, Math.min(25, shuffled.length));
+      
+      setPracticeQuestions(selected);
+      setCurrentQuestionIndex(0);
+      setSessionStats({ correct: 0, total: 0, streak: 0 });
+      setSelectedAnswer(null);
+      setShowResult(false);
+      setView('practice');
     } catch (error) {
       console.error('Error starting practice:', error);
       toast.error('Failed to start practice');
@@ -584,8 +599,9 @@ const handleAnswer = async (answer) => {
 
                     return (
                       <button 
+                        key={key} 
                         onClick={() => handleAnswer(letter)} 
-                        disabled={showResult || isSubmitting} // ✅ Add isSubmitting
+                        disabled={showResult || isSubmitting}
                         className={buttonClass}
                       >
                         <div className="flex items-center justify-between">
