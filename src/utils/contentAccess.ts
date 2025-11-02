@@ -27,14 +27,16 @@ export const canAccessChapter = async (
   chapterName: string
 ): Promise<AccessResult> => {
   try {
-    // 1. Get chapter info
-    const chapterQuery: any = supabase
+    // 1. Get chapter info - Cast query builder to any to prevent deep inference
+    const chapterPromise = (supabase
       .from('chapters')
       .select('id, is_free')
       .eq('subject', subject)
       .eq('title', chapterName)
-      .maybeSingle();
-    const { data: chapter } = await chapterQuery;
+      .maybeSingle()) as any;
+    
+    const chapterResult = await chapterPromise;
+    const chapter = chapterResult.data as { id: string; is_free: boolean } | null;
 
     if (!chapter) {
       return {
@@ -336,26 +338,27 @@ export const getUserUsageStats = async (userId: string): Promise<UsageStats> => 
       return acc;
     }, {} as Record<string, number>) || {};
 
-    // Chapters accessed (all time, unique)
-    const chaptersResult = await supabase
+    // Chapters accessed (all time, unique) - Use unknown to break type chain
+    const chaptersPromise = supabase
       .from('user_content_access')
       .select('content_identifier, subject')
       .eq('user_id', userId)
-      .eq('access_type', 'chapter');
+      .eq('content_type', 'chapter');
     
-    const chaptersAccessed = chaptersResult.data || [];
+    const chaptersResult = await (chaptersPromise as unknown as Promise<any>);
+    const chaptersAccessed = (chaptersResult.data || []) as Array<{ content_identifier: string; subject: string }>;
 
     const uniqueChapters = new Set(
       chaptersAccessed?.map(c => `${c.subject}-${c.content_identifier}`) || []
     );
 
-    // Questions attempted today
-    const questionsTodayResult = await supabase
+    // Questions attempted today - Cast query builder to any
+    const questionsTodayResult = (await supabase
       .from('user_content_access')
       .select('id')
       .eq('user_id', userId)
-      .eq('access_type', 'question')
-      .gte('accessed_at', today.toISOString());
+      .eq('content_type', 'question')
+      .gte('accessed_at', today.toISOString())) as any;
     
     const questionsToday = questionsTodayResult.data || [];
 
