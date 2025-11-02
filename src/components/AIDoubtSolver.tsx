@@ -358,7 +358,12 @@ Reply in Hinglish (6-8 lines). Explain the concept, show approach, point out mis
                 )}
                   <div 
                     className="text-sm leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(msg.content) }}
+                    dangerouslySetInnerHTML={{ 
+                      __html: DOMPurify.sanitize(msg.content, {
+                        ALLOWED_TAGS: ['strong', 'em', 'code', 'br', 'span'],
+                        ALLOWED_ATTR: ['class']
+                      }) 
+                    }}
                   />
               </div>
             </div>
