@@ -311,68 +311,58 @@ const StudyNowPage = () => {
   };
 
   const startPractice = async (topic = null) => {
-  setLoading(true);
-  setSelectedTopic(topic);
+    setLoading(true);
+    setSelectedTopic(topic);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { data: attemptedQuestions } = await supabase
+        .from('question_attempts')
+        .select('question_id')
+        .eq('user_id', user.id);
+      
+      const attemptedIds = attemptedQuestions?.map(a => a.question_id) || [];
   
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    // ✅ Get already attempted question IDs
-    const { data: attemptedQuestions } = await supabase
-      .from('question_attempts')
-      .select('question_id')
-      .eq('user_id', user.id);
-    
-    const attemptedIds = attemptedQuestions?.map(a => a.question_id) || [];
-
-    // ✅ Fetch only NON-attempted questions
-    let query = supabase
-      .from('questions')
-      .select('*')
-      .eq('subject', selectedSubject)
-      .eq('chapter', selectedChapter)
-      .not('id', 'in', `(${attemptedIds.join(',') || 0})`); // Exclude attempted
-
-    if (topic) {
-      query = query.eq('topic', topic);
-    }
-
-    const { data, error } = await query.limit(50);
-    
-    if (error) throw error;
-    
-    if (!data || data.length === 0) {
-      toast.info('🎉 You\'ve completed all questions in this topic!');
+      let query = supabase
+        .from('questions')
+        .select('*')
+        .eq('subject', selectedSubject)
+        .eq('chapter', selectedChapter);
+  
+      // ✅ ONLY apply filter if there are attempted IDs
+      if (attemptedIds.length > 0) {
+        query = query.not('id', 'in', `(${attemptedIds.join(',')})`);
+      }
+  
+      if (topic) {
+        query = query.eq('topic', topic);
+      }
+  
+      const { data, error } = await query.limit(50);
+      
+      // ... rest of code
+    } catch (error) {
+      console.error('Error starting practice:', error);
+      toast.error('Failed to start practice');
+    } finally {
       setLoading(false);
-      return;
     }
+  };
 
-    const shuffled = data.sort(() => Math.random() - 0.5);
-    const selected = shuffled.slice(0, Math.min(25, shuffled.length));
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    setPracticeQuestions(selected);
-    setCurrentQuestionIndex(0);
-    setSessionStats({ correct: 0, total: 0, streak: 0 });
-    setSelectedAnswer(null);
-    setShowResult(false);
-    setView('practice');
-  } catch (error) {
-    console.error('Error starting practice:', error);
-    toast.error('Failed to start practice');
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const handleAnswer = async (answer) => {
+const handleAnswer = async (answer) => {
+  // ✅ Prevent multiple submissions
+  if (isSubmitting || showResult) return;
+  
   if (!isPro && dailyQuestionsUsed >= DAILY_LIMIT_FREE) {
-    toast.error('Daily limit reached! Upgrade to Pro for unlimited practice.');
+    toast.error('Daily limit reached!');
     setTimeout(() => navigate('/subscription-plans'), 2000);
     return;
   }
   
-  if (showResult) return;
-  
+  setIsSubmitting(true); // ✅ Lock the function
   setSelectedAnswer(answer);
   setShowResult(true);
   
@@ -386,114 +376,77 @@ const StudyNowPage = () => {
     streak: isCorrect ? prev.streak + 1 : 0
   }));
 
-  (async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.id) {
-        console.error('No user found');
-        return;
-      }
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.id) return;
 
-      // ✅ FIRST: Check if already attempted
-      const { data: existingAttempt, error: checkError } = await supabase
-        .from('question_attempts')
-        .select('id')
+    // Check if already attempted
+    const { data: existingAttempt } = await supabase
+      .from('question_attempts')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('question_id', question.id)
+      .maybeSingle();
+
+    if (existingAttempt) {
+      console.log('⚠️ Already attempted');
+      return;
+    }
+
+    // Insert new attempt
+    const { error: insertError } = await supabase
+      .from('question_attempts')
+      .insert({
+        user_id: user.id,
+        question_id: question.id,
+        selected_option: `option_${answer.toLowerCase()}`,
+        is_correct: isCorrect,
+        time_taken: 30,
+        mode: 'study'
+      });
+
+    if (insertError && insertError.code !== '23505') {
+      console.error('Insert error:', insertError);
+    }
+
+    // Update usage limits
+    if (!isPro) {
+      const today = new Date().toISOString().split('T')[0];
+      const { data: usage } = await supabase
+        .from('usage_limits')
+        .select('*')
         .eq('user_id', user.id)
-        .eq('question_id', question.id)
         .maybeSingle();
 
-      if (checkError) {
-        console.error('Check error:', checkError);
-      }
-
-      // ✅ If already exists, just skip silently
-      if (existingAttempt) {
-        console.log('⚠️ Already attempted, skipping database save');
-        return; // Exit early, don't try to insert
-      }
-
-      // ✅ ONLY insert if NOT exists
-      console.log('💾 Attempting to save new attempt...');
-      
-      const { data: insertData, error: insertError } = await supabase
-        .from('question_attempts')
-        .insert([{  // ✅ Wrap in array
-          user_id: user.id,
-          question_id: question.id,
-          selected_option: `option_${answer.toLowerCase()}`,
-          is_correct: isCorrect,
-          time_taken: 30,
-          mode: 'study'
-        }])
-        .select();
-
-      if (insertError) {
-        // ✅ If it's a duplicate error, ignore it
-        if (insertError.code === '23505') {
-          console.log('⚠️ Duplicate detected (race condition), ignoring');
-          return;
-        }
-        console.error('❌ Insert failed:', insertError);
-        return;
-      }
-
-      console.log('✅ Attempt saved:', insertData);
-
-      // Update usage limits for free users
-      if (!isPro) {
-        const today = new Date().toISOString().split('T')[0];
-        
-        const { data: usage } = await supabase
+      if (usage) {
+        const needsReset = usage.last_reset_date !== today;
+        await supabase
           .from('usage_limits')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (usage) {
-          const needsReset = usage.last_reset_date !== today;
-          await supabase
-            .from('usage_limits')
-            .update({
-              questions_today: needsReset ? 1 : (usage.questions_today || 0) + 1,
-              last_reset_date: today
-            })
-            .eq('user_id', user.id);
-          
-          setDailyQuestionsUsed(needsReset ? 1 : (usage.questions_today || 0) + 1);
-        } else {
-          await supabase
-            .from('usage_limits')
-            .insert({
-              user_id: user.id,
-              questions_today: 1,
-              last_reset_date: today
-            });
-          setDailyQuestionsUsed(1);
-        }
-
-        const newCount = dailyQuestionsUsed + 1;
-        if (newCount >= DAILY_LIMIT_FREE - 3 && newCount < DAILY_LIMIT_FREE) {
-          toast.warning(`⚠️ ${DAILY_LIMIT_FREE - newCount} questions left!`);
-        }
+          .update({
+            questions_today: needsReset ? 1 : (usage.questions_today || 0) + 1,
+            last_reset_date: today
+          })
+          .eq('user_id', user.id);
+        
+        setDailyQuestionsUsed(needsReset ? 1 : (usage.questions_today || 0) + 1);
+      } else {
+        await supabase
+          .from('usage_limits')
+          .insert({
+            user_id: user.id,
+            questions_today: 1,
+            last_reset_date: today
+          });
+        setDailyQuestionsUsed(1);
       }
-
-      // Topic mastery (optional, non-blocking)
-      if (selectedTopic) {
-        supabase.functions.invoke('calculate-topic-mastery', {
-          body: {
-            subject: selectedSubject,
-            chapter: selectedChapter,
-            topic: selectedTopic
-          }
-        }).catch(err => console.log('Mastery:', err));
-      }
-
-    } catch (error) {
-      console.error('❌ Outer error:', error);
     }
-  })();
 
-  setTimeout(() => nextQuestion(), 800);
+  } catch (error) {
+    console.error('Error:', error);
+  } finally {
+    setIsSubmitting(false); // ✅ Unlock
+    setTimeout(() => nextQuestion(), 800);
+  }
 };
   
   const nextQuestion = () => {
@@ -631,9 +584,8 @@ const StudyNowPage = () => {
 
                     return (
                       <button 
-                        key={key} 
                         onClick={() => handleAnswer(letter)} 
-                        disabled={showResult}
+                        disabled={showResult || isSubmitting} // ✅ Add isSubmitting
                         className={buttonClass}
                       >
                         <div className="flex items-center justify-between">
