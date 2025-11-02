@@ -27,16 +27,13 @@ export const canAccessChapter = async (
   chapterName: string
 ): Promise<AccessResult> => {
   try {
-    // 1. Get chapter info - Cast query builder to any to prevent deep inference
-    const chapterPromise = (supabase
+    // 1. Get chapter info - Cast to avoid deep type inference
+    const { data: chapter } = await supabase
       .from('chapters')
       .select('id, is_free')
       .eq('subject', subject)
-      .eq('title', chapterName)
-      .maybeSingle()) as any;
-    
-    const chapterResult = await chapterPromise;
-    const chapter = chapterResult.data as { id: string; is_free: boolean } | null;
+      .eq('chapter_name', chapterName)
+      .maybeSingle() as { data: { id: string; is_free: boolean } | null };
 
     if (!chapter) {
       return {
@@ -338,39 +335,38 @@ export const getUserUsageStats = async (userId: string): Promise<UsageStats> => 
       return acc;
     }, {} as Record<string, number>) || {};
 
-    // Chapters accessed (all time, unique) - Use unknown to break type chain
-    const chaptersPromise = supabase
+    // Chapters accessed (all time, unique) - Simplify type
+    const chaptersResult = await supabase
       .from('user_content_access')
       .select('content_identifier, subject')
       .eq('user_id', userId)
-      .eq('content_type', 'chapter');
+      .eq('content_type', 'chapter') as { data: Array<{ content_identifier: string; subject: string }> | null; error: any };
     
-    const chaptersResult = await (chaptersPromise as unknown as Promise<any>);
-    const chaptersAccessed = (chaptersResult.data || []) as Array<{ content_identifier: string; subject: string }>;
+    const chaptersAccessed = chaptersResult.data || [];
 
     const uniqueChapters = new Set(
       chaptersAccessed?.map(c => `${c.subject}-${c.content_identifier}`) || []
     );
 
-    // Questions attempted today - Cast query builder to any
-    const questionsTodayResult = (await supabase
+    // Questions attempted today - Simplify type
+    const questionsTodayResult = await supabase
       .from('user_content_access')
       .select('id')
       .eq('user_id', userId)
       .eq('content_type', 'question')
-      .gte('accessed_at', today.toISOString())) as any;
+      .gte('accessed_at', today.toISOString()) as { data: Array<{ id: string }> | null; error: any };
     
     const questionsToday = questionsTodayResult.data || [];
 
-    // AI queries today
-    const aiQueriesTodayResult = await supabase
+    // AI queries today - Cast to avoid deep type inference
+    const { data: aiQueriesData } = await supabase
       .from('user_content_access')
       .select('id')
       .eq('user_id', userId)
-      .eq('access_type', 'ai_query')
-      .gte('accessed_at', today.toISOString());
+      .eq('content_type', 'ai_query')
+      .gte('accessed_at', today.toISOString()) as { data: Array<{ id: string }> | null };
     
-    const aiQueriesToday = aiQueriesTodayResult.data || [];
+    const aiQueriesToday = aiQueriesData || [];
 
     return {
       chaptersAccessed: uniqueChapters.size,
