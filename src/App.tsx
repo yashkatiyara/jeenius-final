@@ -62,7 +62,6 @@ const App = () => (
             {/* Public Routes */}
             <Route path="/" element={<Index />} />
             <Route path="/why-us" element={<WhyUsPage />} />
-            <Route path="/features" element={<FeaturesPage />} />
             
             {/* Authentication Routes */}
             <Route path="/login" element={<Login />} />
@@ -82,8 +81,6 @@ const App = () => (
 
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/subscription-plans" element={<SubscriptionPlans />} />
-
-            <Route path="/debug-subscription" element={<DebugSubscription />} />
             
             {/* Gamification & AI Planner */}
             <Route
@@ -94,17 +91,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            
-            {/* Protected Routes - Main Dashboard */}
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <EnhancedDashboard />
-                </ProtectedRoute>
-              } 
-            />
-
+          
             {/* AI Study Planner */}
             <Route
               path="/ai-planner"
@@ -131,16 +118,6 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <TestPage />
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Lesson Builder */}
-            <Route
-              path="/lesson-builder"
-              element={
-                <ProtectedRoute>
-                  <LessonBuilderPage />
                 </ProtectedRoute>
               }
             />
@@ -175,44 +152,6 @@ const App = () => (
               }
             />
             
-            {/* Mobile Routes */}
-            <Route
-              path="/mobile/dashboard"
-              element={
-                <ProtectedRoute>
-                  <MobileDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/mobile/learning"
-              element={
-                <ProtectedRoute>
-                  <MobileLearning />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/mobile/planner"
-              element={
-                <ProtectedRoute>
-                  <MobileStudyPlanner />
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Lesson Detail Route - Placeholder for future implementation */}
-            <Route 
-              path="/lesson/:id" 
-              element={
-                <div className="min-h-screen bg-gray-50 pt-24">
-                  <div className="container mx-auto px-4 text-center">
-                    <h1 className="text-2xl font-bold">Lesson Detail - Coming Soon</h1>
-                    <p className="text-gray-600 mt-4">This lesson detail page will be implemented soon.</p>
-                  </div>
-                </div>
-              } 
-            />
             
             {/* Catch-all route - 404 */}
             <Route path="*" element={<NotFound />} />
