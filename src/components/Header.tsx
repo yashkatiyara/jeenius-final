@@ -44,43 +44,23 @@ const Header = () => {
   // Simplified and more reliable logout function
   const handleLogout = async () => {
     try {
-      console.log('🚪 Logging out...');
-      
-      // Close mobile menu first
       setIsMenuOpen(false);
       
-      // Clear localStorage immediately
+      // Clear localStorage first
       localStorage.clear();
-      console.log('🧹 Cleared localStorage');
       
-      // Call Supabase signOut
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('❌ Supabase signOut error:', error);
-      } else {
-        console.log('✅ Supabase signOut successful');
-      }
+      // Sign out from Supabase
+      await supabase.auth.signOut();
       
-      // Call AuthContext signOut if available
-      if (signOut && typeof signOut === 'function') {
-        try {
-          await signOut();
-          console.log('✅ AuthContext signOut successful');
-        } catch (authError) {
-          console.error('AuthContext signOut error:', authError);
-        }
-      }
+      // Call context signOut
+      if (signOut) await signOut();
       
-      // Redirect to home page with replace to prevent back navigation
-      window.location.replace('/');
-      
+      // Force reload to clear all state
+      window.location.href = '/';
     } catch (error) {
-      console.error('❌ Logout error:', error);
-      
-      // Fallback: Force logout anyway
+      console.error('Logout error:', error);
       localStorage.clear();
-      setIsMenuOpen(false);
-      window.location.replace('/');
+      window.location.href = '/';
     }
   };
 
