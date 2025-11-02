@@ -81,16 +81,6 @@ const App = () => (
 
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/subscription-plans" element={<SubscriptionPlans />} />
-            
-            {/* Gamification & AI Planner */}
-            <Route
-              path="/progress"
-              element={
-                <ProtectedRoute>
-                  <GamificationPage />
-                </ProtectedRoute>
-              }
-            />
           
             {/* AI Study Planner */}
             <Route
