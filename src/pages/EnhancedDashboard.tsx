@@ -471,6 +471,87 @@ const EnhancedDashboard = () => {
           </div>
         )}
 
+        {/* JEEnius Points & Level Card - Add after welcome banner */}
+        <Card className="mb-4 border-2 border-purple-200 bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 shadow-xl overflow-hidden">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              {/* Points Display */}
+              <div className="flex-1 w-full">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="bg-gradient-to-br from-purple-600 to-pink-600 p-3 rounded-xl">
+                    <Sparkles className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-slate-600 font-medium uppercase tracking-wider">JEEnius Points</p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                      {profile?.total_points?.toLocaleString() || 0}
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Level Progress */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold text-purple-700">
+                      {(() => {
+                        const points = profile?.total_points || 0;
+                        if (points >= 5000) return '🏆 JEE Master';
+                        if (points >= 3000) return '⚡ JEE Legend';
+                        if (points >= 1500) return '🎯 JEE Champion';
+                        if (points >= 500) return '💪 JEE Warrior';
+                        return '🌱 JEE Rookie';
+                      })()}
+                    </span>
+                    <span className="text-xs text-slate-600">
+                      {(() => {
+                        const points = profile?.total_points || 0;
+                        if (points >= 5000) return 'Max Level!';
+                        if (points >= 3000) return `${5000 - points} to Master`;
+                        if (points >= 1500) return `${3000 - points} to Legend`;
+                        if (points >= 500) return `${1500 - points} to Champion`;
+                        return `${500 - points} to Warrior`;
+                      })()}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={(() => {
+                      const points = profile?.total_points || 0;
+                      if (points >= 5000) return 100;
+                      if (points >= 3000) return ((points - 3000) / 2000) * 100;
+                      if (points >= 1500) return ((points - 1500) / 1500) * 100;
+                      if (points >= 500) return ((points - 500) / 1000) * 100;
+                      return (points / 500) * 100;
+                    })()} 
+                    className="h-2 bg-purple-100"
+                  />
+                </div>
+              </div>
+        
+              {/* Recent Badges */}
+              <div className="border-l-2 border-purple-200 pl-4">
+                <p className="text-xs text-slate-600 font-medium mb-2">Recent Badges</p>
+                <div className="flex gap-2">
+                  <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center shadow-lg">
+                    <Trophy className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg">
+                    <Star className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center shadow-lg">
+                    <Flame className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                <button 
+                  onClick={() => navigate('/achievements')}
+                  className="text-xs text-purple-600 hover:text-purple-700 font-semibold mt-2"
+                >
+                  View All →
+                </button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 mt-6">
           <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/50 shadow-xl hover:shadow-2xl transition-all hover:scale-105">
             <CardContent className="p-3 sm:p-4">
