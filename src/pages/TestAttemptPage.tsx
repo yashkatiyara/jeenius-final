@@ -40,6 +40,7 @@ interface Question {
 interface TestSession {
   id: string;
   title: string;
+  subject?: string;
   questions: Question[];
   duration: number;
   startTime: string;
@@ -244,10 +245,10 @@ const TestAttemptPage = () => {
     try {
       await supabase.from("test_sessions").insert([{
         user_id: user.id,
-        test_type: testSession.title.split(' - ')[0] || "General",
+        subject: testSession.subject || 'General',
         total_questions: testSession.questions.length,
-        score: correctAnswers,
-        time_taken: Math.round(testSession.duration * 60),
+        correct_answers: correctAnswers,
+        total_time: Math.round(testSession.duration * 60),
         completed_at: new Date().toISOString()
       }]);
 

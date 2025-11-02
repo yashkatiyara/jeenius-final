@@ -28,12 +28,13 @@ export const canAccessChapter = async (
 ): Promise<AccessResult> => {
   try {
     // 1. Get chapter info
-    const { data: chapter } = await supabase
+    const chapterQuery: any = supabase
       .from('chapters')
       .select('id, is_free')
       .eq('subject', subject)
       .eq('title', chapterName)
       .maybeSingle();
+    const { data: chapter } = await chapterQuery;
 
     if (!chapter) {
       return {
@@ -69,11 +70,11 @@ export const canAccessChapter = async (
       .single();
 
     // Get all chapters user has accessed
-    const accessedResult = await supabase
+    const accessedResult = (await supabase
       .from('user_content_access')
       .select('content_identifier, subject')
       .eq('user_id', userId)
-      .eq('access_type', 'chapter');
+      .eq('content_type', 'chapter')) as any;
     
     const accessedChapters = accessedResult.data || [];
 
@@ -92,7 +93,7 @@ export const canAccessChapter = async (
       if (!alreadyAccessed) {
         await supabase.from('user_content_access').insert([{
           user_id: userId,
-          access_type: 'chapter',
+          content_type: 'chapter',
           content_identifier: chapterName,
           subject: subject
         }]);
@@ -144,12 +145,13 @@ export const canAttemptQuestion = async (userId: string): Promise<AccessResult> 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const attemptsResult = await supabase
+    const attemptsQuery = supabase
       .from('user_content_access')
       .select('id')
       .eq('user_id', userId)
-      .eq('access_type', 'question')
+      .eq('content_type', 'question')
       .gte('accessed_at', today.toISOString());
+    const attemptsResult: any = await attemptsQuery;
     
     const todayAttempts = attemptsResult.data || [];
 
@@ -196,7 +198,7 @@ export const trackQuestionAttempt = async (
   try {
     await supabase.from('user_content_access').insert([{
       user_id: userId,
-      access_type: 'question',
+      content_type: 'question',
       content_identifier: questionId,
       subject: ''
     }]);
@@ -227,12 +229,13 @@ export const canUseAI = async (userId: string): Promise<AccessResult> => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const queriesResult = await supabase
+    const queriesQuery: any = supabase
       .from('user_content_access')
       .select('id')
       .eq('user_id', userId)
-      .eq('access_type', 'ai_query')
+      .eq('content_type', 'ai_query')
       .gte('accessed_at', today.toISOString());
+    const queriesResult = await queriesQuery;
     
     const todayQueries = queriesResult.data || [];
 
@@ -276,7 +279,7 @@ export const trackAIQuery = async (userId: string): Promise<void> => {
   try {
     await supabase.from('user_content_access').insert([{
       user_id: userId,
-      access_type: 'ai_query',
+      content_type: 'ai_query',
       content_identifier: 'ai_query',
       subject: ''
     }]);
@@ -424,14 +427,14 @@ export const getAccessibleChapters = async (
       query.eq('subject', subject);
     }
 
-    const { data: allChapters } = await query;
+    const { data: allChapters } = (await query) as any;
 
     // Get accessed chapters
-    const accessedChaptersResult = await supabase
+    const accessedChaptersResult = (await supabase
       .from('user_content_access')
       .select('content_identifier, subject')
       .eq('user_id', userId)
-      .eq('access_type', 'chapter');
+      .eq('content_type', 'chapter')) as any;
     
     const accessedChapters = accessedChaptersResult.data || [];
 
@@ -449,7 +452,7 @@ export const getAccessibleChapters = async (
     const limitValue = freeLimit?.limit_value || 5;
 
     return allChapters?.map(chapter => {
-      const key = `${chapter.subject}-${chapter.title}`;
+      const key = `${chapter.subject}-${chapter.chapter_name}`;
       const alreadyAccessed = accessedSet.has(key);
       const canAccess = chapter.is_free || alreadyAccessed || accessedSet.size < limitValue;
 

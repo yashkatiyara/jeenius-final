@@ -10,7 +10,7 @@ export interface Question {
   subject: string;
   topic: string;
   difficulty_level: number;
-  chapter: number;
+  chapter: string | number;
 }
 
 export interface QuestionAttempt {
@@ -212,8 +212,9 @@ const getRandomQuestions = async (
         throw new Error('Failed to validate answer');
       }
 
-      // Type cast the response data
-      const result = data as {
+      // Type cast the response data - RPC returns array
+      const result = (data as any)?.[0] || data;
+      const typedResult = result as {
         attempt_id: string;
         is_correct: boolean;
         correct_option: string;

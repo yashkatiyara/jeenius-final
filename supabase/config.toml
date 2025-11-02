@@ -1,1 +1,4 @@
 project_id = "zbclponzlwulmltwkjga"
+
+[functions.jeenie]
+verify_jwt = false

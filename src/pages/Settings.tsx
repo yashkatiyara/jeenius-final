@@ -97,8 +97,8 @@ const Settings = () => {
           phone: profileData.phone || '',
           city: profileData.city || '',
           state: profileData.state || '',
-          grade: profileData.grade === '11th' ? '11th' : 
-                 profileData.grade === '12th' ? '12th' : 
+          grade: profileData.grade === 11 ? '11th' : 
+                 profileData.grade === 12 ? '12th' : 
                  '12th-pass',
           target_exam: profileData.target_exam || 'JEE'
         });
@@ -139,13 +139,14 @@ const Settings = () => {
       }
 
       // Prepare update data
+      const gradeNumber = profile.grade === '11th' ? 11 : profile.grade === '12th' ? 12 : 13;
       const updateData = {
         full_name: `${profile.firstName.trim()} ${profile.lastName.trim()}`.trim(),
         email: profile.email.trim(),
         phone: profile.phone?.trim() || null,
         city: profile.city?.trim() || null,
         state: profile.state?.trim() || null,
-        grade: profile.grade,
+        grade: gradeNumber,
         target_exam: profile.target_exam || 'JEE',
         updated_at: new Date().toISOString()
       };
