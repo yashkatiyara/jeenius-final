@@ -4,6 +4,7 @@ import { checkIsPremium } from '@/utils/premiumChecker';
 import { X, Send, Loader2, Sparkles, Flame, AlertCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import DOMPurify from 'dompurify';
 
 interface Message {
   role: 'user' | 'assistant';
