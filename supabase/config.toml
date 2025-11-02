@@ -2,3 +2,6 @@ project_id = "zbclponzlwulmltwkjga"
 
 [functions.jeenie]
 verify_jwt = true
+
+[auth.jwt]
+verify_jwt = true
