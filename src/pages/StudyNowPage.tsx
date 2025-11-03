@@ -577,7 +577,7 @@ const handleAnswer = async (answer) => {
                   </div>
                 </div>
 
-                <div className="space-y-2 sm:space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
                   {['option_a', 'option_b', 'option_c', 'option_d'].map((key, idx) => {
                     const letter = String.fromCharCode(65 + idx);
                     const isSelected = selectedAnswer === letter;
