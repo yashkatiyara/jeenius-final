@@ -486,14 +486,14 @@ const handleAnswer = async (answer) => {
     const progress = ((currentQuestionIndex + 1) / practiceQuestions.length) * 100;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col">
         <Header />
-        <div className="pt-24 pb-12">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
+        <div className="flex-1 overflow-y-auto pt-16 sm:pt-20 pb-4">
+          <div className="container mx-auto px-3 sm:px-4 max-w-4xl">
             
             <Button 
               variant="outline"
-              className="mb-6 border-2 border-blue-600"
+              className="mb-3 border-2 border-blue-600 text-sm"
               onClick={() => setView('topics')}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -501,12 +501,12 @@ const handleAnswer = async (answer) => {
             </Button>
 
             {!isPro && (
-              <div className="mb-4 p-4 rounded-xl bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-300 shadow-md">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
+              <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-300 shadow-md">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex-1 w-full">
                     <div className="flex items-center gap-2 mb-1">
-                      <Target className="w-5 h-5 text-orange-600" />
-                      <p className="font-bold text-orange-900 text-lg">
+                      <Target className="w-4 h-4 text-orange-600" />
+                      <p className="font-bold text-orange-900 text-sm sm:text-base">
                         Daily Progress: {dailyQuestionsUsed}/{DAILY_LIMIT_FREE} Questions
                       </p>
                     </div>
@@ -516,7 +516,7 @@ const handleAnswer = async (answer) => {
                         style={{ width: `${(dailyQuestionsUsed / DAILY_LIMIT_FREE) * 100}%` }}
                       ></div>
                     </div>
-                    <p className="text-sm text-orange-700">
+                    <p className="text-xs sm:text-sm text-orange-700">
                       {dailyQuestionsUsed >= DAILY_LIMIT_FREE - 5 ? (
                         <span className="font-semibold">⚠️ Almost at your limit! Upgrade for unlimited practice.</span>
                       ) : (
@@ -526,7 +526,7 @@ const handleAnswer = async (answer) => {
                   </div>
                   <Button
                     onClick={() => navigate('/subscription-plans')}
-                    className="ml-4 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold px-6 py-3 shadow-lg"
+                    className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold px-4 py-2 shadow-lg text-sm"
                   >
                     <Sparkles className="w-4 h-4 mr-2" />
                     Upgrade Now
@@ -535,23 +535,25 @@ const handleAnswer = async (answer) => {
               </div>
             )}
 
-            <Card className="mb-6 border-2 border-blue-200 shadow-xl bg-white">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+            <Card className="mb-3 border-2 border-blue-200 shadow-xl bg-white">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs sm:text-sm">
                       Question {currentQuestionIndex + 1}/{practiceQuestions.length}
                     </Badge>
-                    <Badge variant="outline" className="text-sm">
+                    <Badge variant="outline" className="text-xs hidden sm:inline-flex">
                       {selectedSubject} • {selectedChapter}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-gray-900">
+                      <div className="text-lg sm:text-2xl font-bold text-gray-900">
                         {sessionStats.correct}/{sessionStats.total}
                       </div>
-                      <div className="text-xs text-gray-500">Correct</div>
+                      <div className="text-xs text-gray-500">
+                        {sessionStats.total > 0 ? Math.round((sessionStats.correct / sessionStats.total) * 100) : 0}% Accurate
+                      </div>
                     </div>
                     {sessionStats.streak > 2 && (
                       <Badge className="bg-orange-500 text-white animate-pulse">
@@ -564,25 +566,25 @@ const handleAnswer = async (answer) => {
               </CardContent>
             </Card>
 
-            <Card className="border-2 border-blue-200 shadow-xl bg-white mb-6">
-              <CardContent className="p-6">
-                <div className="mb-6">
-                  <div className="flex items-start gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold shrink-0">
+            <Card className="border-2 border-blue-200 shadow-xl bg-white mb-3">
+              <CardContent className="p-4 sm:p-6">
+                <div className="mb-4 sm:mb-6">
+                  <div className="flex items-start gap-2 sm:gap-3 mb-4">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold shrink-0 text-sm sm:text-base">
                       {currentQuestionIndex + 1}
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900 flex-1">{question.question}</h2>
+                    <h2 className="text-base sm:text-xl font-bold text-gray-900 flex-1">{question.question}</h2>
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   {['option_a', 'option_b', 'option_c', 'option_d'].map((key, idx) => {
                     const letter = String.fromCharCode(65 + idx);
                     const isSelected = selectedAnswer === letter;
                     const correctLetter = question.correct_option.replace('option_', '').toUpperCase();
                     const isCorrect = letter === correctLetter;
         
-                    let buttonClass = 'w-full text-left p-4 rounded-xl border-2 transition-all ';
+                    let buttonClass = 'w-full text-left p-3 sm:p-4 rounded-xl border-2 transition-all ';
                     if (showResult) {
                       if (isCorrect) {
                         buttonClass += 'border-green-500 bg-gradient-to-r from-green-50 to-emerald-50';
@@ -605,41 +607,41 @@ const handleAnswer = async (answer) => {
                         className={buttonClass}
                       >
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3 flex-1">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold shadow-md ${
+                          <div className="flex items-center gap-2 sm:gap-3 flex-1">
+                            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center font-bold shadow-md text-sm sm:text-base ${
                               showResult && isCorrect ? 'bg-green-500 text-white' :
                               showResult && isSelected && !isCorrect ? 'bg-red-500 text-white' :
                               isSelected ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
                             }`}>
                               {letter}
                             </div>
-                            <span className="text-base font-medium text-gray-900">{question[key]}</span>
+                            <span className="text-sm sm:text-base font-medium text-gray-900">{question[key]}</span>
                           </div>
-                          {showResult && isCorrect && <CheckCircle2 className="w-6 h-6 text-green-600" />}
-                          {showResult && isSelected && !isCorrect && <XCircle className="w-6 h-6 text-red-600" />}
+                          {showResult && isCorrect && <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />}
+                          {showResult && isSelected && !isCorrect && <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />}
                         </div>
                       </button>
                     );
                   })}
                 </div>
 
-                <div className="mt-6 flex justify-center">
+                <div className="mt-4 sm:mt-6 flex justify-center">
                   <Button
                     onClick={() => setShowAIModal(true)}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white font-semibold shadow-lg px-6 py-3"
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white font-semibold shadow-lg px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base"
                   >
-                    <Sparkles className="w-5 h-5 mr-2" />
+                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                     Ask AI for Help
                   </Button>
                 </div>
                 
                 {showResult && question.explanation && (
-                  <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-600">
-                    <div className="flex items-start gap-3">
-                      <Lightbulb className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <div className="mt-4 sm:mt-6 p-3 sm:p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-600">
+                    <div className="flex items-start gap-2 sm:gap-3">
+                      <Lightbulb className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 mt-0.5" />
                       <div>
-                        <p className="font-bold text-blue-900 mb-2">Explanation</p>
-                        <p className="text-gray-700 text-sm leading-relaxed">{question.explanation}</p>
+                        <p className="font-bold text-blue-900 mb-2 text-sm sm:text-base">Explanation</p>
+                        <p className="text-gray-700 text-xs sm:text-sm leading-relaxed">{question.explanation}</p>
                       </div>
                     </div>
                   </div>
@@ -668,54 +670,27 @@ const handleAnswer = async (answer) => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         <Header />
-        <div className="pt-24 pb-12">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-            <div className="mb-12 text-center">
-              <div className="max-w-3xl mx-auto p-8 rounded-2xl bg-white border border-gray-200 shadow-lg">
-                <div className="flex justify-center gap-3">
-                  <Badge className="bg-green-50 text-green-700 border-green-200 px-4 py-1.5">
-                    <Target className="w-4 h-4 mr-1" />
-                    Attempted: {userStats.attempted}
-                  </Badge>
-                  <Badge className="bg-blue-50 text-blue-700 border-blue-200 px-4 py-1.5">
-                    <Trophy className="w-4 h-4 mr-1" />
-                    Accuracy: {userStats.accuracy}%
-                  </Badge>
-                </div>
-              </div>
-            </div>  
-            <div className="grid md:grid-cols-3 gap-6">
+        <div className="pt-20 sm:pt-24 pb-8 sm:pb-12">
+          <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-7xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
               {subjects.map((subject) => (
                 <Card 
                   key={subject.name}
                   onClick={() => loadChapters(subject.name)}
                   className={`group cursor-pointer hover:scale-105 transition-all duration-300 border-2 ${subject.borderColor} shadow-lg hover:shadow-xl overflow-hidden`}
                 >
-                  <div className={`p-6 text-center bg-gradient-to-br ${subject.bgColor}`}>
-                    <div className="text-5xl mb-3">{subject.emoji}</div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">{subject.name}</h3>
-                    <Badge className="bg-white/80 text-gray-700">AI Powered</Badge>
+                  <div className={`p-4 sm:p-6 text-center bg-gradient-to-br ${subject.bgColor}`}>
+                    <div className="text-4xl sm:text-5xl mb-2 sm:mb-3">{subject.emoji}</div>
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{subject.name}</h3>
+                    <Badge className="bg-white/80 text-gray-700 text-xs sm:text-sm">AI Powered</Badge>
                   </div>
-                  <CardContent className="p-6">
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-gray-900">{subject.totalQuestions}</div>
-                        <div className="text-xs text-gray-500">Questions</div>
-                      </div>
-                      {subject.attempted > 0 && (
-                        <div className="text-center">
-                          <div className={`text-2xl font-bold ${
-                            subject.accuracy >= 80 ? 'text-green-600' : 
-                            subject.accuracy >= 60 ? 'text-yellow-600' : 'text-red-600'
-                          }`}>
-                            {subject.accuracy}%
-                          </div>
-                          <div className="text-xs text-gray-500">Accuracy</div>
-                        </div>
-                      )}
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="text-center mb-4">
+                      <div className="text-2xl sm:text-3xl font-bold text-gray-900">{subject.totalQuestions}</div>
+                      <div className="text-xs text-gray-500">Total Questions</div>
                     </div>
                     
-                    <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-gray-50 rounded-lg">
                       <div className="grid grid-cols-3 gap-2 text-center text-xs">
                         <div>
                           <div className="font-bold text-green-600">{subject.difficulties.easy}</div>
@@ -732,7 +707,7 @@ const handleAnswer = async (answer) => {
                       </div>
                     </div>
 
-                    <Button className={`w-full bg-gradient-to-r ${subject.color} hover:opacity-90 text-white font-semibold`}>
+                    <Button className={`w-full text-sm sm:text-base bg-gradient-to-r ${subject.color} hover:opacity-90 text-white font-semibold`}>
                       <Play className="w-4 h-4 mr-2" />
                       Start Practicing
                     </Button>
@@ -752,24 +727,24 @@ const handleAnswer = async (answer) => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         <Header />
-        <div className="pt-24 pb-12">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
+        <div className="pt-20 sm:pt-24 pb-8 sm:pb-12">
+          <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-6xl">
             <Button 
               variant="outline" 
               onClick={() => setView('subjects')} 
-              className="mb-8 border-2 border-blue-600"
+              className="mb-6 sm:mb-8 border-2 border-blue-600 text-sm"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Subjects
             </Button>
 
-            <div className="mb-8 text-center">
-              <Badge className="bg-blue-600 text-white text-lg px-4 py-2 mb-4">
+            <div className="mb-6 sm:mb-8 text-center">
+              <Badge className="bg-blue-600 text-white text-base sm:text-lg px-3 sm:px-4 py-1.5 sm:py-2 mb-4">
                 {selectedSubject}
               </Badge>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {chapters.map((chapter) => {
                 if (chapter.isLocked) {
                   return (
@@ -778,12 +753,12 @@ const handleAnswer = async (answer) => {
                       className="group relative border-2 border-gray-200 shadow-lg opacity-60"
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-gray-100/80 backdrop-blur-[2px] rounded-xl flex items-center justify-center z-10">
-                        <div className="text-center">
-                          <div className="bg-gradient-to-br from-orange-400 to-red-500 p-4 rounded-full inline-block mb-3">
-                            <Lock className="w-8 h-8 text-white" />
+                        <div className="text-center px-4">
+                          <div className="bg-gradient-to-br from-orange-400 to-red-500 p-3 sm:p-4 rounded-full inline-block mb-2 sm:mb-3">
+                            <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                           </div>
-                          <p className="font-bold text-lg mb-2">Premium Chapter</p>
-                          <p className="text-sm text-gray-600 mb-4 max-w-xs px-4">
+                          <p className="font-bold text-base sm:text-lg mb-2">Premium Chapter</p>
+                          <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 max-w-xs">
                             Upgrade to unlock all chapters!
                           </p>
                           <button
@@ -791,24 +766,24 @@ const handleAnswer = async (answer) => {
                               e.stopPropagation();
                               navigate('/subscription-plans');
                             }}
-                            className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:shadow-lg transition-shadow"
+                            className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-bold hover:shadow-lg transition-shadow text-sm sm:text-base"
                           >
                             🔓 Unlock Now
                           </button>
                         </div>
                       </div>
             
-                      <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50">
-                        <Badge className="mb-2">Chapter {chapter.sequence}</Badge>
-                        <h3 className="font-bold text-lg text-gray-900">{chapter.name}</h3>
+                      <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-indigo-50">
+                        <Badge className="mb-2 text-xs sm:text-sm">Chapter {chapter.sequence}</Badge>
+                        <h3 className="font-bold text-base sm:text-lg text-gray-900">{chapter.name}</h3>
                       </div>
-                      <CardContent className="p-4">
+                      <CardContent className="p-3 sm:p-4">
                         <div className="text-center mb-3">
-                          <div className="text-xl font-bold text-gray-900">{chapter.totalQuestions}</div>
+                          <div className="text-lg sm:text-xl font-bold text-gray-900">{chapter.totalQuestions}</div>
                           <div className="text-xs text-gray-500">Questions</div>
                         </div>
                         
-                        <div className="mb-4 p-2 bg-gray-50 rounded-lg">
+                        <div className="mb-3 sm:mb-4 p-2 bg-gray-50 rounded-lg">
                           <div className="grid grid-cols-3 gap-1 text-center text-xs">
                             <div>
                               <div className="font-bold text-green-600">{chapter.difficulties.easy}</div>
@@ -825,7 +800,7 @@ const handleAnswer = async (answer) => {
                           </div>
                         </div>
             
-                        <Button className="w-full bg-blue-600 text-white" disabled>
+                        <Button className="w-full bg-blue-600 text-white text-sm" disabled>
                           <Sparkles className="w-4 h-4 mr-2" />
                           Explore Topics
                         </Button>
@@ -840,19 +815,17 @@ const handleAnswer = async (answer) => {
                     onClick={() => loadTopics(chapter.name)}
                     className="group cursor-pointer hover:border-gray-800 hover:scale-105 transition-all border-2 border-blue-200 shadow-lg hover:shadow-xl"
                   >
-                    <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50">
-                      <Badge className="mb-2">Chapter {chapter.sequence}</Badge>
-                      <h3 className="font-bold text-lg text-gray-900">{chapter.name}</h3>
+                    <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-indigo-50">
+                      <Badge className="mb-2 text-xs sm:text-sm">Chapter {chapter.sequence}</Badge>
+                      <h3 className="font-bold text-base sm:text-lg text-gray-900">{chapter.name}</h3>
                     </div>
-                    <CardContent className="p-4">
-                      <div className="grid grid-cols-1 gap-3 mb-3">
-                        <div className="text-center">
-                          <div className="text-xl font-bold text-gray-900">{chapter.totalQuestions}</div>
-                          <div className="text-xs text-gray-500">Questions</div>
-                        </div>
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="text-center mb-3">
+                        <div className="text-lg sm:text-xl font-bold text-gray-900">{chapter.totalQuestions}</div>
+                        <div className="text-xs text-gray-500">Questions</div>
                       </div>
             
-                      <div className="mb-4 p-2 bg-gray-50 rounded-lg">
+                      <div className="mb-3 sm:mb-4 p-2 bg-gray-50 rounded-lg">
                         <div className="grid grid-cols-3 gap-1 text-center text-xs">
                           <div>
                             <div className="font-bold text-green-600">{chapter.difficulties.easy}</div>
@@ -869,7 +842,7 @@ const handleAnswer = async (answer) => {
                         </div>
                       </div>
             
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm">
                         <Sparkles className="w-4 h-4 mr-2" />
                         Explore Topics
                       </Button>
@@ -890,53 +863,40 @@ const handleAnswer = async (answer) => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         <Header />
-        <div className="pt-24 pb-12">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
+        <div className="pt-20 sm:pt-24 pb-8 sm:pb-12">
+          <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-6xl">
             <Button 
               variant="outline" 
               onClick={() => setView('chapters')} 
-              className="mb-8 border-2 border-blue-600"
+              className="mb-6 sm:mb-8 border-2 border-blue-600 text-sm"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Chapters
             </Button>
 
-            <div className="mb-8 text-center">
-              <Badge className="bg-blue-600 text-white text-lg px-4 py-2 mb-2">
+            <div className="mb-6 sm:mb-8 text-center">
+              <Badge className="bg-blue-600 text-white text-sm sm:text-lg px-3 sm:px-4 py-1.5 sm:py-2 mb-2">
                 {selectedSubject} • {selectedChapter}
               </Badge>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {topics.map((topic) => (
                 <Card 
                   key={topic.name}
                   onClick={() => startPractice(topic.name)}
                   className="group cursor-pointer hover:scale-105 transition-all border-2 border-purple-200 shadow-lg hover:shadow-xl"
                 >
-                  <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50">
-                    <h3 className="font-bold text-lg text-gray-900 mb-2">{topic.name}</h3>
+                  <div className="p-3 sm:p-4 bg-gradient-to-br from-purple-50 to-pink-50">
+                    <h3 className="font-bold text-base sm:text-lg text-gray-900 mb-2">{topic.name}</h3>
                   </div>
-                  <CardContent className="p-4">
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="text-center">
-                        <div className="text-xl font-bold text-gray-900">{topic.totalQuestions}</div>
-                        <div className="text-xs text-gray-500">Questions</div>
-                      </div>
-                      {topic.attempted > 0 && (
-                        <div className="text-center">
-                          <div className={`text-xl font-bold ${
-                            topic.accuracy >= 80 ? 'text-green-600' : 
-                            topic.accuracy >= 60 ? 'text-yellow-600' : 'text-red-600'
-                          }`}>
-                            {topic.accuracy}%
-                          </div>
-                          <div className="text-xs text-gray-500">Accuracy</div>
-                        </div>
-                      )}
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="text-center mb-3">
+                      <div className="text-lg sm:text-xl font-bold text-gray-900">{topic.totalQuestions}</div>
+                      <div className="text-xs text-gray-500">Questions</div>
                     </div>
 
-                    <div className="mb-4 p-2 bg-gray-50 rounded-lg">
+                    <div className="mb-3 sm:mb-4 p-2 bg-gray-50 rounded-lg">
                       <div className="grid grid-cols-3 gap-1 text-center text-xs">
                         <div>
                           <div className="font-bold text-green-600">{topic.difficulties.easy}</div>
@@ -953,7 +913,7 @@ const handleAnswer = async (answer) => {
                       </div>
                     </div>
 
-                    <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90 text-white font-semibold">
+                    <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90 text-white font-semibold text-sm">
                       <Zap className="w-4 h-4 mr-2" />
                       Start Practice
                     </Button>
