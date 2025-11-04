@@ -672,12 +672,12 @@ const handleAnswer = async (answer) => {
         <Header />
         <div className="pt-20 sm:pt-24 pb-8 sm:pb-12">
           <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-7xl">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-2 items-center justify-items-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 items-center justify-items-center">
               {subjects.map((subject) => (
                 <Card 
                   key={subject.name}
                   onClick={() => loadChapters(subject.name)}
-                  className={`group cursor-pointer hover:scale-105 transition-all duration-300 border-2 ${subject.borderColor} shadow-lg hover:shadow-xl overflow-hidden`}
+                  className={`group cursor-pointer hover:scale-105 transition-all duration-300 border-2 ${subject.borderColor} shadow-lg hover:shadow-xl overflow-hidden w-full max-w-sm`}
                 >
                   <div className={`p-4 sm:p-6 text-center bg-gradient-to-br ${subject.bgColor}`}>
                     <div className="text-4xl sm:text-5xl mb-2 sm:mb-3">{subject.emoji}</div>
@@ -707,8 +707,8 @@ const handleAnswer = async (answer) => {
                       </div>
                     </div>
 
-                   <Button 
-                      className="... bg-gradient-to-r from-blue-500 to-indigo-600 ..."
+                    <Button 
+                      className="w-full text-sm sm:text-base bg-gradient-to-r from-blue-500 to-indigo-600 hover:opacity-90 text-white font-semibold"
                       style={subject.name === 'Chemistry' ? {background: 'linear-gradient(to right, rgb(34 197 94), rgb(5 150 105))'} : 
                              subject.name === 'Mathematics' ? {background: 'linear-gradient(to right, rgb(168 85 247), rgb(219 39 119))'} : {}}
                     >
