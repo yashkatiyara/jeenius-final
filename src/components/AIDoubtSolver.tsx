@@ -105,21 +105,16 @@ const AIDoubtSolver: React.FC<AIDoubtSolverProps> = ({ question, isOpen, onClose
       const { data: { user } } = await supabase.auth.getUser();
       if (user && !isPro) {
         const today = new Date().toISOString().split('T')[0];
-        
-        // Use RPC or direct insert with upsert
-        const { error } = await (supabase as any)
+        const { error } = await supabase
           .from('ai_usage_log')
-          .upsert({
+          .insert({
             user_id: user.id,
             date: today,
             count: 1
-          }, {
-            onConflict: 'user_id,date',
-            ignoreDuplicates: false
           });
 
-        if (error) {
-          console.error('Error upserting usage:', error);
+        if (error && error.code !== '23505') { // Ignore duplicate key errors
+          console.error('Error logging AI usage:', error);
         }
       }
     } catch (error) {
