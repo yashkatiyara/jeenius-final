@@ -54,7 +54,7 @@ const AIDoubtSolver: React.FC<AIDoubtSolverProps> = ({ question, isOpen, onClose
   const initialMessage = useMemo(() => {
     const isGeneral = !question?.option_a || question?.question?.includes("koi bhi");
     if (isGeneral) {
-      return `🧞‍♂️ **Welcome to JEEnie!**  
+      return `🧞‍♂️ Welcome to JEEnius! I am JEEnie -  
 Your personal AI mentor for JEE 💙  
 Ask any doubt — Physics, Chemistry, or Maths! ⚡`;
     } else {
