@@ -60,13 +60,12 @@ const TestAttemptPage = () => {
 
   const [testSession, setTestSession] = useState<TestSession | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [userAnswers, setUserAnswers] = useState<{ [key: string]: UserAnswer }>(
-    {}
-  );
+  const [userAnswers, setUserAnswers] = useState<{ [key: string]: UserAnswer }>({});
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [testSubmitted, setTestSubmitted] = useState(false);
+  const [showMobilePalette, setShowMobilePalette] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -74,7 +73,7 @@ const TestAttemptPage = () => {
       navigate("/login");
       return;
     }
-    const [showMobilePalette, setShowMobilePalette] = useState(false);
+
     const savedTest = localStorage.getItem("currentTest");
     if (savedTest) {
       const testData: TestSession = JSON.parse(savedTest);
@@ -114,13 +113,9 @@ const TestAttemptPage = () => {
     const secs = seconds % 60;
 
     if (hours > 0) {
-      return `${hours}:${mins.toString().padStart(2, "0")}:${secs
-        .toString()
-        .padStart(2, "0")}`;
+      return `${hours}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     }
-    return `${mins.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   const handleAnswerSelect = async (option: string) => {
@@ -314,12 +309,8 @@ const TestAttemptPage = () => {
 
   const currentQuestion = testSession.questions[currentQuestionIndex];
   const userAnswer = userAnswers[currentQuestion?.id];
-  const answeredCount = Object.values(userAnswers).filter(
-    (a) => a.selectedOption
-  ).length;
-  const markedCount = Object.values(userAnswers).filter(
-    (a) => a.isMarkedForReview
-  ).length;
+  const answeredCount = Object.values(userAnswers).filter((a) => a.selectedOption).length;
+  const markedCount = Object.values(userAnswers).filter((a) => a.isMarkedForReview).length;
 
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col">
@@ -355,7 +346,7 @@ const TestAttemptPage = () => {
             </div>
           </div>
 
-          {/* Timer */}
+          {/* Timer & Mobile Palette Toggle */}
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="text-center">
               <div
@@ -491,15 +482,14 @@ const TestAttemptPage = () => {
                     className="bg-primary"
                     size="sm"
                   >
-                    <span className="hidden sm:inline">Next</span>
-                    <span className="sm:hidden">Next</span>
+                    Next
                     <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
                   </Button>
                 )}
               </div>
             </div>
 
-            {/* Sidebar - Question Palette */}
+            {/* Desktop Sidebar - Question Palette */}
             <div className="hidden lg:flex flex-col h-full">
               <Card className="flex-1 overflow-y-auto">
                 <CardHeader>
@@ -517,7 +507,7 @@ const TestAttemptPage = () => {
                           onClick={() => navigateQuestion(index)}
                           className={`w-8 h-8 text-xs rounded border-2 transition-all ${
                             isCurrent
-                              ? "border-primary border-2 scale-110"
+                              ? "border-primary scale-110"
                               : "border-transparent"
                           } ${getStatusColor(status)}`}
                         >
@@ -551,15 +541,11 @@ const TestAttemptPage = () => {
                   <div className="mt-4 pt-4 border-t">
                     <div className="grid grid-cols-3 gap-2 text-center text-xs">
                       <div>
-                        <div className="font-bold text-green-600">
-                          {answeredCount}
-                        </div>
+                        <div className="font-bold text-green-600">{answeredCount}</div>
                         <div className="text-xs">Done</div>
                       </div>
                       <div>
-                        <div className="font-bold text-yellow-600">
-                          {markedCount}
-                        </div>
+                        <div className="font-bold text-yellow-600">{markedCount}</div>
                         <div className="text-xs">Marked</div>
                       </div>
                       <div>
@@ -657,15 +643,11 @@ const TestAttemptPage = () => {
               {/* Stats */}
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="bg-green-50 p-3 rounded-lg">
-                  <div className="font-bold text-xl text-green-600">
-                    {answeredCount}
-                  </div>
+                  <div className="font-bold text-xl text-green-600">{answeredCount}</div>
                   <div className="text-xs text-gray-600">Done</div>
                 </div>
                 <div className="bg-yellow-50 p-3 rounded-lg">
-                  <div className="font-bold text-xl text-yellow-600">
-                    {markedCount}
-                  </div>
+                  <div className="font-bold text-xl text-yellow-600">{markedCount}</div>
                   <div className="text-xs text-gray-600">Marked</div>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-lg">
