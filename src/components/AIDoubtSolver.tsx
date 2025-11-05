@@ -54,11 +54,11 @@ const AIDoubtSolver: React.FC<AIDoubtSolverProps> = ({ question, isOpen, onClose
   const initialMessage = useMemo(() => {
     const isGeneral = !question?.option_a || question?.question?.includes("koi bhi");
     if (isGeneral) {
-      return `🧞‍♂️ **Welcome to JEEnius!**  
+      return `🧞‍♂️ **Welcome to JEEnie!**  
 Your personal AI mentor for JEE students 💙  
 Ask any doubt — Physics, Chemistry, or Maths! ⚡`;
     } else {
-      return `🧞‍♂️ **Hey! I’m JEEnius!**  
+      return `🧞‍♂️ **Hey! I’m JEEnie!**  
 **Question:** ${question.question}  
 ${question.option_a ? `A) ${question.option_a}\n` : ""}${
         question.option_b ? `B) ${question.option_b}\n` : ""
@@ -102,7 +102,7 @@ ${question.option_a ? `A) ${question.option_a}\n` : ""}${
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      setError("Please login to use JEEnius AI");
+      setError("Please login to get mentored by JEEnie");
       return;
     }
 
@@ -137,10 +137,10 @@ Upgrade for detailed, step-by-step AI guidance 💎`,
     try {
       const isGeneral = !question?.option_a || question?.question?.includes("koi bhi");
       const prompt = isGeneral
-        ? `You are JEEnius 🧞‍♂️, a friendly AI tutor for JEE students.
+        ? `You are JEEnie 🧞‍♂️, a friendly AI tutor for JEE students.
 Use Hinglish, be concise, motivating, and include emojis.
 Student's doubt: "${userMsg.content}"`
-        : `You are JEEnius 🧞‍♂️, helping with this JEE question:
+        : `You are JEEnie 🧞‍♂️, helping with this JEE question:
 ${question.question}
 Options: A) ${question.option_a}, B) ${question.option_b}, C) ${question.option_c}, D) ${question.option_d}
 Student's doubt: "${userMsg.content}"
@@ -176,44 +176,44 @@ Answer in Hinglish within 5-7 lines.`;
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
       <div className="bg-[#013062] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-blue-900">
+        
         {/* Header */}
-        <div className="p-4 bg-[#013062] flex justify-between items-center border-b border-blue-800">
+        <div className="p-4 border-b bg-gradient-to-r from-[#0056D2] to-[#0079FF] rounded-t-2xl flex justify-between items-center">
           <div className="flex items-center gap-3">
             <img src="/logo.png" alt="JEEnius Logo" className="w-8 h-8 rounded-md" />
             <div>
-              <h3 className="font-bold text-white text-xl">JEEnius 🧞‍♂️</h3>
-              <p className="text-blue-200 text-xs">Your Smart JEE AI Buddy</p>
+              <h3 className="font-bold text-white text-xl">JEEnie 🧞‍♂️</h3>
+              <p className="text-blue-100 text-xs">Your AI Mentor - Powered by JEEnius</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-blue-200 hover:text-white hover:bg-white/20 p-2 rounded-lg transition-all"
+            className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-lg transition-all"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
-
+        
         {/* Mode Toggle */}
-        <div className="flex justify-center items-center gap-3 py-2 bg-[#002652] border-b border-blue-900">
-          <span className={`text-xs font-semibold ${mode === "quick" ? "text-blue-400" : "text-gray-400"}`}>
-            ⚡ Quick
-          </span>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={mode === "deep"}
-              onChange={() => setMode(mode === "quick" ? "deep" : "quick")}
-              className="sr-only peer"
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-400 
-              rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full after:content-[''] 
-              after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 
-              after:transition-all peer-checked:bg-blue-500"></div>
-          </label>
-          <span className={`text-xs font-semibold ${mode === "deep" ? "text-blue-400" : "text-gray-400"}`}>
-            🧠 Deep
-          </span>
-        </div>
+        <div className="flex justify-center items-center gap-3 py-3 bg-gradient-to-r from-[#E7F0FF] to-white border-b border-blue-100 transition-all">
+            <span className={`text-xs font-semibold ${mode === "quick" ? "text-[#0056D2]" : "text-gray-400"}`}>⚡ Quick</span>
+            <div className="relative group">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={mode === "deep"}
+                  onChange={() => setMode(mode === "quick" ? "deep" : "quick")}
+                  className="sr-only peer"
+                />
+                <div className={`w-14 h-7 bg-gray-200 rounded-full peer-focus:ring-2 peer-focus:ring-[#0056D2] transition-all duration-300 peer-checked:bg-[#0056D2]`}></div>
+                <div className={`absolute top-[2px] left-[2px] h-6 w-6 bg-white rounded-full transition-all duration-300 ${mode === "deep" ? "translate-x-7 shadow-[0_0_8px_3px_#FFC93C]" : "shadow-md"}`}></div>
+              </label>
+              <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 scale-0 group-hover:scale-100 transition-all bg-[#0056D2] text-white text-[10px] px-2 py-1 rounded-md shadow-lg">
+                {mode === "deep" ? "🧠 Deep Mode: Detailed AI Answers" : "⚡ Quick Mode: Instant Help"}
+              </div>
+            </div>
+            <span className={`text-xs font-semibold ${mode === "deep" ? "text-[#0056D2]" : "text-gray-400"}`}>🧠 Deep</span>
+          </div>
 
         {/* Chat Body */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-[#f5f8ff] to-white">
@@ -229,7 +229,7 @@ Answer in Hinglish within 5-7 lines.`;
                 {msg.role === "assistant" && (
                   <div className="flex items-center gap-2 mb-2 pb-2 border-b border-blue-100">
                     <Sparkles className="w-4 h-4 text-blue-600" />
-                    <span className="text-xs font-bold text-blue-600">JEEnius</span>
+                    <span className="text-xs font-bold text-blue-600">JEEnie</span>
                   </div>
                 )}
                 <div
@@ -250,7 +250,7 @@ Answer in Hinglish within 5-7 lines.`;
               <div className="bg-white border border-blue-200 p-3 rounded-2xl flex items-center gap-2">
                 <Loader2 className="animate-spin text-blue-600" size={18} />
                 <span className="text-sm text-gray-700 font-medium">
-                  JEEnius soch raha hai... 🤔
+                  JEEnie soch raha hai... 🤔
                 </span>
               </div>
             </div>
@@ -269,26 +269,23 @@ Answer in Hinglish within 5-7 lines.`;
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#002652] border-t border-blue-800">
+        <div className="p-4 border-t bg-gradient-to-r from-[#E7F0FF] to-white">
           <div className="flex gap-2">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Apna doubt yaha likho... 💭"
-              className="flex-1 px-4 py-3 border-2 border-blue-400 rounded-xl focus:ring-2 focus:ring-blue-300 text-sm transition-all"
-              disabled={loading}
+              placeholder="Apna doubt likho... 💭"
+              className="flex-1 px-4 py-3 border-2 border-[#0056D2]/40 rounded-xl focus:border-[#0056D2] focus:ring-2 focus:ring-[#0056D2]/20 text-sm transition-all"
             />
             <Button
               onClick={handleSendMessage}
-              disabled={loading || !input.trim()}
-              className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg px-6 transition-all disabled:opacity-50"
+              className="bg-[#0056D2] hover:bg-[#0043A4] text-white shadow-lg px-6 transition-all disabled:opacity-50"
             >
               {loading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
             </Button>
           </div>
-          <p className="text-center text-[11px] text-blue-300 mt-2">
-            💎 Powered by <strong>JEEnius AI</strong> — Your smart genie for learning.
+          <p className="text-center text-[11px] text-[#0056D2] mt-2">
+            💎 Powered by <strong>JEEnius AI</strong> — Personalized Learning for the Future
           </p>
         </div>
       </div>
