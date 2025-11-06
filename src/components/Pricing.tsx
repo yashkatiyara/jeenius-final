@@ -1,134 +1,286 @@
-// src/pages/Pricing.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Header from '@/components/Header';
-import { Check, X, Crown, Zap, Bot, Calendar, TrendingUp, Star } from 'lucide-react';
+import { Check, X, Star, Crown, Zap, Bot, Calendar, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/utils/supabaseClient';
 
 const PricingPage = () => {
-  const [planInfo, setPlanInfo] = useState(null);
-  const [billingCycle, setBillingCycle] = useState('yearly');
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
 
-  useEffect(() => {
-    const fetchPlan = async () => {
-      const { data, error } = await supabase.from('plans').select('*').eq('name', 'pro').single();
-      if (!error && data) setPlanInfo(data);
-    };
-    fetchPlan();
-  }, []);
+  const freeFeatures = [
+    { text: '25 questions per day', included: true },
+    { text: '150 questions per month', included: true },
+    { text: '2 mock tests per month', included: true },
+    { text: 'Basic dashboard', included: true },
+    { text: 'Leaderboard access', included: true },
+    { text: 'Jeenie AI assistant', included: false },
+    { text: 'AI study planner', included: false },
+    { text: 'Performance analytics', included: false },
+    { text: 'Priority support', included: false }
+  ];
+
+  const proFeatures = [
+    { text: 'Unlimited questions', icon: Zap, highlight: true },
+    { text: 'Unlimited mock tests', icon: TrendingUp, highlight: true },
+    { text: 'Jeenie AI assistant', icon: Bot, highlight: true },
+    { text: 'AI-powered dynamic study planner', icon: Calendar, highlight: true },
+    { text: 'Advanced performance analytics', icon: TrendingUp, highlight: false },
+    { text: 'Leaderboard access', icon: Star, highlight: false },
+    { text: 'Bookmark & notes', icon: Star, highlight: false },
+    { text: 'Priority support 24/7', icon: Star, highlight: false }
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-green-50">
       <Header />
-      <div className="pt-20 pb-16 px-3 sm:px-6">
-        <section className="text-center mb-10">
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 leading-tight">
-            Choose Your Path to <span className="text-green-600">JEE Success 🎯</span>
-          </h1>
-          <p className="text-gray-600 text-sm sm:text-lg max-w-2xl mx-auto mt-3">
-            Start free, upgrade anytime — zero pressure, all progress.
-          </p>
-          <div className="flex justify-center gap-4 mt-6">
-            {['monthly', 'yearly'].map((cycle) => (
+      <div className="pt-24 pb-16">
+        {/* Hero Section */}
+        <section className="py-12">
+          <div className="container mx-auto px-4 text-center">
+            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
+              Choose Your Path to
+              <span className="text-green-600 block mt-2">JEE Success 🎯</span>
+            </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+              Start free, upgrade anytime. No hidden costs, no surprises.
+            </p>
+
+            {/* Billing Toggle */}
+            <div className="flex items-center justify-center gap-4 mb-12">
               <button
-                key={cycle}
-                onClick={() => setBillingCycle(cycle)}
-                className={`px-5 py-2 rounded-lg font-semibold ${
-                  billingCycle === cycle
-                    ? 'bg-green-600 text-white shadow-md'
-                    : 'bg-white border border-gray-300 text-gray-700'
+                onClick={() => setBillingCycle('monthly')}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                  billingCycle === 'monthly'
+                    ? 'bg-green-600 text-white shadow-lg'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                {cycle === 'yearly' ? 'Yearly (Save 15%)' : 'Monthly'}
+                Monthly
               </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-          {/* Starter Plan */}
-          <Card className="border-2 hover:shadow-xl">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold text-gray-900">Starter</CardTitle>
-              <p className="text-gray-600 mt-1">Free forever</p>
-            </CardHeader>
-            <CardContent className="text-sm sm:text-base">
-              <ul className="space-y-3 mb-5">
-                <li><Check className="inline w-5 h-5 text-green-600 mr-2" />25 questions/day</li>
-                <li><Check className="inline w-5 h-5 text-green-600 mr-2" />150 questions/month</li>
-                <li><Check className="inline w-5 h-5 text-green-600 mr-2" />2 mock tests/month</li>
-                <li><X className="inline w-5 h-5 text-gray-300 mr-2" />Jeenie AI & Study Planner</li>
-              </ul>
-              <Button className="w-full bg-white border border-green-600 text-green-600 py-3 font-semibold">
-                Continue Free
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Pro Plan */}
-          <Card className="border-2 border-green-600 shadow-2xl scale-105 relative">
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-              <span className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-1 rounded-full text-xs font-bold shadow-md">
-                MOST POPULAR
-              </span>
-            </div>
-            <CardHeader className="text-center bg-gradient-to-br from-green-50 to-emerald-50">
-              <CardTitle className="text-2xl font-bold text-gray-900">Pro</CardTitle>
-              <p className="text-green-700 mt-2 font-semibold">
-                ₹{billingCycle === 'yearly' ? '499' : '49'}
-                <span className="text-sm text-gray-600">
-                  /{billingCycle === 'yearly' ? 'year' : 'month'}
+              <button
+                onClick={() => setBillingCycle('yearly')}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all relative ${
+                  billingCycle === 'yearly'
+                    ? 'bg-green-600 text-white shadow-lg'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Yearly
+                <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                  Save 15%
                 </span>
-              </p>
-              {billingCycle === 'yearly' && (
-                <p className="text-xs text-green-600">Save ₹89/year</p>
-              )}
-            </CardHeader>
-            <CardContent className="bg-white text-sm sm:text-base">
-              <ul className="space-y-3 mb-6">
-                {[
-                  { text: 'Unlimited questions', icon: Zap },
-                  { text: 'Unlimited tests', icon: TrendingUp },
-                  { text: 'Jeenie AI 24/7', icon: Bot },
-                  { text: 'AI Study Planner', icon: Calendar },
-                  { text: 'Advanced analytics', icon: Star },
-                  { text: 'Priority support', icon: Crown },
-                ].map(({ text, icon: Icon }, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <Icon className="w-5 h-5 text-green-600 mt-0.5" />
-                    <span>{text}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 font-semibold shadow-md hover:scale-[1.02] transition">
-                Upgrade to Pro 👑
-              </Button>
-              <p className="text-xs text-center text-gray-500 mt-3">Cancel anytime • 30-day refund</p>
-            </CardContent>
-          </Card>
-        </section>
-
-        <section className="mt-12 text-center">
-          <h2 className="text-2xl font-bold mb-4">Why Students ❤️ Pro</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
-            <div className="bg-white p-4 rounded-xl shadow-sm">
-              <div className="text-3xl mb-2">🎯</div>
-              <p className="font-semibold">3x faster progress</p>
-              <p className="text-sm text-gray-600">Unlimited practice = faster improvement</p>
-            </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm">
-              <div className="text-3xl mb-2">🤖</div>
-              <p className="font-semibold">AI-powered prep</p>
-              <p className="text-sm text-gray-600">Jeenie guides your weak areas smartly</p>
-            </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm">
-              <div className="text-3xl mb-2">💰</div>
-              <p className="font-semibold">Less than ₹2/day</p>
-              <p className="text-sm text-gray-600">Affordable, flexible, powerful</p>
+              </button>
             </div>
           </div>
         </section>
+
+        {/* Pricing Cards */}
+        <section className="py-8">
+          <div className="container mx-auto px-4">
+            <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+              
+              {/* FREE PLAN */}
+              <Card className="relative shadow-lg hover:shadow-xl transition-all duration-300 border-2">
+                <CardHeader className="text-center pb-4">
+                  <CardTitle className="text-2xl font-bold text-gray-900">
+                    Starter
+                  </CardTitle>
+                  <div className="mt-4">
+                    <div className="flex items-baseline justify-center">
+                      <span className="text-5xl font-bold text-gray-900">₹0</span>
+                      <span className="text-gray-600 ml-2">/forever</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">Perfect to get started</p>
+                  </div>
+                </CardHeader>
+
+                <CardContent>
+                  <ul className="space-y-3 mb-8">
+                    {freeFeatures.map((feature, index) => (
+                      <li key={index} className="flex items-start space-x-3">
+                        {feature.included ? (
+                          <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <X className="w-5 h-5 text-gray-300 flex-shrink-0 mt-0.5" />
+                        )}
+                        <span className={feature.included ? 'text-gray-700' : 'text-gray-400 line-through'}>
+                          {feature.text}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button 
+                    className="w-full text-lg py-6 bg-white border-2 border-green-600 text-green-600 hover:bg-green-50" 
+                    size="lg"
+                  >
+                    Get Started Free
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* PRO PLAN */}
+              <Card className="relative shadow-2xl hover:shadow-3xl transition-all duration-300 border-2 border-green-500 scale-105">
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-2 rounded-full text-sm font-bold flex items-center space-x-2 shadow-lg">
+                    <Crown className="w-4 h-4" />
+                    <span>MOST POPULAR</span>
+                  </div>
+                </div>
+
+                <CardHeader className="text-center pb-4 bg-gradient-to-br from-green-50 to-emerald-50">
+                  <CardTitle className="text-2xl font-bold text-gray-900">
+                    Pro
+                  </CardTitle>
+                  <div className="mt-4">
+                    <div className="flex items-baseline justify-center">
+                      {billingCycle === 'monthly' ? (
+                        <>
+                          <span className="text-5xl font-bold text-green-600">₹49</span>
+                          <span className="text-gray-600 ml-2">/month</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-5xl font-bold text-green-600">₹499</span>
+                          <span className="text-gray-600 ml-2">/year</span>
+                        </>
+                      )}
+                    </div>
+                    {billingCycle === 'yearly' && (
+                      <div className="mt-2 space-y-1">
+                        <p className="text-sm text-gray-500 line-through">₹588/year</p>
+                        <p className="text-green-600 font-semibold">Save ₹89 annually!</p>
+                      </div>
+                    )}
+                  </div>
+                </CardHeader>
+
+                <CardContent className="bg-white">
+                  <ul className="space-y-3 mb-8">
+                    {proFeatures.map((feature, index) => {
+                      const Icon = feature.icon;
+                      return (
+                        <li key={index} className="flex items-start space-x-3">
+                          <Icon className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+                            feature.highlight ? 'text-green-600' : 'text-green-500'
+                          }`} />
+                          <span className={`${
+                            feature.highlight ? 'text-gray-900 font-semibold' : 'text-gray-700'
+                          }`}>
+                            {feature.text}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  <Button 
+                    className="w-full text-lg py-6 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg" 
+                    size="lg"
+                  >
+                    Upgrade to Pro 👑
+                  </Button>
+                  
+                  <p className="text-center text-xs text-gray-500 mt-4">
+                    Cancel anytime • Money-back guarantee
+                  </p>
+                </CardContent>
+              </Card>
+
+            </div>
+          </div>
+        </section>
+
+        {/* Feature Comparison Table */}
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">Detailed Comparison</h2>
+            
+            <div className="max-w-4xl mx-auto overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b-2">
+                    <th className="text-left py-4 px-6 font-semibold text-gray-900">Feature</th>
+                    <th className="text-center py-4 px-6 font-semibold text-gray-900">Starter</th>
+                    <th className="text-center py-4 px-6 font-semibold text-green-600">Pro</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  <tr className="hover:bg-gray-50">
+                    <td className="py-4 px-6 text-gray-700">Questions per day</td>
+                    <td className="text-center py-4 px-6 text-gray-600">25</td>
+                    <td className="text-center py-4 px-6 text-green-600 font-semibold">Unlimited</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="py-4 px-6 text-gray-700">Monthly question cap</td>
+                    <td className="text-center py-4 px-6 text-gray-600">150</td>
+                    <td className="text-center py-4 px-6 text-green-600 font-semibold">Unlimited</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="py-4 px-6 text-gray-700">Mock tests</td>
+                    <td className="text-center py-4 px-6 text-gray-600">2/month</td>
+                    <td className="text-center py-4 px-6 text-green-600 font-semibold">Unlimited</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="py-4 px-6 text-gray-700">Jeenie AI Assistant</td>
+                    <td className="text-center py-4 px-6"><X className="w-5 h-5 text-gray-300 mx-auto" /></td>
+                    <td className="text-center py-4 px-6"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="py-4 px-6 text-gray-700">AI Study Planner</td>
+                    <td className="text-center py-4 px-6"><X className="w-5 h-5 text-gray-300 mx-auto" /></td>
+                    <td className="text-center py-4 px-6"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="py-4 px-6 text-gray-700">Performance Analytics</td>
+                    <td className="text-center py-4 px-6"><X className="w-5 h-5 text-gray-300 mx-auto" /></td>
+                    <td className="text-center py-4 px-6"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="py-4 px-6 text-gray-700">Dashboard</td>
+                    <td className="text-center py-4 px-6 text-gray-600">Basic</td>
+                    <td className="text-center py-4 px-6 text-green-600 font-semibold">Advanced</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="py-4 px-6 text-gray-700">Leaderboard</td>
+                    <td className="text-center py-4 px-6"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
+                    <td className="text-center py-4 px-6"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="py-4 px-6 text-gray-700">Priority Support</td>
+                    <td className="text-center py-4 px-6"><X className="w-5 h-5 text-gray-300 mx-auto" /></td>
+                    <td className="text-center py-4 px-6"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        {/* Trust Section */}
+        <section className="py-12 bg-gradient-to-br from-green-50 to-emerald-50">
+          <div className="container mx-auto px-4 text-center">
+            <h3 className="text-2xl font-bold mb-8">Why Students Choose Pro</h3>
+            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="text-4xl mb-3">🎯</div>
+                <h4 className="font-bold mb-2">3x Faster Progress</h4>
+                <p className="text-sm text-gray-600">Unlimited practice helps students improve 3x faster</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="text-4xl mb-3">🤖</div>
+                <h4 className="font-bold mb-2">AI-Powered Learning</h4>
+                <p className="text-sm text-gray-600">Jeenie adapts to your weak areas automatically</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="text-4xl mb-3">💰</div>
+                <h4 className="font-bold mb-2">Less than ₹2/day</h4>
+                <p className="text-sm text-gray-600">Cheaper than a samosa - but can change your rank!</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </div>
     </div>
   );
