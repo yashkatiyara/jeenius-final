@@ -68,6 +68,29 @@ const EnhancedDashboard = () => {
     }
   }, [user, isClient]);
 
+  // ✅ DYNAMIC GOAL CALCULATOR - Gets smarter over time
+  const calculateDailyGoal = (totalQuestions: number, avgAccuracy: number, currentStreak: number) => {
+    let baseGoal = 20; // Starting point for beginners
+    
+    // Level up based on total questions attempted
+    if (totalQuestions > 1000) baseGoal = 50;      // Expert level
+    else if (totalQuestions > 500) baseGoal = 40;  // Advanced
+    else if (totalQuestions > 200) baseGoal = 35;  // Intermediate+
+    else if (totalQuestions > 100) baseGoal = 30;  // Intermediate
+    else if (totalQuestions > 50) baseGoal = 25;   // Beginner+
+    
+    // Bonus for high accuracy (reward quality)
+    if (avgAccuracy >= 90) baseGoal += 5;
+    else if (avgAccuracy >= 80) baseGoal += 3;
+    
+    // Streak bonus (reward consistency)
+    if (currentStreak >= 30) baseGoal += 10;      // Legend status
+    else if (currentStreak >= 14) baseGoal += 5;  // 2+ weeks streak
+    else if (currentStreak >= 7) baseGoal += 3;   // 1+ week streak
+    
+    return Math.min(baseGoal, 60); // Cap at 60 to keep it realistic
+  };
+
   const loadUserData = async () => {
     try {
       setIsLoading(true);
@@ -131,21 +154,25 @@ const EnhancedDashboard = () => {
       const todayTotal = todayAttempts?.length || 0;
       const todayAccuracy = todayTotal > 0 ? Math.round((todayCorrect / todayTotal) * 100) : 0;
 
+      // ✅ FIXED STREAK - Only counts days with goal completion
+      const DAILY_TARGET = 30; // Will be replaced by dynamic goal below
       let streak = 0;
       let currentDate = new Date();
       currentDate.setHours(0, 0, 0, 0);
       
       for (let i = 0; i < 365; i++) {
-        const dayHasAttempts = (attempts || []).some(a => {
+        const questionsOnThisDay = (attempts || []).filter(a => {
           const attemptDate = new Date(a.created_at);
           attemptDate.setHours(0, 0, 0, 0);
           return attemptDate.getTime() === currentDate.getTime();
-        });
+        }).length;
         
-        if (dayHasAttempts) {
+        // ✅ Day only counts if daily goal was met
+        if (questionsOnThisDay >= DAILY_TARGET) {
           streak++;
           currentDate.setDate(currentDate.getDate() - 1);
-        } else if (i === 0) {
+        } else if (i === 0 && questionsOnThisDay > 0) {
+          // Today hasn't hit goal yet, but has attempts - don't break streak
           currentDate.setDate(currentDate.getDate() - 1);
         } else {
           break;
@@ -183,6 +210,9 @@ const EnhancedDashboard = () => {
         }
       });
 
+      // ✅ DYNAMIC DAILY GOAL
+      const dynamicGoal = calculateDailyGoal(totalQuestions, accuracy, streak);
+
       setStats({
         totalQuestions,
         questionsToday: todayAttempts.length,
@@ -195,7 +225,7 @@ const EnhancedDashboard = () => {
         rank: 15,
         rankChange: -3,
         percentile: 94.5,
-        todayGoal: 30,
+        todayGoal: dynamicGoal, // ✅ Dynamic goal based on progress
         todayProgress: todayAttempts.length,
         weakestTopic,
         strongestTopic,
@@ -285,8 +315,8 @@ const EnhancedDashboard = () => {
         progressClass: "bg-gradient-to-r from-emerald-700 to-green-800",
         textColor: "text-emerald-900",
         icon: "👑",
-        badge: { text: "I'm a legend!", color: "bg-gradient-to-r from-emerald-700 to-green-800" },
-        message: `${progress} questions! Legendary performance! 🔥`
+        badge: { text: "Legend!", color: "bg-gradient-to-r from-emerald-700 to-green-800" },
+        message: `${progress} questions! Legendary! 🔥`
       };
     } else if (percentage >= 120) {
       return {
@@ -295,8 +325,8 @@ const EnhancedDashboard = () => {
         progressClass: "bg-gradient-to-r from-green-600 to-emerald-700",
         textColor: "text-green-800",
         icon: "🏆",
-        badge: { text: "I'm a champion!", color: "bg-gradient-to-r from-green-600 to-emerald-700" },
-        message: `Outstanding! ${progress}/${goal} - You're a champion!`
+        badge: { text: "Champion!", color: "bg-gradient-to-r from-green-600 to-emerald-700" },
+        message: `Outstanding! ${progress}/${goal} 🏆`
       };
     } else if (percentage >= 100) {
       return {
@@ -305,8 +335,8 @@ const EnhancedDashboard = () => {
         progressClass: "bg-gradient-to-r from-green-500 to-lime-600",
         textColor: "text-green-700",
         icon: "✅",
-        badge: { text: "Goal smashed!", color: "bg-gradient-to-r from-green-500 to-lime-600" },
-        message: `Perfect! Goal complete! Keep this momentum! 💪`
+        badge: { text: "Goal Smashed!", color: "bg-gradient-to-r from-green-500 to-lime-600" },
+        message: `Perfect! Keep this momentum! 💪`
       };
     } else if (percentage >= 80) {
       return {
@@ -315,8 +345,8 @@ const EnhancedDashboard = () => {
         progressClass: "bg-gradient-to-r from-blue-500 to-sky-600",
         textColor: "text-blue-700",
         icon: "⚡",
-        badge: { text: "Almost there!", color: "bg-blue-500" },
-        message: `Just ${goal - progress} more! You're so close!`
+        badge: { text: "Almost There!", color: "bg-blue-500" },
+        message: `Just ${goal - progress} more! 🚀`
       };
     } else if (percentage >= 50) {
       return {
@@ -325,8 +355,8 @@ const EnhancedDashboard = () => {
         progressClass: "bg-gradient-to-r from-amber-500 to-yellow-600",
         textColor: "text-amber-700",
         icon: "📈",
-        badge: { text: "Good progress", color: "bg-amber-500" },
-        message: `Halfway there! ${goal - progress} more to go!`
+        badge: { text: "Good Progress", color: "bg-amber-500" },
+        message: `Halfway! ${goal - progress} to go!`
       };
     } else {
       return {
@@ -335,8 +365,8 @@ const EnhancedDashboard = () => {
         progressClass: "bg-gradient-to-r from-orange-500 to-red-600",
         textColor: "text-orange-700",
         icon: "💪",
-        badge: { text: "Let's push!", color: "bg-orange-500" },
-        message: `${goal - progress} questions left - Let's go! 🚀`
+        badge: { text: "Let's Push!", color: "bg-orange-500" },
+        message: `${goal - progress} left - Let's go! 🚀`
       };
     }
   };
@@ -353,6 +383,60 @@ const EnhancedDashboard = () => {
     return "from-red-50 to-orange-50 border-red-200/50";
   };
 
+  // ✅ ENHANCED PROGRESS BADGES - More meaningful ranges
+  const getProgressBadge = (accuracy: number) => {
+    if (accuracy >= 95) {
+      return { 
+        text: "Perfect! 💎", 
+        color: "bg-gradient-to-r from-purple-600 to-pink-600",
+        message: "Absolute mastery!"
+      };
+    } else if (accuracy >= 90) {
+      return { 
+        text: "Mastered! 🌟", 
+        color: "bg-gradient-to-r from-purple-500 to-pink-500",
+        message: "Outstanding work!"
+      };
+    } else if (accuracy >= 85) {
+      return { 
+        text: "Excellent! ⭐", 
+        color: "bg-gradient-to-r from-blue-500 to-indigo-600",
+        message: "Keep it up!"
+      };
+    } else if (accuracy >= 80) {
+      return { 
+        text: "Very Good! 👍", 
+        color: "bg-gradient-to-r from-green-500 to-emerald-600",
+        message: "Almost there!"
+      };
+    } else if (accuracy >= 75) {
+      return { 
+        text: "Good Job! 📈", 
+        color: "bg-gradient-to-r from-lime-500 to-green-600",
+        message: "Keep practicing!"
+      };
+    } else if (accuracy >= 65) {
+      return { 
+        text: "Making Progress 💪", 
+        color: "bg-yellow-500",
+        message: "You're improving!"
+      };
+    } else if (accuracy >= 55) {
+      return { 
+        text: "Need Practice 📚", 
+        color: "bg-orange-400",
+        message: "Review basics"
+      };
+    } else {
+      return { 
+        text: "Focus Needed ⚠️", 
+        color: "bg-orange-500",
+        icon: AlertCircle,
+        message: "Start with easy"
+      };
+    }
+  };
+
   if (isLoading) {
     return <LoadingScreen message="Preparing your genius dashboard..." />;
   }
@@ -361,8 +445,8 @@ const EnhancedDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 overflow-hidden">
       <Header />
       
-      div className={`container mx-auto px-3 sm:px-4 lg:px-8 max-w-7xl ${
-        showBanner || showWelcome ? 'pt-20 sm:pt-24' : 'pt-16 sm:pt-20'
+      <div className={`container mx-auto px-3 sm:px-4 lg:px-8 max-w-7xl ${
+        showBanner || showWelcome ? 'pt-20 sm:pt-24' : 'pt-16 sm:pt-18'
       }`}>
         {showBanner && notification && (
           <div className={`mb-3 sm:mb-4 bg-gradient-to-r ${
@@ -459,7 +543,7 @@ const EnhancedDashboard = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4 mt-4 sm:mt-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4">
           <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/50 shadow-xl hover:shadow-2xl transition-all hover:scale-105">
             <CardContent className="p-2.5 sm:p-3 lg:p-4">
               <div className="flex items-center justify-between">
@@ -531,7 +615,7 @@ const EnhancedDashboard = () => {
                 
                 <CardContent className="p-2.5 sm:p-3 lg:p-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 pr-2">
                       <p className={`text-xs font-medium mb-0.5 ${goalStyle.textColor}`}>
                         Today's Goal
                       </p>
@@ -543,13 +627,12 @@ const EnhancedDashboard = () => {
                           /{stats?.todayGoal || 30}
                         </span>
                       </div>
-                      // In the Today's Goal card Progress section:
                       <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
                         <Progress 
                           value={percentage} 
                           className="h-1 sm:h-1.5 flex-1" 
                         />
-                        <span className={`text-xs font-semibold ${goalStyle.textColor} w-10 text-right`}>
+                        <span className={`text-xs font-semibold ${goalStyle.textColor} w-9 text-right shrink-0`}>
                           {Math.round(percentage)}%
                         </span>
                       </div>
@@ -630,7 +713,7 @@ const EnhancedDashboard = () => {
                     if (Object.keys(subjectStats).length === 0) {
                       return (
                         <div className="text-center py-6 sm:py-8 text-slate-500">
-                          <BookOpen className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-3 opacity-50" />
+                          <BookOpen className="h-10 w-10 sm:h-12 sm:h-12 mx-auto mb-2 sm:mb-3 opacity-50" />
                           <p className="text-xs sm:text-sm">Start practicing to see your progress!</p>
                         </div>
                       );
@@ -641,33 +724,34 @@ const EnhancedDashboard = () => {
                         ? Math.round((data.correct / data.total) * 100) 
                         : 0;
                       
-                      let colorClass, progressClass, textColor, badge;
+                      const badge = getProgressBadge(accuracy);
                       
-                      if (accuracy >= 85) {
-                        colorClass = "from-blue-50 to-indigo-50 border-blue-200";
+                      let colorClass, progressClass, textColor;
+                      
+                      if (accuracy >= 90) {
+                        colorClass = "from-purple-50 to-pink-50 border-purple-200";
                         progressClass = "bg-purple-100";
                         textColor = "text-purple-600";
-                        badge = { 
-                          text: "Excellent! 🌟", 
-                          color: "bg-gradient-to-r from-purple-500 to-pink-600" 
-                        };
-                      } else if (accuracy >= 70) {
+                      } else if (accuracy >= 85) {
+                        colorClass = "from-blue-50 to-indigo-50 border-blue-200";
+                        progressClass = "bg-blue-100";
+                        textColor = "text-blue-600";
+                      } else if (accuracy >= 80) {
+                        colorClass = "from-green-50 to-emerald-50 border-green-200";
+                        progressClass = "bg-green-100";
+                        textColor = "text-green-600";
+                      } else if (accuracy >= 75) {
+                        colorClass = "from-lime-50 to-green-50 border-lime-200";
+                        progressClass = "bg-lime-100";
+                        textColor = "text-lime-700";
+                      } else if (accuracy >= 65) {
                         colorClass = "from-yellow-50 to-amber-50 border-yellow-300";
                         progressClass = "bg-yellow-100";
                         textColor = "text-yellow-700";
-                        badge = { 
-                          text: "Good Progress", 
-                          color: "bg-yellow-500" 
-                        };
                       } else {
                         colorClass = "from-orange-50 to-red-50 border-orange-300";
                         progressClass = "bg-orange-100";
                         textColor = "text-orange-700";
-                        badge = { 
-                          text: "Focus Needed", 
-                          color: "bg-orange-500",
-                          icon: AlertCircle 
-                        };
                       }
                 
                       return (
@@ -699,9 +783,7 @@ const EnhancedDashboard = () => {
                           
                           <div className="mt-1.5 sm:mt-2 flex items-center justify-between text-xs">
                             <span className="text-slate-600">
-                              {accuracy >= 85 ? 'Excellent work!' : 
-                               accuracy >= 70 ? 'Keep practicing' : 
-                               'Need more practice'}
+                              {badge.message}
                             </span>
                             <button 
                               onClick={() => navigate('/study-now')} 
@@ -718,7 +800,7 @@ const EnhancedDashboard = () => {
               </CardContent>
             </Card>
           </div>
-          <Leaderboard />
+          <Leaderboard key={leaderboardKey} />
         </div>
         
         <PricingModal 
