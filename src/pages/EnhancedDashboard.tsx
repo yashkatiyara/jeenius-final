@@ -543,7 +543,7 @@ const EnhancedDashboard = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4 pt-4">
           <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/50 shadow-xl hover:shadow-2xl transition-all hover:scale-105">
             <CardContent className="p-2.5 sm:p-3 lg:p-4">
               <div className="flex items-center justify-between">
