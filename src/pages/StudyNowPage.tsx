@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import PricingModal from '@/components/PricingModal';
 import Header from '@/components/Header';
 import LoadingScreen from '@/components/ui/LoadingScreen';
+import { useUserLevel } from '@/hooks/useUserLevel';
+import LevelIndicator from '@/components/gamification/LevelIndicator';
 import {
   Flame, ArrowLeft, Lightbulb, XCircle, CheckCircle2, Trophy, Target,
   Sparkles, Zap, Play, Lock
@@ -43,6 +45,8 @@ const StudyNowPage = () => {
   const [isPro, setIsPro] = useState(false);
   const [dailyQuestionsUsed, setDailyQuestionsUsed] = useState(0);
   const DAILY_LIMIT_FREE = 20;
+  
+  const { userLevel, loading: levelLoading, checkAndUpgradeLevel, getLevelProgress } = useUserLevel();
 
   useEffect(() => {
     checkSubscriptionStatus();
@@ -368,7 +372,6 @@ const StudyNowPage = () => {
   };
 
 const handleAnswer = async (answer) => {
-  // ✅ Prevent multiple submissions
   if (isSubmitting || showResult) return;
   
   if (!isPro && dailyQuestionsUsed >= DAILY_LIMIT_FREE) {
@@ -377,7 +380,7 @@ const handleAnswer = async (answer) => {
     return;
   }
   
-  setIsSubmitting(true); // ✅ Lock the function
+  setIsSubmitting(true);
   setSelectedAnswer(answer);
   setShowResult(true);
   
@@ -395,7 +398,6 @@ const handleAnswer = async (answer) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user?.id) return;
 
-    // Check if already attempted
     const { data: existingAttempt } = await supabase
       .from('question_attempts')
       .select('id')
@@ -408,7 +410,7 @@ const handleAnswer = async (answer) => {
       return;
     }
 
-    // Insert new attempt
+    // Insert new attempt (trigger will award points based on level)
     const { error: insertError } = await supabase
       .from('question_attempts')
       .insert({
@@ -423,6 +425,9 @@ const handleAnswer = async (answer) => {
     if (insertError && insertError.code !== '23505') {
       console.error('Insert error:', insertError);
     }
+
+    // Check and upgrade level
+    await checkAndUpgradeLevel(isCorrect);
 
     // Update usage limits
     if (!isPro) {
@@ -459,7 +464,7 @@ const handleAnswer = async (answer) => {
   } catch (error) {
     console.error('Error:', error);
   } finally {
-    setIsSubmitting(false); // ✅ Unlock
+    setIsSubmitting(false);
     setTimeout(() => nextQuestion(), 800);
   }
 };
@@ -499,6 +504,18 @@ const handleAnswer = async (answer) => {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Topics
             </Button>
+
+            {/* Level Indicator */}
+            {userLevel && !levelLoading && (
+              <div className="mb-3">
+                <LevelIndicator
+                  currentLevel={userLevel.currentLevel}
+                  questionsAtLevel={userLevel.questionsAtLevel}
+                  accuracyAtLevel={userLevel.accuracyAtLevel}
+                  {...(getLevelProgress() || {})}
+                />
+              </div>
+            )}
 
             {!isPro && (
               <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-300 shadow-md">

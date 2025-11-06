@@ -5,6 +5,11 @@ import PricingModal from '@/components/PricingModal';
 import { Crown } from 'lucide-react';
 import { FREE_LIMITS } from '@/config/subscriptionPlans';
 import Leaderboard from '../components/Leaderboard';
+import PointsDisplay from '@/components/gamification/PointsDisplay';
+import BadgesShowcase from '@/components/gamification/BadgesShowcase';
+import LevelIndicator from '@/components/gamification/LevelIndicator';
+import RewardsTracker from '@/components/gamification/RewardsTracker';
+import { useUserLevel } from '@/hooks/useUserLevel';
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,6 +61,8 @@ const EnhancedDashboard = () => {
   const [currentTime, setCurrentTime] = useState<number | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [leaderboardKey, setLeaderboardKey] = useState(0);
+  
+  const { userLevel, loading: levelLoading, getLevelProgress } = useUserLevel();
 
   useEffect(() => {
     setIsClient(true);
@@ -715,7 +722,40 @@ const EnhancedDashboard = () => {
               </CardContent>
             </Card>
           </div>
-          <Leaderboard />
+          
+          <div className="lg:col-span-1 space-y-3 sm:space-y-4">
+            <Leaderboard key={leaderboardKey} />
+          </div>
+        </div>
+        
+        {/* Gamification Section */}
+        <div className="grid lg:grid-cols-3 gap-3 sm:gap-4 mt-4">
+          {/* Level Indicator */}
+          {userLevel && !levelLoading && (
+            <div className="lg:col-span-1">
+              <LevelIndicator
+                currentLevel={userLevel.currentLevel}
+                questionsAtLevel={userLevel.questionsAtLevel}
+                accuracyAtLevel={userLevel.accuracyAtLevel}
+                {...(getLevelProgress() || {})}
+              />
+            </div>
+          )}
+          
+          {/* Points Display */}
+          <div className="lg:col-span-1">
+            <PointsDisplay />
+          </div>
+          
+          {/* Rewards Tracker */}
+          <div className="lg:col-span-1">
+            <RewardsTracker />
+          </div>
+        </div>
+        
+        {/* Badges Section */}
+        <div className="mt-4">
+          <BadgesShowcase />
         </div>
         
         <PricingModal 
