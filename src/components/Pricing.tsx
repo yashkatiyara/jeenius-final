@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import Header from '@/components/Header';
-import { Check, X, Star, Crown, Zap, Bot, Calendar, TrendingUp, CupSoda, Pizza } from 'lucide-react'; 
-// ☕ Coffee replaced with CupSoda (drink icon), 🥟 Samosa replaced with Pizza
+import { Check, X, Star, Crown, Zap, Bot, Calendar, TrendingUp, Coffee, Samosa } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -58,7 +57,7 @@ const PricingPage = () => {
             >
               Monthly
               <div className="text-xs text-gray-200 mt-1 flex items-center justify-center gap-1">
-                <CupSoda className="w-3 h-3" /> Less than a cold coffee ☕
+                <Coffee className="w-3 h-3" /> Less than a cold coffee ☕
               </div>
             </button>
             <button
@@ -74,7 +73,7 @@ const PricingPage = () => {
                 Save 15%
               </span>
               <div className="text-xs text-gray-200 mt-1 flex items-center justify-center gap-1">
-                <Pizza className="w-3 h-3" /> Cheaper than a samosa 🥟
+                <Samosa className="w-3 h-3" /> Cheaper than a samosa 🥟
               </div>
             </button>
           </div>
@@ -207,7 +206,7 @@ const PricingPage = () => {
             <div className="bg-white p-4 rounded-lg shadow-md w-64">
               <div className="text-3xl mb-2">🤖</div>
               <h4 className="font-bold mb-1">AI-Powered Jeenie</h4>
-              <p className="text-sm text-gray-600">Jeenie knows your weak topics better than you 😜</p>
+              <p className="text-sm text-gray-600">Jeenie knows your weak topics better than you do 😜</p>
             </div>
             <div className="bg-white p-4 rounded-lg shadow-md w-64">
               <div className="text-3xl mb-2">💰</div>
