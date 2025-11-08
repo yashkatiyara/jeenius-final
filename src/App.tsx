@@ -1,15 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import FloatingAIButton from '@/components/FloatingAIButton';
 import SubscriptionPlans from '@/pages/SubscriptionPlans';
 import PricingPage from '@/components/Pricing';
-import { useAuth } from "@/contexts/AuthContext";
-
 
 // Main pages
 import Index from "./pages/Index";
@@ -38,6 +36,7 @@ import AnalyticsPage from "@/pages/AnalyticsPage";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminRoute from "@/components/AdminRoute";
 import AdminDashboard from "@/pages/AdminDashboard";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 
 // Create QueryClient with optimized settings for better performance
 const queryClient = new QueryClient({
@@ -51,16 +50,20 @@ const queryClient = new QueryClient({
   },
 });
 
-// ✅ ADD THIS NEW COMPONENT HERE
+// Dashboard Router Component - Must be inside Router context
 const DashboardRouter = () => {
-  const { userRole } = useAuth();
+  const { userRole, isLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (userRole === 'admin') {
+    if (!isLoading && userRole === 'admin') {
       navigate('/admin', { replace: true });
     }
-  }, [userRole, navigate]);
+  }, [userRole, isLoading, navigate]);
+
+  if (isLoading) {
+    return <LoadingScreen message="Loading dashboard..." />;
+  }
 
   return userRole === 'admin' ? null : <EnhancedDashboard />;
 };
@@ -85,6 +88,7 @@ const App = () => (
             {/* Goal Selection (might be needed after signup) */}
             <Route path="/goal-selection" element={<GoalSelectionPage />} />
             
+            {/* Dashboard with Admin Redirect */}
             <Route
               path="/dashboard"
               element={
