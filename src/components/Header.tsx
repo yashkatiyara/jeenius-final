@@ -33,15 +33,19 @@ const Header = () => {
     { name: 'All Features', path: '/features', icon: BarChart3, description: 'Explore all platform features' },
   ];
 
-  const navItems = isAuthenticated ? [
+  const navItems = isAuthenticated ? (
+  isAdmin ? [
+    { name: 'Dashboard', href: '/admin', path: '/admin', icon: BarChart3 },
+    { name: 'Analytics', href: '/admin/analytics', path: '/admin/analytics', icon: Target },
+    { name: 'Users', href: '/admin/users', path: '/admin/users', icon: BookOpen },
+    { name: 'Content', href: '/admin/content', path: '/admin/content', icon: Brain },
+  ] : [
     { name: 'Dashboard', href: '/dashboard', path: '/dashboard', icon: BarChart3 },
     { name: 'Study Now', href: '/study-now', path: '/study-now', icon: BookOpen, highlight: false },
-    ...(isPremium ? [{ name: 'AI Study Planner', href: '/ai-planner', path: '/ai-planner', icon: Brain, highlight: false }] : []),    { name: 'Tests', href: '/tests', path: '/tests', icon: Target },
-  ] : publicNavItems;
-    const handleNavigation = (path: string) => {
-      navigate(path);
-      setIsMenuOpen(false);
-    };
+    ...(isPremium ? [{ name: 'AI Study Planner', href: '/ai-planner', path: '/ai-planner', icon: Brain, highlight: false }] : []),
+    { name: 'Tests', href: '/tests', path: '/tests', icon: Target },
+  ]
+) : publicNavItems;
 
   // Simplified and more reliable logout function
   const handleLogout = async () => {
