@@ -14,6 +14,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   updateProfile: (profileData: any) => Promise<{ error?: string }>;
 }
+
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const useAuth = () => {
@@ -29,30 +30,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
+  const [userRole, setUserRole] = useState<'admin' | 'student' | null>(null);
   const listenerRef = React.useRef<any>(null);
 
+  // Check premium status and user role
   const checkPremiumStatus = async (userId: string) => {
-  try {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_premium, subscription_end_date, role')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_premium, subscription_end_date, role')
+        .eq('id', userId)
+        .single();
 
-    const isPremiumActive = profile?.is_premium && 
-      profile?.subscription_end_date &&
-      new Date(profile.subscription_end_date) > new Date();
+      const isPremiumActive = profile?.is_premium && 
+        profile?.subscription_end_date &&
+        new Date(profile.subscription_end_date) > new Date();
 
-    setIsPremium(!!isPremiumActive);
-    setUserRole(profile?.role || 'student');
-    console.log('✅ Premium status:', isPremiumActive ? 'PREMIUM' : 'FREE');
-    console.log('✅ User role:', profile?.role);
-  } catch (error) {
-    console.error('❌ Premium check error:', error);
-    setIsPremium(false);
-    setUserRole('student');
-  }
-};
+      setIsPremium(!!isPremiumActive);
+      setUserRole(profile?.role || 'student');
+      console.log('✅ Premium status:', isPremiumActive ? 'PREMIUM' : 'FREE');
+      console.log('✅ User role:', profile?.role || 'student');
+    } catch (error) {
+      console.error('❌ Premium check error:', error);
+      setIsPremium(false);
+      setUserRole('student');
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -68,6 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await checkPremiumStatus(session.user.id);
       } else {
         setIsPremium(false);
+        setUserRole(null);
       }
       
       setIsLoading(false);
@@ -99,6 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (event === "SIGNED_OUT") {
           setUser(null);
           setSession(null);
+          setUserRole(null);
         }
       }
     );
@@ -142,6 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             grade: null,
             subjects: null,
             goals_set: false,
+            role: 'student',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });
@@ -206,6 +212,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Immediately clear auth state to update UI
     setUser(null);
     setSession(null);
+    setUserRole(null);
 
     setIsLoading(false);
     console.log('✅ Signed out successfully');
@@ -239,17 +246,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const value = {
-  user,
-  session,
-  isAuthenticated: !!user,
-  isLoading,
-  isPremium,
-  userRole,
-  refreshPremium,
-  signInWithGoogle,
-  signOut,
-  updateProfile,
-};
+    user,
+    session,
+    isAuthenticated: !!user,
+    isLoading,
+    isPremium,
+    userRole,
+    refreshPremium,
+    signInWithGoogle,
+    signOut,
+    updateProfile,
+  };
 
   return (
     <AuthContext.Provider value={value}>
