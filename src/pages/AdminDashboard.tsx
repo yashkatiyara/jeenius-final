@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -7,17 +7,36 @@ import {
   BookOpen, 
   TrendingUp, 
   Award, 
-  BarChart3,
-  Settings,
   Shield
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import { AdminAnalytics } from '@/components/admin/AdminAnalytics';
 import { UserManagement } from '@/components/admin/UserManagement';
 import ChapterManager from '@/components/admin/ChapterManager';
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState('overview');
+  const location = useLocation();
+  
+  // Determine which content to show based on URL
+  const getActiveContent = () => {
+    if (location.pathname === '/admin/analytics') {
+      return <AdminAnalytics />;
+    } else if (location.pathname === '/admin/users') {
+      return <UserManagement />;
+    } else if (location.pathname === '/admin/content') {
+      return <ChapterManager />;
+    } else {
+      return <QuickStatsOverview />;
+    }
+  };
+
+  const getPageTitle = () => {
+    if (location.pathname === '/admin/analytics') return 'Platform Analytics & Insights';
+    if (location.pathname === '/admin/users') return 'User Management';
+    if (location.pathname === '/admin/content') return 'Content Management';
+    return 'Manage platform and monitor performance';
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -31,7 +50,7 @@ const AdminDashboard = () => {
               <Shield className="h-8 w-8 text-purple-600" />
               <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
             </div>
-            <p className="text-slate-600">Manage platform and monitor performance</p>
+            <p className="text-slate-600">{getPageTitle()}</p>
           </div>
           <Badge className="bg-purple-600 text-white px-4 py-2">
             <Shield className="h-4 w-4 mr-2" />
@@ -39,60 +58,14 @@ const AdminDashboard = () => {
           </Badge>
         </div>
 
-        import { useLocation } from 'react-router-dom';
-
-        const AdminDashboard = () => {
-          const location = useLocation();
-          
-          // Determine which content to show based on URL
-          const getActiveContent = () => {
-            if (location.pathname === '/admin/analytics') {
-              return <AdminAnalytics />;
-            } else if (location.pathname === '/admin/users') {
-              return <UserManagement />;
-            } else if (location.pathname === '/admin/content') {
-              return <ChapterManager />;
-            } else {
-              return <QuickStatsOverview />;
-            }
-          };
-        
-          return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-              <Header />
-              
-              <div className="container mx-auto px-4 pt-20">
-                {/* Admin Header */}
-                <div className="mb-6 flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <Shield className="h-8 w-8 text-purple-600" />
-                      <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
-                    </div>
-                    <p className="text-slate-600">
-                      {location.pathname === '/admin/analytics' && 'Platform Analytics & Insights'}
-                      {location.pathname === '/admin/users' && 'User Management'}
-                      {location.pathname === '/admin/content' && 'Content Management'}
-                      {location.pathname === '/admin' && 'Manage platform and monitor performance'}
-                    </p>
-                  </div>
-                  <Badge className="bg-purple-600 text-white px-4 py-2">
-                    <Shield className="h-4 w-4 mr-2" />
-                    Admin Access
-                  </Badge>
-                </div>
-        
-                {/* Content based on route */}
-                {getActiveContent()}
-              </div>
-            </div>
-          );
-        };
+        {/* Content based on route */}
+        {getActiveContent()}
       </div>
     </div>
   );
 };
 
+// Quick Stats Component with Real Data
 const QuickStatsOverview = () => {
   const [stats, setStats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,7 +112,9 @@ const QuickStatsOverview = () => {
         .select('*', { count: 'exact', head: true })
         .gte('created_at', lastWeek.toISOString());
 
-      const userGrowth = lastWeekUsers ? ((lastWeekUsers / (totalUsers || 1)) * 100).toFixed(1) : 0;
+      const userGrowth = lastWeekUsers && totalUsers 
+        ? ((lastWeekUsers / totalUsers) * 100).toFixed(1) 
+        : '0';
 
       setStats([
         {
@@ -147,28 +122,32 @@ const QuickStatsOverview = () => {
           value: totalUsers?.toLocaleString() || '0',
           icon: Users,
           color: 'blue',
-          change: `+${userGrowth}%`
+          change: `+${userGrowth}%`,
+          subtext: 'from last week'
         },
         {
           title: 'Active Today',
           value: uniqueActiveToday.toString(),
           icon: TrendingUp,
           color: 'green',
-          change: `${uniqueActiveToday} users`
+          change: `${uniqueActiveToday} users`,
+          subtext: 'active now'
         },
         {
           title: 'Total Questions',
           value: totalQuestions?.toLocaleString() || '0',
           icon: BookOpen,
           color: 'purple',
-          change: 'All time'
+          change: 'All time',
+          subtext: 'attempts'
         },
         {
           title: 'Premium Users',
           value: premiumUsers?.toLocaleString() || '0',
           icon: Award,
           color: 'amber',
-          change: `${((premiumUsers || 0) / (totalUsers || 1) * 100).toFixed(1)}%`
+          change: totalUsers ? `${((premiumUsers || 0) / totalUsers * 100).toFixed(1)}%` : '0%',
+          subtext: 'of total'
         }
       ]);
     } catch (error) {
@@ -187,57 +166,60 @@ const QuickStatsOverview = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {stats.map((stat) => (
-        <Card key={stat.title}>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-slate-600">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className={`h-5 w-5 text-${stat.color}-500`} />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end justify-between">
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat) => (
+          <Card key={stat.title} className="hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-slate-600">
+                  {stat.title}
+                </CardTitle>
+                <div className={`p-2 rounded-lg bg-${stat.color}-100`}>
+                  <stat.icon className={`h-5 w-5 text-${stat.color}-600`} />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
               <div>
                 <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
-                <p className="text-xs text-slate-500 mt-1">
-                  <span className="text-green-600 font-semibold">{stat.change}</span>
-                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-xs font-semibold text-green-600">{stat.change}</span>
+                  <span className="text-xs text-slate-500">{stat.subtext}</span>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-};
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {stats.map((stat) => (
-        <Card key={stat.title}>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-slate-600">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className={`h-5 w-5 text-${stat.color}-500`} />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end justify-between">
-              <div>
-                <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
-                <p className="text-xs text-slate-500 mt-1">
-                  <span className="text-green-600 font-semibold">{stat.change}</span> from last week
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button className="p-4 border-2 border-dashed border-slate-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all text-left">
+              <Users className="h-6 w-6 text-purple-600 mb-2" />
+              <h3 className="font-semibold text-slate-900">Manage Users</h3>
+              <p className="text-sm text-slate-600">View and edit user accounts</p>
+            </button>
+            
+            <button className="p-4 border-2 border-dashed border-slate-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left">
+              <BookOpen className="h-6 w-6 text-blue-600 mb-2" />
+              <h3 className="font-semibold text-slate-900">Add Content</h3>
+              <p className="text-sm text-slate-600">Upload new questions</p>
+            </button>
+            
+            <button className="p-4 border-2 border-dashed border-slate-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all text-left">
+              <TrendingUp className="h-6 w-6 text-green-600 mb-2" />
+              <h3 className="font-semibold text-slate-900">View Reports</h3>
+              <p className="text-sm text-slate-600">Detailed analytics</p>
+            </button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
