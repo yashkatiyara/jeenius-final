@@ -556,23 +556,6 @@ export default function EnhancedAIStudyPlanner() {
         <p className="text-slate-600 text-sm">Performance analysis + personalized study plan</p>
       </div>
 
-      {/* Points */}
-      <Card className="relative overflow-hidden border border-slate-200 shadow-sm rounded-2xl bg-white">
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-[#4C6FFF]/10 p-3 rounded-xl">
-                <Sparkles className="w-5 h-5 text-[#4C6FFF]" />
-              </div>
-              <div>
-                <p className="text-slate-500 text-[11px] font-medium uppercase tracking-wider">JEEnius Points</p>
-                <p className="text-slate-900 text-2xl font-extrabold">{userPoints.toLocaleString()}</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Exam + Countdown */}
       <Card className="border border-slate-200 shadow-sm rounded-2xl bg-white">
         <CardContent className="p-5">
@@ -604,68 +587,6 @@ export default function EnhancedAIStudyPlanner() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Stats Dashboard */}
-      <div className="grid grid-cols-2 gap-3">
-        <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-[#013062]/10 p-2.5 rounded-lg">
-                <Target className="w-5 h-5 text-[#013062]" />
-              </div>
-              <div>
-                <p className="text-[11px] text-slate-500">Today's Progress</p>
-                <p className="text-2xl font-bold text-[#013062]">{stats.todayProgress.toFixed(0)}%</p>
-              </div>
-            </div>
-            <Progress value={stats.todayProgress} className="mt-2" />
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-orange-100 p-2.5 rounded-lg">
-                <Flame className="w-5 h-5 text-[#FF9F45]" />
-              </div>
-              <div>
-                <p className="text-[11px] text-slate-500">Study Streak</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.weeklyStreak} days</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Performance Overview */}
-      <div className="grid md:grid-cols-2 gap-3">
-        <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <Target className="w-8 h-8 text-[#013062]" />
-              <Badge className="bg-slate-900 text-white text-sm px-3 py-1">
-                {overallAccuracy}%
-              </Badge>
-            </div>
-            <p className="text-3xl font-black mb-1 text-slate-900">{correctAnswers}</p>
-            <p className="text-slate-500 text-sm">out of {totalAttempts} correct</p>
-            <Progress value={overallAccuracy} className="h-2 mt-4" />
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <BookOpen className="w-8 h-8 text-emerald-700" />
-              <Badge className="bg-emerald-600 text-white text-sm px-3 py-1">
-                ANALYZED
-              </Badge>
-            </div>
-            <p className="text-3xl font-black mb-1 text-slate-900">{subjectAnalysis.length}</p>
-            <p className="text-slate-500 text-sm">subjects tracked</p>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* ✅ REDUCED: Badges (5 visible, rest collapsible) */}
       {badges.length > 0 && (
@@ -1099,28 +1020,7 @@ export default function EnhancedAIStudyPlanner() {
         </CardContent>
       </Card>
 
-      {/* Study Streak Card */}
-      <Card className="border border-amber-200 bg-white rounded-2xl shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                <Flame className="w-10 h-10 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-xs text-amber-700 mb-1">Current Study Streak</p>
-                <p className="text-4xl font-black text-amber-900">{currentStreak}</p>
-                <p className="text-sm text-amber-700 mt-1">
-                  {currentStreak >= 30 ? 'Legendary streak!' : 
-                   currentStreak >= 7 ? 'Great momentum!' : 
-                   'Keep building!'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
+      
       {/* Action Banner */}
       <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm mb-24">
         <CardContent className="p-6 text-center">
