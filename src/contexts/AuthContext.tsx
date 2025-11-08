@@ -8,12 +8,12 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isPremium: boolean;
+  userRole: 'admin' | 'student' | null;
   refreshPremium: () => Promise<void>;
   signInWithGoogle: () => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   updateProfile: (profileData: any) => Promise<{ error?: string }>;
 }
-
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const useAuth = () => {
@@ -31,26 +31,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isPremium, setIsPremium] = useState(false);
   const listenerRef = React.useRef<any>(null);
 
-  // Check premium status
   const checkPremiumStatus = async (userId: string) => {
-    try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_premium, subscription_end_date')
-        .eq('id', userId)
-        .single();
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_premium, subscription_end_date, role')
+      .eq('id', userId)
+      .single();
 
-      const isPremiumActive = profile?.is_premium && 
-        profile?.subscription_end_date &&
-        new Date(profile.subscription_end_date) > new Date();
+    const isPremiumActive = profile?.is_premium && 
+      profile?.subscription_end_date &&
+      new Date(profile.subscription_end_date) > new Date();
 
-      setIsPremium(!!isPremiumActive);
-      console.log('✅ Premium status:', isPremiumActive ? 'PREMIUM' : 'FREE');
-    } catch (error) {
-      console.error('❌ Premium check error:', error);
-      setIsPremium(false);
-    }
-  };
+    setIsPremium(!!isPremiumActive);
+    setUserRole(profile?.role || 'student');
+    console.log('✅ Premium status:', isPremiumActive ? 'PREMIUM' : 'FREE');
+    console.log('✅ User role:', profile?.role);
+  } catch (error) {
+    console.error('❌ Premium check error:', error);
+    setIsPremium(false);
+    setUserRole('student');
+  }
+};
 
   useEffect(() => {
     let mounted = true;
@@ -237,16 +239,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const value = {
-    user,
-    session,
-    isAuthenticated: !!user,
-    isLoading,
-    isPremium,
-    refreshPremium,
-    signInWithGoogle,
-    signOut,
-    updateProfile,
-  };
+  user,
+  session,
+  isAuthenticated: !!user,
+  isLoading,
+  isPremium,
+  userRole,
+  refreshPremium,
+  signInWithGoogle,
+  signOut,
+  updateProfile,
+};
 
   return (
     <AuthContext.Provider value={value}>
