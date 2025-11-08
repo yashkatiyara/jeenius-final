@@ -24,6 +24,12 @@ const Header = () => {
   const { isAuthenticated, signOut, isPremium } = useAuth();
   const { isAdmin } = useAdminAuth();
 
+  // Add the missing handleNavigation function
+  const handleNavigation = (path: string) => {
+    setIsMenuOpen(false); // Close mobile menu if open
+    navigate(path);
+  };
+
   const publicNavItems = [
     { name: 'Home', href: '/', path: '/', icon: null, highlight: false },
     { name: 'Why Us', href: '/why-us', path: '/why-us', icon: null, highlight: false },
@@ -138,7 +144,6 @@ const Header = () => {
             </div>
           </div>
 
-          {/* Desktop Navigation */}
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
             {navItems.map((item) => (
@@ -306,5 +311,4 @@ const Header = () => {
   );
 };
 
-// IMPORTANT: Make sure to export as default
 export default Header;
