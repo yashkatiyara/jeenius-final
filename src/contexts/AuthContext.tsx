@@ -8,7 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isPremium: boolean;
-  userRole: 'admin' | 'student' | null;
+  userRole: 'admin' | 'student' | 'super_admin' | null;
   refreshPremium: () => Promise<void>;
   signInWithGoogle: () => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
@@ -30,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
-  const [userRole, setUserRole] = useState<'admin' | 'student' | null>(null);
+  const [userRole, setUserRole] = useState<'admin' | 'student' | 'super_admin' | null>(null);
   const listenerRef = React.useRef<any>(null);
 
   // Check premium status and user role
@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         new Date(profile.subscription_end_date) > new Date();
 
       setIsPremium(!!isPremiumActive);
-      setUserRole(profile?.role || 'student');
+      setUserRole((profile?.role as 'admin' | 'student' | 'super_admin') || 'student');
       console.log('✅ Premium status:', isPremiumActive ? 'PREMIUM' : 'FREE');
       console.log('✅ User role:', profile?.role || 'student');
     } catch (error) {

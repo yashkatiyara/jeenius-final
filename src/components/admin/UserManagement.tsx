@@ -17,7 +17,7 @@ interface UserProfile {
   joined_at: string;
   grade?: number;
   target_exam?: string;
-  role?: 'user' | 'admin' | 'super_admin';
+  role?: 'student' | 'admin' | 'super_admin';
 }
 
 export const UserManagement: React.FC = () => {
@@ -56,7 +56,7 @@ const fetchUsers = async () => {
       joined_at: profile.created_at,
       grade: profile.grade,
       target_exam: profile.target_exam,
-      role: profile.role || 'user'
+      role: profile.role as 'student' | 'admin' | 'super_admin' || 'student'
     }));
     
     setUsers(formattedUsers);
@@ -91,7 +91,7 @@ const fetchUsers = async () => {
     setFilteredUsers(filtered);
   };
 
-  const updateUserRole = async (userId: string, newRole: 'user' | 'admin' | 'super_admin') => {
+  const updateUserRole = async (userId: string, newRole: 'student' | 'admin' | 'super_admin') => {
   try {
     // Update in Supabase
     const { error } = await supabase
@@ -224,19 +224,19 @@ const fetchUsers = async () => {
                       </TableCell>
                       <TableCell>
                         <Badge variant={getRoleBadgeVariant(user.role)}>
-                          {user.role || 'user'}
+                          {user.role || 'student'}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <Select
-                          value={user.role || 'user'}
+                          value={user.role || 'student'}
                           onValueChange={(value) => updateUserRole(user.user_id, value as any)}
                         >
                           <SelectTrigger className="w-[120px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="student">Student</SelectItem>
                             <SelectItem value="admin">Admin</SelectItem>
                             <SelectItem value="super_admin">Super Admin</SelectItem>
                           </SelectContent>

@@ -443,6 +443,33 @@ export type Database = {
         }
         Relationships: []
       }
+      plans: {
+        Row: {
+          discount_percent: number | null
+          features: string[]
+          id: string
+          monthly_price: number
+          name: string
+          yearly_price: number
+        }
+        Insert: {
+          discount_percent?: number | null
+          features?: string[]
+          id?: string
+          monthly_price: number
+          name: string
+          yearly_price: number
+        }
+        Update: {
+          discount_percent?: number | null
+          features?: string[]
+          id?: string
+          monthly_price?: number
+          name?: string
+          yearly_price?: number
+        }
+        Relationships: []
+      }
       points_log: {
         Row: {
           action: string
@@ -491,6 +518,7 @@ export type Database = {
           premium_until: string | null
           questions_capacity: number | null
           razorpay_subscription_id: string | null
+          role: string | null
           state: string | null
           student_level: string | null
           study_planner_enabled: boolean | null
@@ -522,6 +550,7 @@ export type Database = {
           premium_until?: string | null
           questions_capacity?: number | null
           razorpay_subscription_id?: string | null
+          role?: string | null
           state?: string | null
           student_level?: string | null
           study_planner_enabled?: boolean | null
@@ -553,6 +582,7 @@ export type Database = {
           premium_until?: string | null
           questions_capacity?: number | null
           razorpay_subscription_id?: string | null
+          role?: string | null
           state?: string | null
           student_level?: string | null
           study_planner_enabled?: boolean | null
@@ -1439,6 +1469,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_levels: {
+        Row: {
+          accuracy_at_current_level: number
+          created_at: string | null
+          current_level: number
+          id: string
+          level_upgraded_at: string | null
+          questions_at_current_level: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          accuracy_at_current_level?: number
+          created_at?: string | null
+          current_level?: number
+          id?: string
+          level_upgraded_at?: string | null
+          questions_at_current_level?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          accuracy_at_current_level?: number
+          created_at?: string | null
+          current_level?: number
+          id?: string
+          level_upgraded_at?: string | null
+          questions_at_current_level?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_rankings: {
         Row: {
           accuracy: number | null
@@ -1471,6 +1534,45 @@ export type Database = {
           questions_solved?: number | null
           rank?: number | null
           study_time_minutes?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_rewards: {
+        Row: {
+          claimed_at: string | null
+          created_at: string | null
+          eligibility_criteria: Json
+          id: string
+          is_claimed: boolean | null
+          is_eligible: boolean | null
+          reward_name: string
+          reward_type: string
+          reward_value: number
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          created_at?: string | null
+          eligibility_criteria: Json
+          id?: string
+          is_claimed?: boolean | null
+          is_eligible?: boolean | null
+          reward_name: string
+          reward_type: string
+          reward_value: number
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string | null
+          created_at?: string | null
+          eligibility_criteria?: Json
+          id?: string
+          is_claimed?: boolean | null
+          is_eligible?: boolean | null
+          reward_name?: string
+          reward_type?: string
+          reward_value?: number
           user_id?: string
         }
         Relationships: []
@@ -1654,6 +1756,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: never; Returns: boolean }
       validate_question_answer: {
         Args: { _question_id: string; _user_answer: string }
         Returns: {
