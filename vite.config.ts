@@ -33,8 +33,7 @@ export default defineConfig(({ mode }) => ({
       },
     },
     target: 'esnext',
-    // ⬇️ YEH BHI ADD KARO
     sourcemap: false,
-    minify: 'terser',
+    minify: 'esbuild', // Using esbuild (faster and built-in)
   },
 }));
