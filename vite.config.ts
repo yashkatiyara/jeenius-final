@@ -20,14 +20,21 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    // ⬇️ YEH ADD KARO - Cache busting
     rollupOptions: {
       output: {
+        entryFileNames: `assets/[name].[hash].js`,
+        chunkFileNames: `assets/[name].[hash].js`,
+        assetFileNames: `assets/[name].[hash].[ext]`,
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-toast'],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
         },
       },
     },
     target: 'esnext',
+    // ⬇️ YEH BHI ADD KARO
+    sourcemap: false,
+    minify: 'terser',
   },
 }));
