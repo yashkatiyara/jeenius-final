@@ -68,6 +68,11 @@ const DashboardRouter = () => {
   return userRole === 'admin' ? null : <EnhancedDashboard />;
 };
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
