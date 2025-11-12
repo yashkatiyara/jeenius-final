@@ -11,8 +11,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
+    mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -20,7 +19,6 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    // ⬇️ YEH ADD KARO - Cache busting
     rollupOptions: {
       output: {
         entryFileNames: `assets/[name].[hash].js`,
@@ -29,11 +27,18 @@ export default defineConfig(({ mode }) => ({
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
           ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
+          supabase: ['@supabase/supabase-js'],
+          charts: ['recharts'],
         },
       },
     },
     target: 'esnext',
-    sourcemap: false,
-    minify: 'esbuild', // Using esbuild (faster and built-in)
+    sourcemap: mode === 'development', // Development mein sourcemap, production mein nahi
+    minify: 'esbuild',
+    chunkSizeWarningLimit: 1000, // Warning limit badha di
+  },
+  // Performance optimization
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', '@supabase/supabase-js'],
   },
 }));
