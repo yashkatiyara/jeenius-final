@@ -706,7 +706,6 @@ const EnhancedDashboard = () => {
                             <Progress value={accuracy} className="flex-1 h-2" />
                             <span className="text-xs text-slate-600 shrink-0">{data.correct}/{data.total}</span>
                           </div>
-                          <p className="text-xs text-slate-500 mt-1">{badge.message}</p>
                         </div>
                       );
                     })
