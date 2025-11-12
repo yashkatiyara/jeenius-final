@@ -137,16 +137,13 @@ const TestPage = () => {
         
         const attemptedIds = attemptedQuestions?.map(a => a.question_id) || [];
         
-        let query = supabase
-        .from('questions_safe')  // ⚠️ Use safe view
-        .select('id, question, option_a, option_b, option_c, option_d, subject, chapter, topic, difficulty, year');
-      
-      if (attemptedIds.length > 0) {
-        query = query.not('id', 'in', `(${attemptedIds.join(',')})`);
-      }
-      
-      const { data: questions, error } = await query.limit(100);
+        let query = supabase.from('questions').select('*');
+        
+        if (attemptedIds.length > 0) {
+          query = query.not('id', 'in', `(${attemptedIds.join(',')})`);
+        }
 
+        const { data: questions, error } = await query.limit(100);
         
         if (error) throw error;
         
@@ -222,22 +219,20 @@ const TestPage = () => {
       
       const attemptedIds = attemptedQuestions?.map(a => a.question_id) || [];
       
-      let query = supabase
-      .from('questions_safe')  // ⚠️ Use safe view
-      .select('id, question, option_a, option_b, option_c, option_d, subject, chapter, topic, difficulty, year');
-    
-    if (mode === "chapter" && selectedChapters.length > 0) {
-      const chapterNames = selectedChapters.map(ch => ch.chapter);
-      query = query.in('chapter', chapterNames);
-    } else if (mode === "subject" && selectedSubjects.length > 0) {
-      query = query.in('subject', selectedSubjects);
-    }
-    
-    if (attemptedIds.length > 0) {
-      query = query.not('id', 'in', `(${attemptedIds.join(',')})`);
-    }
-    
-    const { data: questions, error } = await query.limit(100);
+      let query = supabase.from('questions').select('*');
+      
+      if (mode === "chapter" && selectedChapters.length > 0) {
+        const chapterNames = selectedChapters.map(ch => ch.chapter);
+        query = query.in('chapter', chapterNames);
+      } else if (mode === "subject" && selectedSubjects.length > 0) {
+        query = query.in('subject', selectedSubjects);
+      }
+
+      if (attemptedIds.length > 0) {
+        query = query.not('id', 'in', `(${attemptedIds.join(',')})`);
+      }
+
+      const { data: questions, error } = await query.limit(100);
       
       if (error) throw error;
       
