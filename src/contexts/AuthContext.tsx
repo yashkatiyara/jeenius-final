@@ -168,13 +168,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     console.log('🚀 Starting Google OAuth...');
 
-    // 🔹 Use environment variable for deployed site (fallback to current origin)
-    const redirectUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
+    // 🔹 Always use window.location.origin which includes protocol
+    const redirectUrl = window.location.origin;
+    console.log('🔗 Redirect URL:', redirectUrl);
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${redirectUrl}/`, // ✅ Correct redirect path
+        redirectTo: `${redirectUrl}/auth/callback`, // ✅ Correct redirect path
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
