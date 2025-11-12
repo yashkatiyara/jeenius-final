@@ -164,37 +164,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signInWithGoogle = async (): Promise<{ error?: string }> => {
-    try {
-      setIsLoading(true);
-      console.log('🚀 Starting Google OAuth...');
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          // ✅ FIXED: Correct redirect URL
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          }
-        }
-      });
+  try {
+    setIsLoading(true);
+    console.log('🚀 Starting Google OAuth...');
 
-      if (error) {
-        console.error('❌ Google OAuth error:', error);
-        setIsLoading(false);
-        return { error: error.message };
-      }
+    // 🔹 Use environment variable for deployed site (fallback to current origin)
+    const redirectUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
 
-      console.log('✅ OAuth initiated successfully');
-      // Don't set loading to false here - redirect will happen
-      return {};
-    } catch (error: any) {
-      console.error('❌ Sign-in error:', error);
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${redirectUrl}/`, // ✅ Correct redirect path
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
+    });
+
+    if (error) {
+      console.error('❌ Google OAuth error:', error);
       setIsLoading(false);
-      return { error: error.message || 'Failed to sign in' };
+      return { error: error.message };
     }
-  };
+
+    console.log('✅ OAuth initiated successfully');
+    // Supabase will redirect automatically
+    return {};
+  } catch (error: any) {
+    console.error('❌ Sign-in error:', error);
+    setIsLoading(false);
+    return { error: error.message || 'Failed to sign in' };
+  }
+};
 
   const signOut = async (): Promise<void> => {
     setIsLoading(true);
