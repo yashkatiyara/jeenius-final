@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, LogOut, ChevronDown, BookOpen, Target, BarChart3, Brain, Award, Shield } from 'lucide-react';
+import { Menu, X, Globe, Smartphone, Download, LogOut, ChevronDown, BookOpen, Target, MessageCircle, Trophy, BarChart3, PlusCircle, Brain, Award, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
 import {
   DropdownMenu,
@@ -9,109 +12,153 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const EnhancedHeader = ({ 
-  isAuthenticated = true, 
-  isAdmin = false,
-  isPremium = false,
-  onNavigate = (path) => console.log('Navigate to:', path),
-  onLogout = () => console.log('Logout'),
-  currentPath = '/dashboard'
-}) => {
+const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [userInitials, setUserInitials] = useState('U');
-  const [userName, setUserName] = useState('User');
+  const [language, setLanguage] = useState('EN');
+  const [showAppBanner, setShowAppBanner] = useState(() => {
+    const dismissed = localStorage.getItem('appBannerDismissed');
+    return dismissed !== 'true';
+  });
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, signOut, isPremium } = useAuth();
+  const { isAdmin } = useAdminAuth();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchUserProfile();
-    }
-  }, [isAuthenticated]);
-
-  const fetchUserProfile = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, avatar_url')
-        .eq('id', user.id)
-        .single();
-
-      if (profile?.full_name) {
-        setUserName(profile.full_name);
-        // Generate initials from name
-        const names = profile.full_name.trim().split(' ');
-        const initials = names.length > 1 
-          ? names[0][0] + names[names.length - 1][0]
-          : names[0].slice(0, 2);
-        setUserInitials(initials.toUpperCase());
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    }
-  };
-
-  const handleNavigation = (path) => {
-    setIsMenuOpen(false);
-    onNavigate(path);
-  };
-
-  const handleLogoutClick = () => {
-    setIsMenuOpen(false);
-    onLogout();
+  // Add the missing handleNavigation function
+  const handleNavigation = (path: string) => {
+    setIsMenuOpen(false); // Close mobile menu if open
+    navigate(path);
   };
 
   const publicNavItems = [
-    { name: 'Home', path: '/', icon: null },
-    { name: 'Why Us', path: '/why-us', icon: null },
+    { name: 'Home', href: '/', path: '/', icon: null, highlight: false },
+    { name: 'Why Us', href: '/why-us', path: '/why-us', icon: null, highlight: false },
+  ];
+
+  const featureDropdownItems = [
+    { name: 'All Features', path: '/features', icon: BarChart3, description: 'Explore all platform features' },
   ];
 
   const navItems = isAuthenticated ? (
-    isAdmin ? [
-      { name: 'Dashboard', path: '/admin', icon: BarChart3 },
-      { name: 'Analytics', path: '/admin/analytics', icon: Target },
-      { name: 'Users', path: '/admin/users', icon: BookOpen },
-      { name: 'Content', path: '/admin/content', icon: Brain },
-    ] : [
-      { name: 'Dashboard', path: '/dashboard', icon: BarChart3 },
-      { name: 'Study Now', path: '/study-now', icon: BookOpen },
-      ...(isPremium ? [{ name: 'AI Planner', path: '/ai-planner', icon: Brain }] : []),
-      { name: 'Tests', path: '/tests', icon: Target },
-    ]
-  ) : publicNavItems;
+  isAdmin ? [
+    { name: 'Dashboard', href: '/admin', path: '/admin', icon: BarChart3 },
+    { name: 'Analytics', href: '/admin/analytics', path: '/admin/analytics', icon: Target },
+    { name: 'Users', href: '/admin/users', path: '/admin/users', icon: BookOpen },
+    { name: 'Content', href: '/admin/content', path: '/admin/content', icon: Brain },
+  ] : [
+    { name: 'Dashboard', href: '/dashboard', path: '/dashboard', icon: BarChart3 },
+    { name: 'Study Now', href: '/study-now', path: '/study-now', icon: BookOpen, highlight: false },
+    ...(isPremium ? [{ name: 'AI Study Planner', href: '/ai-planner', path: '/ai-planner', icon: Brain, highlight: false }] : []),
+    { name: 'Tests', href: '/tests', path: '/tests', icon: Target },
+  ]
+) : publicNavItems;
+
+  // Simplified and more reliable logout function
+  const handleLogout = async () => {
+    try {
+      setIsMenuOpen(false);
+      
+      // Clear localStorage first
+      localStorage.clear();
+      
+      // Sign out from Supabase
+      await supabase.auth.signOut();
+      
+      // Call context signOut
+      if (signOut) await signOut();
+      
+      // Force reload to clear all state
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      localStorage.clear();
+      window.location.href = '/';
+    }
+  };
+
+  const handleDownloadApp = () => {
+    window.open('https://play.google.com/store/apps/details?id=com.jeenius.app', '_blank');
+  };
+
+  const dismissAppBanner = () => {
+    setShowAppBanner(false);
+    localStorage.setItem('appBannerDismissed', 'true');
+  };
+
+  // Add/remove class to body for dynamic spacing
+  React.useEffect(() => {
+    if (showAppBanner) {
+      document.body.classList.add('has-app-banner');
+    } else {
+      document.body.classList.remove('has-app-banner');
+    }
+    
+    return () => {
+      document.body.classList.remove('has-app-banner');
+    };
+  }, [showAppBanner]);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200">
+      {/* Mobile App Promotion Bar */}
+      {showAppBanner && (
+        <div className="bg-gradient-to-r from-green-500 to-blue-600 text-white text-center py-2 text-sm relative">
+          <div className="flex items-center justify-center space-x-2">
+            <Smartphone className="w-4 h-4" />
+            <span>📱 Get the full JEEnius experience - Download our Android App now!</span>
+            <Button 
+              size="sm" 
+              variant="secondary" 
+              className="ml-2 bg-white text-green-600 text-xs py-1 px-2 h-6"
+              onClick={handleDownloadApp}
+            >
+              <Download className="w-3 h-3 mr-1" />
+              Download
+            </Button>
+          </div>
+          <button 
+            onClick={dismissAppBanner}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-white hover:text-gray-200 p-1"
+            aria-label="Dismiss banner"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          
           {/* Logo */}
           <div 
-            className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => handleNavigation(isAuthenticated ? '/dashboard' : '/')}
+            className="flex items-center space-x-3 cursor-pointer"
+            onClick={() => navigate(isAuthenticated ? '/dashboard' : '/')}
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">J</span>
-            </div>
+          <img 
+            src="logo.png" 
+            alt="JEEnius Logo" 
+            className="w-10 h-10 object-contain rounded-lg"
+          />
             <div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                JEEnius
-              </span>
+              <span className="text-xl font-bold text-primary">JEEnius</span>
               <div className="text-xs text-gray-500">AI Learning Platform</div>
             </div>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-2">
+          <nav className="hidden md:flex items-center space-x-6">
             {navItems.map((item) => (
               <button
                 key={item.name}
-                onClick={() => handleNavigation(item.path)}
-                className={`transition-all duration-200 font-medium px-4 py-2 rounded-lg flex items-center space-x-2 ${
-                  currentPath === item.path
-                    ? 'text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg'
-                    : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
+                onClick={() => {
+                  console.log('Navigating to:', item.href || item.path);
+                  handleNavigation(item.href || item.path);
+                }}
+                className={`transition-colors duration-200 font-medium px-3 py-2 rounded-lg flex items-center space-x-2 ${
+                  location.pathname === (item.href || item.path)
+                    ? 'text-white bg-primary'
+                    : item.highlight 
+                    ? 'text-primary bg-primary/10 hover:bg-primary hover:text-white'
+                    : 'text-gray-700 hover:text-primary hover:bg-gray-100'
                 }`}
               >
                 {item.icon && <item.icon className="w-4 h-4" />}
@@ -120,89 +167,55 @@ const EnhancedHeader = ({
             ))}
           </nav>
 
-          {/* Auth Section */}
+          {/* Language Toggle & Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
+                        
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex items-center space-x-2 hover:border-blue-500 transition-all"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-sm font-bold shadow-md">
-                      {userInitials}
+                  <Button variant="outline" size="sm" className="flex items-center space-x-2">
+                    <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs">
+                      U
                     </div>
-                    <span className="font-medium">{userName.split(' ')[0]}</span>
                     <ChevronDown className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-white border border-gray-200 shadow-xl">
-                  <div className="px-3 py-2 border-b border-gray-100">
-                    <p className="text-sm font-semibold text-gray-900">{userName}</p>
-                    <p className="text-xs text-gray-500">Manage your account</p>
-                  </div>
-                  
+                <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-200 shadow-lg">
                   <DropdownMenuItem onClick={() => handleNavigation('/profile')}>
-                    <div className="flex items-center space-x-3 w-full py-1">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0">
-                        <span className="text-white text-xs font-bold">{userInitials}</span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Profile</p>
-                        <p className="text-xs text-gray-500">View & edit profile</p>
-                      </div>
+                    <div className="flex items-center space-x-2 w-full">
+                      <div className="w-4 h-4 rounded-full bg-primary"></div>
+                      <span>Profile</span>
                     </div>
                   </DropdownMenuItem>
-                  
                   <DropdownMenuItem onClick={() => handleNavigation('/settings')}>
-                    <div className="flex items-center space-x-3 w-full py-1">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                        <span className="text-lg">⚙️</span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Settings</p>
-                        <p className="text-xs text-gray-500">Preferences & more</p>
-                      </div>
+                    <div className="flex items-center space-x-2 w-full">
+                      <span>⚙️</span>
+                      <span>Settings</span>
                     </div>
                   </DropdownMenuItem>
-                  
                   {isAdmin && (
                     <DropdownMenuItem onClick={() => handleNavigation('/admin')}>
-                      <div className="flex items-center space-x-3 w-full py-1">
-                        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
-                          <Shield className="w-4 h-4 text-purple-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-purple-600">Admin Panel</p>
-                          <p className="text-xs text-purple-400">Manage platform</p>
-                        </div>
+                      <div className="flex items-center space-x-2 w-full">
+                        <Shield className="w-4 h-4 text-purple-600" />
+                        <span className="text-purple-600 font-semibold">Admin Panel</span>
                       </div>
                     </DropdownMenuItem>
                   )}
-                  
-                  <div className="border-t border-gray-100 mt-1">
-                    <DropdownMenuItem 
-                      onClick={handleLogoutClick}
-                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                    >
-                      <div className="flex items-center space-x-3 w-full py-1">
-                        <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                          <LogOut className="w-4 h-4 text-red-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Logout</p>
-                          <p className="text-xs text-red-400">Sign out of account</p>
-                        </div>
-                      </div>
-                    </DropdownMenuItem>
-                  </div>
+                  <DropdownMenuItem 
+                    onClick={handleLogout}
+                    className="text-red-600 focus:text-red-600"
+                  >
+                    <div className="flex items-center space-x-2 w-full">
+                      <LogOut className="w-4 h-4" />
+                      <span>Logout</span>
+                    </div>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <Button 
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-90 text-white px-6 shadow-lg"
-                onClick={() => handleNavigation('/login')}
+                className="bg-primary hover:bg-primary/90 text-white px-6"
+                onClick={() => navigate('/login')}
               >
                 Sign In / Get Started
               </Button>
@@ -211,7 +224,7 @@ const EnhancedHeader = ({
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="md:hidden p-2"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? (
@@ -224,16 +237,18 @@ const EnhancedHeader = ({
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200 bg-white">
+          <div className="md:hidden py-4 border-t border-gray-200">
             <nav className="flex flex-col space-y-2">
               {navItems.map((item) => (
                 <button
                   key={item.name}
                   onClick={() => handleNavigation(item.path)}
-                  className={`text-left font-medium transition-all flex items-center space-x-3 p-3 rounded-lg ${
-                    currentPath === item.path
-                      ? 'text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg'
-                      : 'text-gray-700 hover:bg-blue-50'
+                  className={`text-left font-medium transition-colors flex items-center space-x-3 p-3 rounded-lg ${
+                    location.pathname === item.path
+                      ? 'text-white bg-primary'
+                      : item.highlight
+                      ? 'text-primary bg-primary/10'
+                      : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
                   {item.icon && <item.icon className="w-5 h-5" />}
@@ -241,52 +256,53 @@ const EnhancedHeader = ({
                 </button>
               ))}
               
-              {isAuthenticated && (
-                <div className="pt-3 space-y-2 border-t mt-3">
-                  <Button 
-                    variant="outline"
-                    className="w-full justify-start text-left h-12 flex items-center space-x-3 px-3 hover:bg-blue-50"
-                    onClick={() => handleNavigation('/profile')}
-                  >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-sm font-bold">
-                      {userInitials}
-                    </div>
-                    <div>
-                      <p className="font-medium">{userName}</p>
-                      <p className="text-xs text-gray-500">View Profile</p>
-                    </div>
-                  </Button>
-                  
-                  <Button 
-                    variant="outline"
-                    className="w-full justify-start text-left h-12 flex items-center space-x-3 px-3 hover:bg-gray-50"
-                    onClick={() => handleNavigation('/settings')}
-                  >
-                    <span className="text-xl">⚙️</span>
-                    <span>Settings</span>
-                  </Button>
-                  
-                  {isAdmin && (
+              <div className="pt-3 space-y-2 border-t mt-3">
+                {isAuthenticated ? (
+                  <>
                     <Button 
                       variant="outline"
-                      className="w-full justify-start text-left h-12 flex items-center space-x-3 px-3 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300"
-                      onClick={() => handleNavigation('/admin')}
+                      className="w-full justify-start text-left h-12 flex items-center space-x-3 px-3"
+                      onClick={() => handleNavigation('/profile')}
                     >
-                      <Shield className="w-5 h-5" />
-                      <span className="font-semibold">Admin Panel</span>
+                      <div className="w-5 h-5 rounded-full bg-primary"></div>
+                      <span>Profile</span>
                     </Button>
-                  )}
-                  
+                    <Button 
+                      variant="outline"
+                      className="w-full justify-start text-left h-12 flex items-center space-x-3 px-3"
+                      onClick={() => handleNavigation('/settings')}
+                    >
+                      <span className="text-lg">⚙️</span>
+                      <span>Settings</span>
+                    </Button>
+                    {isAdmin && (
+                      <Button 
+                        variant="outline"
+                        className="w-full justify-start text-left h-12 flex items-center space-x-3 px-3 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300"
+                        onClick={() => handleNavigation('/admin')}
+                      >
+                        <Shield className="w-5 h-5" />
+                        <span className="font-semibold">Admin Panel</span>
+                      </Button>
+                    )}
+                    <Button 
+                      variant="outline"
+                      onClick={handleLogout}
+                      className="w-full justify-start text-left h-12 flex items-center space-x-3 px-3 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                    >
+                      <LogOut className="w-5 h-5" />
+                      <span>Logout</span>
+                    </Button>
+                  </>
+                ) : (
                   <Button 
-                    variant="outline"
-                    onClick={handleLogoutClick}
-                    className="w-full justify-start text-left h-12 flex items-center space-x-3 px-3 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                    className="w-full bg-primary hover:bg-primary/90 text-white h-12"
+                    onClick={() => handleNavigation('/login')}
                   >
-                    <LogOut className="w-5 h-5" />
-                    <span>Logout</span>
+                    Sign In / Get Started
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
             </nav>
           </div>
         )}
@@ -295,4 +311,4 @@ const EnhancedHeader = ({
   );
 };
 
-export default EnhancedHeader;
+export default Header;
