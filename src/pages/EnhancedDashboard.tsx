@@ -205,26 +205,7 @@ const EnhancedDashboard = () => {
           if (attempt.is_correct) subjectStats[subject].correct++;
         }
       });
-
-      // Find weakest & strongest topics (minimum 5 attempts filter)
-      let weakestTopic = "Not enough data";
-      let strongestTopic = "Not enough data";
-      let lowestAccuracy = 100;
-      let highestAccuracy = 0;
-      Object.entries(topicStats).forEach(([topic, s]: [string, any]) => {
-        if (s.total >= 5) {
-          const acc = (s.correct / s.total) * 100;
-          if (acc < lowestAccuracy) {
-            lowestAccuracy = acc;
-            weakestTopic = topic;
-          }
-          if (acc > highestAccuracy) {
-            highestAccuracy = acc;
-            strongestTopic = topic;
-          }
-        }
-      });
-
+      
       // Dynamic daily goal based on real totals
       const dynamicGoal = calculateDailyGoal(totalQuestions, accuracy, streak);
 
