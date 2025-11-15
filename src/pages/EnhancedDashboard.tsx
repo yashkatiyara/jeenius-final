@@ -323,7 +323,57 @@ const EnhancedDashboard = () => {
   };
 
   const timeMessage = currentTime !== null ? getTimeBasedMessage() : { greeting: "Hello", message: "Loading...", icon: "👋", action: "Start" };
-
+  const getSmartNotification = () => {
+    if (!stats) return null;
+  
+    // Low accuracy alert
+    if (stats.todayAccuracy < 60 && stats.questionsToday >= 10) {
+      return {
+        message: "Focus needed! Review mistakes before continuing.",
+        color: "orange",
+        icon: AlertCircle
+      };
+    }
+  
+    // Streak breaking warning
+    if (stats.streak >= 7 && stats.questionsToday < 10) {
+      return {
+        message: `🔥 Don't break your ${stats.streak}-day streak! Complete today's goal.`,
+        color: "orange",
+        icon: Flame
+      };
+    }
+  
+    // Goal achievement
+    if (stats.todayProgress >= stats.todayGoal && stats.todayAccuracy >= 80) {
+      return {
+        message: "🎉 Daily goal smashed with great accuracy! You're on fire!",
+        color: "green",
+        icon: Trophy
+      };
+    }
+  
+    // High performer
+    if (stats.questionsToday >= 50 && stats.todayAccuracy >= 85) {
+      return {
+        message: "⭐ Outstanding performance today! Keep dominating!",
+        color: "green",
+        icon: Sparkles
+      };
+    }
+  
+    // Rank improvement
+    if (stats.rankChange && stats.rankChange > 0 && stats.rankChange >= 3) {
+      return {
+        message: `📈 Climbed ${stats.rankChange} ranks! You're moving up fast!`,
+        color: "blue",
+        icon: TrendingUp
+      };
+    }
+  
+    return null;
+  };
+    
   const notification = stats ? getSmartNotification() : null;
 
   useEffect(() => {
