@@ -706,30 +706,6 @@ const EnhancedDashboard = () => {
                     </div>
                   )}
 
-                  {/* Weakest & strongest topic summary */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                      <div className="text-xs text-slate-500">Weakest Topic</div>
-                      <div className="flex items-center justify-between mt-1">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-800">{stats?.weakestTopic}</div>
-                          <div className="text-xs text-slate-500 mt-0.5">Focus on this — targeted practice recommended</div>
-                        </div>
-                        <div className="text-2xl text-red-600">⚠️</div>
-                      </div>
-                    </div>
-
-                    <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                      <div className="text-xs text-slate-500">Strongest Topic</div>
-                      <div className="flex items-center justify-between mt-1">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-800">{stats?.strongestTopic}</div>
-                          <div className="text-xs text-slate-500 mt-0.5">Great job — consolidate with revision</div>
-                        </div>
-                        <div className="text-2xl text-green-600">🏅</div>
-                      </div>
-                    </div>
-                  </div>
 
                   {/* Compact points-to-level display */}
                   <div className="bg-gradient-to-r from-indigo-50 to-white p-3 rounded-xl border border-indigo-100 flex items-center justify-between">
