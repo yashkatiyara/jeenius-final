@@ -458,7 +458,7 @@ const EnhancedDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <Header />
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl pt-8 pb-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl pt-20 pb-8">
         <div className="flex flex-col gap-4">
           {/* Banner */}
           {showBanner && notification && (
@@ -718,19 +718,60 @@ const EnhancedDashboard = () => {
                   )}
 
                   {/* Points to next level */}
-                  <div className="bg-gradient-to-r from-indigo-50 to-white p-4 rounded-xl border border-indigo-100 flex items-center justify-between">
-                    <div>
-                      <div className="text-xs text-slate-500">Progress to next level</div>
-                      <div className="text-lg font-bold text-slate-800">{stats?.totalPoints ?? 0} points</div>
-                      <div className="text-xs text-slate-500 mt-0.5">Level {stats?.currentLevel} • {stats?.pointsToNext} points to Level {stats ? stats.currentLevel + 1 : "-"}</div>
-                      <div className="mt-3 max-w-md">
-                        <Progress value={Math.min(100, Math.round((((stats?.totalPoints ?? 0) % (stats?.currentLevel * 100 || 100)) / (stats?.currentLevel * 100 || 100)) * 100))} className="h-2" />
+                  <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-white p-5 rounded-xl border border-indigo-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg">
+                          <Trophy className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold text-slate-800">JEEnius Points</div>
+                          <div className="text-xs text-slate-500">Your achievement progress</div>
+                        </div>
                       </div>
+                      <Badge className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-3 py-1">
+                        Level {stats?.currentLevel}
+                      </Badge>
                     </div>
-                    <div className="text-right">
-                      <div className="text-xs text-slate-500">Top rankers avg</div>
-                      <div className="text-lg font-extrabold text-slate-900">{stats?.topRankersAvg ?? "-"}</div>
-                      <div className="text-xs text-slate-500 mt-1">Avg top-10 points</div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-baseline gap-2">
+                        <div className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+                          {stats?.totalPoints ?? 0}
+                        </div>
+                        <div className="text-sm text-slate-500">total points</div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-600">Progress to Level {stats ? stats.currentLevel + 1 : "-"}</span>
+                          <span className="font-semibold text-indigo-600">
+                            {stats?.pointsToNext} points needed
+                          </span>
+                        </div>
+                        <Progress 
+                          value={Math.min(100, Math.round((((stats?.totalPoints ?? 0) % (stats?.currentLevel * 100 || 100)) / (stats?.currentLevel * 100 || 100)) * 100))} 
+                          className="h-3 bg-indigo-100"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3 pt-3 border-t border-slate-200">
+                        <div className="text-center">
+                          <div className="text-xs text-slate-500">Rank</div>
+                          <div className="text-sm font-bold text-slate-800">#{stats?.rank ?? "-"}</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs text-slate-500">Percentile</div>
+                          <div className="text-sm font-bold text-slate-800">Top {stats?.percentile ?? "-"}%</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs text-slate-500">Streak</div>
+                          <div className="text-sm font-bold text-amber-600 flex items-center justify-center gap-1">
+                            <Flame className="h-3 w-3" />
+                            {stats?.streak ?? 0}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
