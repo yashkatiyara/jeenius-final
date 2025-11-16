@@ -3,12 +3,12 @@ import React from 'react';
 import { BarChart3, TrendingUp, Clock, Target, Star, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useUserData } from '@/hooks/useUserData';
+import { useUserStats } from '@/hooks/useUserStats';
 import { useAuth } from '@/contexts/AuthContext';
 
 const ParentDashboard = () => {
   const { user } = useAuth();
-  const { stats, profile, subjectProgress, loading } = useUserData();
+  const { stats, profile, subjectProgress, loading } = useUserStats();
 
   if (loading) {
     return (
