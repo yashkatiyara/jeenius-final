@@ -1,9 +1,5 @@
-// src/hooks/useTestSeries.tsx
-// ✅ UPDATED: Safe localStorage usage
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { safeLocalStorage } from '@/utils/safeStorage';
 
 export interface TestSeries {
   id: string;
@@ -121,13 +117,11 @@ export const useTestSeries = () => {
     if (!user) return;
 
     try {
-      // ✅ SAFE: Won't crash in incognito mode
-      const attempts = safeLocalStorage.getJSON<TestAttempt[]>('testAttempts', []);
+      const attempts = JSON.parse(localStorage.getItem('testAttempts') || '[]');
       const userAttempts = attempts.filter((attempt: TestAttempt) => attempt.user_id === user.id);
       setUserAttempts(userAttempts);
     } catch (err) {
       console.error('Error fetching user attempts:', err);
-      setUserAttempts([]);
     }
   };
 
@@ -135,13 +129,11 @@ export const useTestSeries = () => {
     if (!user) return;
 
     try {
-      // ✅ SAFE: Won't crash in incognito mode
-      const registrations = safeLocalStorage.getJSON<TestRegistration[]>('testRegistrations', []);
+      const registrations = JSON.parse(localStorage.getItem('testRegistrations') || '[]');
       const userRegs = registrations.filter((reg: TestRegistration) => reg.user_id === user.id);
       setUserRegistrations(userRegs);
     } catch (err) {
       console.error('Error fetching user registrations:', err);
-      setUserRegistrations([]);
     }
   };
 
@@ -151,8 +143,7 @@ export const useTestSeries = () => {
     }
 
     try {
-      // ✅ SAFE: Get existing registrations
-      const registrations = safeLocalStorage.getJSON<TestRegistration[]>('testRegistrations', []);
+      const registrations = JSON.parse(localStorage.getItem('testRegistrations') || '[]');
       
       // Check if already registered
       const existingReg = registrations.find((reg: TestRegistration) => 
@@ -171,13 +162,7 @@ export const useTestSeries = () => {
       };
 
       registrations.push(newRegistration);
-      
-      // ✅ SAFE: Save with error handling
-      const success = safeLocalStorage.setJSON('testRegistrations', registrations);
-      
-      if (!success) {
-        console.warn('⚠️ Failed to save registration - using in-memory only');
-      }
+      localStorage.setItem('testRegistrations', JSON.stringify(registrations));
       
       // Refresh registrations
       await fetchUserRegistrations();
