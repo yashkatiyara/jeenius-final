@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Header from '@/components/Header';
 import LoadingScreen from '@/components/ui/LoadingScreen';
-import UpgradeModal from '@/components/UpgradeModal';
+import PricingModal from '@/components/PricingModal';
 import {
   Flame, ArrowLeft, Lightbulb, XCircle, CheckCircle2, Target,
   Sparkles, Zap, Play, Lock, TrendingUp
@@ -697,12 +697,10 @@ const StudyNowPage = () => {
           </div>
         </div>
 
-        <UpgradeModal
+        <PricingModal
           isOpen={showUpgradeModal}
           onClose={() => setShowUpgradeModal(false)}
-          promptType={upgradePromptType}
-          data={upgradePromptData}
-          userId={profile?.id || ''}
+          limitType="daily_limit"
         />
 
         <AIDoubtSolver
