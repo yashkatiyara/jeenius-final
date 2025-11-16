@@ -25,7 +25,6 @@ import AuthCallback from '@/pages/AuthCallback';
 
 // Feature pages
 import WhyUsPage from "./pages/WhyUsPage";
-import FeaturesPage from "./pages/FeaturesPage";
 import GoalSelectionPage from '@/pages/GoalSelectionPage';
 import AIStudyPlannerPage from './pages/AIStudyPlannerPage';
 
@@ -138,7 +137,6 @@ const App = () => (
               {/* Public Routes */}
               <Route path="/" element={<Index />} />
               <Route path="/why-us" element={<WhyUsPage />} />
-              <Route path="/features" element={<FeaturesPage />} />
               
               {/* Authentication Routes */}
               <Route path="/login" element={<Login />} />
