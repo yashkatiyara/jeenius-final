@@ -267,15 +267,11 @@ const EnhancedDashboard = () => {
           const topSlice = sorted.slice(0, 10).filter((p: any) => typeof p.total_points === "number");
           if (topSlice.length > 0) {
             const sum = topSlice.reduce((acc: number, p: any) => acc + (p.total_points || 0), 0);
-            topRankersAvg = Math.round(sum / topSlice.length);
-          }
+          topRankersAvg = Math.round(sum / topSlice.length);
+        }
 
-          // rankChange best-effort: if profile has previous_rank field, use it (non-invasive)
-          if (profileData && typeof profileData.previous_rank === "number" && rank !== null) {
-            rankChange = profileData.previous_rank - rank; // positive means improved
-          } else {
-            rankChange = null;
-          }
+        // Rank change tracking removed - not available in current schema
+        rankChange = null;
         }
       } catch (err) {
         console.error("Error computing leaderboard metrics:", err);
@@ -753,10 +749,10 @@ const EnhancedDashboard = () => {
                     <div className="text-xs text-green-600 font-semibold">LIVE</div>
                   </div>
 
-                  <div className="flex-1 overflow-auto py-2">
-                    {/* Use user's existing Leaderboard component — refresh using key */}
-                    <Leaderboard key={leaderboardKey} compact />
-                  </div>
+                <div className="flex-1 overflow-auto py-2">
+                  {/* Use user's existing Leaderboard component — refresh using key */}
+                  <Leaderboard key={leaderboardKey} />
+                </div>
 
                   <div className="mt-3 text-xs text-slate-500">
                     <div className="flex items-center justify-between">
