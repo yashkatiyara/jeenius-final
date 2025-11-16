@@ -1,5 +1,8 @@
+// src/components/Header.tsx
+// ✅ FIXED VERSION - All broken links removed
+
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Globe, Smartphone, Download, LogOut, ChevronDown, BookOpen, Target, MessageCircle, Trophy, BarChart3, PlusCircle, Brain, Award, Shield } from 'lucide-react';
+import { Menu, X, Globe, Smartphone, Download, LogOut, ChevronDown, BookOpen, Target, MessageCircle, Trophy, BarChart3, Brain, Award, Shield, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,7 +15,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Calendar } from "lucide-react";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,25 +37,21 @@ const Header = () => {
     { name: 'Home', href: '/', path: '/', icon: null, highlight: false },
     { name: 'Why Us', href: '/why-us', path: '/why-us', icon: null, highlight: false },
   ];
-  
-  const featureDropdownItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: BarChart3, description: 'Your analytics hub' },
-    { name: 'Study Planner', path: '/ai-planner', icon: Calendar, description: 'AI-powered planning' },
-  ];
 
+  // ✅ FIXED: Removed broken features dropdown
   const navItems = isAuthenticated ? (
-  isAdmin ? [
-    { name: 'Dashboard', href: '/admin', path: '/admin', icon: BarChart3 },
-    { name: 'Analytics', href: '/admin/analytics', path: '/admin/analytics', icon: Target },
-    { name: 'Users', href: '/admin/users', path: '/admin/users', icon: BookOpen },
-    { name: 'Content', href: '/admin/content', path: '/admin/content', icon: Brain },
-  ] : [
-    { name: 'Dashboard', href: '/dashboard', path: '/dashboard', icon: BarChart3 },
-    { name: 'Study Now', href: '/study-now', path: '/study-now', icon: BookOpen, highlight: false },
-    ...(isPremium ? [{ name: 'AI Study Planner', href: '/ai-planner', path: '/ai-planner', icon: Brain, highlight: false }] : []),
-    { name: 'Tests', href: '/tests', path: '/tests', icon: Target },
-  ]
-) : publicNavItems;
+    isAdmin ? [
+      { name: 'Dashboard', href: '/admin', path: '/admin', icon: BarChart3 },
+      { name: 'Analytics', href: '/admin/analytics', path: '/admin/analytics', icon: Target },
+      { name: 'Users', href: '/admin/users', path: '/admin/users', icon: BookOpen },
+      { name: 'Content', href: '/admin/content', path: '/admin/content', icon: Brain },
+    ] : [
+      { name: 'Dashboard', href: '/dashboard', path: '/dashboard', icon: BarChart3 },
+      { name: 'Study Now', href: '/study-now', path: '/study-now', icon: BookOpen, highlight: false },
+      ...(isPremium ? [{ name: 'AI Study Planner', href: '/ai-planner', path: '/ai-planner', icon: Brain, highlight: false }] : []),
+      { name: 'Tests', href: '/tests', path: '/tests', icon: Target },
+    ]
+  ) : publicNavItems;
 
   const handleLogout = async () => {
     try {
@@ -125,11 +123,11 @@ const Header = () => {
             className="flex items-center space-x-3 cursor-pointer"
             onClick={() => navigate(isAuthenticated ? '/dashboard' : '/')}
           >
-          <img 
-            src="logo.png" 
-            alt="JEEnius Logo" 
-            className="w-10 h-10 object-contain rounded-lg"
-          />
+            <img 
+              src="/logo.png" 
+              alt="JEEnius Logo" 
+              className="w-10 h-10 object-contain rounded-lg"
+            />
             <div>
               <span className="text-xl font-bold text-primary">JEEnius</span>
               <div className="text-xs text-gray-500">AI Learning Platform</div>
@@ -161,7 +159,6 @@ const Header = () => {
 
           {/* Right Side: Points Display + Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            {/* 🚀 NEW: Points Display - Only show when authenticated */}
             {isAuthenticated && <PointsDisplay />}
             
             {isAuthenticated ? (
@@ -232,7 +229,6 @@ const Header = () => {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200">
-            {/* 🚀 NEW: Points Display for Mobile - Top of menu */}
             {isAuthenticated && (
               <div className="mb-4 flex justify-center">
                 <PointsDisplay />
