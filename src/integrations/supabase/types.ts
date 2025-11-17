@@ -908,6 +908,7 @@ export type Database = {
           option_c: string
           option_d: string
           question: string
+          question_type: string
           subject: string
           topic: string
           year: number | null
@@ -924,6 +925,7 @@ export type Database = {
           option_c: string
           option_d: string
           question: string
+          question_type?: string
           subject: string
           topic: string
           year?: number | null
@@ -940,6 +942,7 @@ export type Database = {
           option_c?: string
           option_d?: string
           question?: string
+          question_type?: string
           subject?: string
           topic?: string
           year?: number | null
