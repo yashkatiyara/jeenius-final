@@ -459,13 +459,22 @@ const StudyNowPage = () => {
           mode: 'study'
         });
 
-      // Points will be calculated by database trigger
-      setPointsEarned(isCorrect ? 10 : 0); // Simple frontend feedback
-      setShowPointsAnimation(isCorrect);
-      setTimeout(() => setShowPointsAnimation(false), 2000);
-      
+      // Calculate and display actual points earned
+      const { points, breakdown } = await PointsService.calculatePoints(
+        user.id,
+        question.difficulty,
+        isCorrect,
+        timeSpent
+      );
 
-      // 🚀 Update progress and streak
+      if (points > 0) {
+        setPointsEarned(points);
+        setShowPointsAnimation(true);
+        setTimeout(() => setShowPointsAnimation(false), 2000);
+        console.log('Points breakdown:', breakdown);
+      }
+
+      // Update progress and streak
       await StreakService.updateProgress(user.id);
       await loadGamificationData();
 

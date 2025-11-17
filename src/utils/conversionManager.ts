@@ -3,6 +3,15 @@
 
 import { safeLocalStorage } from './safeStorage';
 
+interface ConversionData {
+  firstVisit: number;
+  modalShownCount: number;
+  lastModalShown: number | null;
+  limitHitCount: Record<string, number>;
+  pricingPageVisits: number;
+  lastPricingPageVisit: number | null;
+}
+
 export class ConversionManager {
   private storageKey = 'pricing_conversion_data';
 
@@ -24,12 +33,19 @@ export class ConversionManager {
     }
   }
 
-  private getData() {
+  private getData(): ConversionData {
     // ✅ SAFE: Won't crash in incognito mode
-    return safeLocalStorage.getJSON(this.storageKey, {});
+    return safeLocalStorage.getJSON(this.storageKey, {
+      firstVisit: 0,
+      modalShownCount: 0,
+      lastModalShown: null,
+      limitHitCount: {},
+      pricingPageVisits: 0,
+      lastPricingPageVisit: null,
+    }) as ConversionData;
   }
 
-  private saveData(data: any) {
+  private saveData(data: Partial<ConversionData>) {
     const current = this.getData();
     const merged = { ...current, ...data };
     
