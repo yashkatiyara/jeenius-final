@@ -459,19 +459,11 @@ const StudyNowPage = () => {
           mode: 'study'
         });
 
-      // 🚀 Calculate and award points
-      const { points } = await PointsService.calculatePoints(
-        user.id,
-        question.difficulty,
-        isCorrect,
-        timeSpent
-      );
-
-      if (points > 0) {
-        setPointsEarned(points);
-        setShowPointsAnimation(true);
-        setTimeout(() => setShowPointsAnimation(false), 2000);
-      }
+      // Points will be calculated by database trigger
+      setPointsEarned(isCorrect ? 10 : 0); // Simple frontend feedback
+      setShowPointsAnimation(isCorrect);
+      setTimeout(() => setShowPointsAnimation(false), 2000);
+      
 
       // 🚀 Update progress and streak
       await StreakService.updateProgress(user.id);
