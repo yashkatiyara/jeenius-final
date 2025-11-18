@@ -1,17 +1,12 @@
+// src/components/Leaderboard.tsx
+// ✅ FIXED - Uses profiles.total_points + question_attempts
+
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
-  Trophy,
-  TrendingUp,
-  TrendingDown,
-  Flame,
-  Zap,
-  Crown,
-  Target,
-  Medal,
-  Activity
+  Trophy, TrendingUp, TrendingDown, Flame, Zap, Crown, Target, Medal, Activity
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +17,7 @@ interface LeaderboardUser {
   avatar_url?: string;
   total_questions: number;
   accuracy: number;
+  total_points: number; // ✅ NEW
   streak: number;
   rank: number;
   rank_change: number;
@@ -38,24 +34,19 @@ const Leaderboard: React.FC = () => {
 
   useEffect(() => {
     fetchLeaderboard(true);
-    
-    // Refresh every 30 seconds
     const interval = setInterval(() => fetchLeaderboard(false), 30000);
     return () => clearInterval(interval);
   }, [timeFilter, user]);
 
   const fetchLeaderboard = async (showLoader = true) => {
     try {
-      if (showLoader) {
-        setLoading(true);
-      } else {
-        setIsRefreshing(true);
-      }
+      if (showLoader) setLoading(true);
+      else setIsRefreshing(true);
 
-      // ✅ NO LIMIT - Fetch ALL users
+      // ✅ Fetch profiles with total_points
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url');
+        .select('id, full_name, avatar_url, total_points');
 
       if (profileError) {
         console.error('❌ Profile fetch error:', profileError);
@@ -68,9 +59,9 @@ const Leaderboard: React.FC = () => {
         return;
       }
 
-      console.log(`✅ Fetched ${profiles.length} total profiles`);
+      console.log(`✅ Fetched ${profiles.length} profiles`);
 
-      // Fetch ALL question attempts at once (more efficient)
+      // Fetch question attempts
       const { data: allAttempts, error: attemptsError } = await supabase
         .from('question_attempts')
         .select('user_id, is_correct, created_at, mode');
@@ -79,33 +70,26 @@ const Leaderboard: React.FC = () => {
         console.error('❌ Attempts fetch error:', attemptsError);
       }
 
-      console.log(`✅ Fetched ${allAttempts?.length || 0} total attempts`);
+      console.log(`✅ Fetched ${allAttempts?.length || 0} attempts`);
 
-      // Group attempts by user_id for faster lookup
+      // Group attempts by user (exclude test/battle)
       const attemptsByUser = new Map<string, any[]>();
       allAttempts?.forEach(attempt => {
-        // Filter out test and battle modes
         if (attempt.mode === 'test' || attempt.mode === 'battle') return;
-        
         if (!attemptsByUser.has(attempt.user_id)) {
           attemptsByUser.set(attempt.user_id, []);
         }
         attemptsByUser.get(attempt.user_id)?.push(attempt);
       });
 
-      console.log(`✅ ${attemptsByUser.size} users have practice attempts`);
-
-      // Calculate stats for each user
+      // Calculate stats
       const userStats: LeaderboardUser[] = [];
       
       profiles.forEach(profile => {
         const attempts = attemptsByUser.get(profile.id) || [];
-        
-        if (attempts.length === 0) {
-          return; // Skip users with no practice attempts
-        }
+        if (attempts.length === 0) return;
 
-        // Filter based on time
+        // Time filtering
         let timeFilteredAttempts = attempts;
         if (timeFilter === 'today') {
           const today = new Date();
@@ -117,21 +101,18 @@ const Leaderboard: React.FC = () => {
           timeFilteredAttempts = attempts.filter(a => new Date(a.created_at) >= weekAgo);
         }
 
-        // Skip if no attempts in selected time filter
-        if (timeFilteredAttempts.length === 0) {
-          return;
-        }
+        if (timeFilteredAttempts.length === 0) return;
 
         const totalQuestions = timeFilteredAttempts.length;
         const correctAnswers = timeFilteredAttempts.filter(a => a.is_correct).length;
         const accuracy = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
 
-        // Calculate today's questions
+        // Today's questions
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const todayAttempts = attempts.filter(a => new Date(a.created_at) >= today);
 
-        // Calculate streak (30+ questions per day)
+        // Calculate streak
         let streak = 0;
         const DAILY_TARGET = 30;
         const sortedAttempts = [...attempts].sort((a, b) => 
@@ -152,7 +133,6 @@ const Leaderboard: React.FC = () => {
             streak++;
             currentDate.setDate(currentDate.getDate() - 1);
           } else if (i === 0 && questionsOnThisDay > 0) {
-            // Today hasn't hit goal yet but has attempts
             currentDate.setDate(currentDate.getDate() - 1);
           } else {
             break;
@@ -165,6 +145,7 @@ const Leaderboard: React.FC = () => {
           avatar_url: profile.avatar_url,
           total_questions: totalQuestions,
           accuracy,
+          total_points: profile.total_points || 0, // ✅ Use real points
           streak,
           rank: 0,
           rank_change: 0,
@@ -172,22 +153,20 @@ const Leaderboard: React.FC = () => {
         });
       });
 
-      console.log(`✅ ${userStats.length} users have stats for ${timeFilter}`);
-
       if (userStats.length === 0) {
-        console.log('⚠️ No users with attempts in selected time period');
+        console.log('⚠️ No users with attempts');
         setTopUsers([]);
         setCurrentUser(null);
         setLoading(false);
         return;
       }
 
-      // Sort by total questions (primary) and accuracy (secondary)
+      // ✅ Sort by POINTS first, then questions
       userStats.sort((a, b) => {
-        if (b.total_questions !== a.total_questions) {
-          return b.total_questions - a.total_questions;
+        if (b.total_points !== a.total_points) {
+          return b.total_points - a.total_points;
         }
-        return b.accuracy - a.accuracy;
+        return b.total_questions - a.total_questions;
       });
 
       // Assign ranks
@@ -200,25 +179,18 @@ const Leaderboard: React.FC = () => {
       const current = userStats.find(u => u.id === user?.id);
       if (current) {
         setCurrentUser(current);
-        console.log(`✅ Current user rank: ${current.rank} (${current.total_questions} questions)`);
+        console.log(`✅ Your rank: ${current.rank} (${current.total_points} pts)`);
       } else {
-        console.log('⚠️ Current user not in leaderboard for this time period');
         setCurrentUser(null);
       }
 
-      // Set top 10 users
-      const top10 = userStats.slice(0, 10);
-      setTopUsers(top10);
-      console.log('✅ Top 10 users:', top10.map(u => `${u.full_name}: ${u.total_questions}Q`));
+      setTopUsers(userStats.slice(0, 10));
 
     } catch (error) {
       console.error('❌ Error fetching leaderboard:', error);
     } finally {
-      if (showLoader) {
-        setLoading(false);
-      } else {
-        setIsRefreshing(false);
-      }
+      if (showLoader) setLoading(false);
+      else setIsRefreshing(false);
     }
   };
 
@@ -311,7 +283,7 @@ const Leaderboard: React.FC = () => {
 
       <CardContent className="p-4 space-y-3 max-h-[600px] overflow-y-auto">
         
-        {/* Current User Card - Show if rank > 10 */}
+        {/* Current User Card */}
         {currentUser && currentUser.rank > 10 && (
           <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-300">
             <div className="flex items-center justify-between">
@@ -322,7 +294,7 @@ const Leaderboard: React.FC = () => {
                 <div>
                   <p className="font-bold text-sm text-slate-900">You</p>
                   <p className="text-xs text-slate-600">
-                    {currentUser.total_questions} questions • {currentUser.accuracy}% accuracy
+                    {currentUser.total_points} pts • {currentUser.total_questions} questions
                   </p>
                 </div>
               </div>
@@ -340,8 +312,7 @@ const Leaderboard: React.FC = () => {
         {topUsers.length === 0 ? (
           <div className="text-center py-8 text-slate-500">
             <Trophy className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p className="text-sm">No users found for this time period.</p>
-            <p className="text-xs mt-1">Be the first to practice!</p>
+            <p className="text-sm">No users found.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -361,12 +332,10 @@ const Leaderboard: React.FC = () => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1">
-                      {/* Rank */}
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${getRankBadge(leaderUser.rank)}`}>
                         {getRankIcon(leaderUser.rank) || leaderUser.rank}
                       </div>
 
-                      {/* User Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="font-bold text-sm text-slate-900 truncate">
@@ -381,9 +350,13 @@ const Leaderboard: React.FC = () => {
                         </div>
                         
                         <div className="flex items-center gap-3 text-xs text-slate-600 mt-1">
+                          <span className="flex items-center gap-1 font-bold text-indigo-600">
+                            <Zap className="h-3 w-3" />
+                            {leaderUser.total_points} pts
+                          </span>
                           <span className="flex items-center gap-1">
                             <Target className="h-3 w-3" />
-                            {leaderUser.total_questions}
+                            {leaderUser.total_questions}Q
                           </span>
                           <span className={`font-semibold ${
                             leaderUser.accuracy >= 80 ? 'text-green-600' :
@@ -391,14 +364,8 @@ const Leaderboard: React.FC = () => {
                           }`}>
                             {leaderUser.accuracy}%
                           </span>
-                          {leaderUser.questions_today > 0 && (
-                            <Badge className="bg-blue-100 text-blue-700 text-xs">
-                              +{leaderUser.questions_today} today
-                            </Badge>
-                          )}
                         </div>
 
-                        {/* Progress bar */}
                         <Progress 
                           value={leaderUser.accuracy} 
                           className="h-1.5 mt-2"
@@ -406,7 +373,6 @@ const Leaderboard: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Rank Change */}
                     {leaderUser.rank_change !== 0 && (
                       <div className={`flex items-center gap-1 text-xs font-bold ${
                         leaderUser.rank_change > 0 ? 'text-green-600' : 'text-red-600'
@@ -426,16 +392,16 @@ const Leaderboard: React.FC = () => {
           </div>
         )}
 
-        {/* Motivational Footer */}
+        {/* Footer */}
         {currentUser && topUsers.length > 0 && (
           <div className="mt-4 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
             <div className="flex items-center gap-2 mb-2">
               <Zap className="h-4 w-4 text-purple-600" />
-              <p className="text-xs font-bold text-purple-900">Climb the Ranks!</p>
+              <p className="text-xs font-bold text-purple-900">Earn More Points!</p>
             </div>
             <p className="text-xs text-purple-700">
               {currentUser.rank > 1
-                ? `You're ${currentUser.rank - 1} ${currentUser.rank === 2 ? 'position' : 'positions'} away from the top! Keep pushing! 🚀`
+                ? `Answer correctly to earn points and climb the ranks! 🚀`
                 : "You're at the top! Maintain your position! 👑"}
             </p>
           </div>
