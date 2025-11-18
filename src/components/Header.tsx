@@ -35,10 +35,6 @@ const Header = () => {
     { name: 'Home', href: '/', path: '/', icon: null, highlight: false },
     { name: 'Why Us', href: '/why-us', path: '/why-us', icon: null, highlight: false },
   ];
-
-  // ✅ FIXED: Remove or update this route
-  // Option A: Remove from dropdown if page doesn't exist
-  // Option B: Create a Features page or redirect to dashboard
   
   // Recommended Fix:
   const featureDropdownItems = [
@@ -167,7 +163,7 @@ const Header = () => {
           {/* Right Side: Points Display + Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
             {/* 🚀 NEW: Points Display - Only show when authenticated */}
-            {isAuthenticated && <PointsDisplay />}
+            {/* {isAuthenticated && <PointsDisplay />} */}
             
             {isAuthenticated ? (
               <DropdownMenu>
@@ -240,7 +236,7 @@ const Header = () => {
             {/* 🚀 NEW: Points Display for Mobile - Top of menu */}
             {isAuthenticated && (
               <div className="mb-4 flex justify-center">
-                <PointsDisplay />
+                {/* <PointsDisplay /> */}
               </div>
             )}
 
