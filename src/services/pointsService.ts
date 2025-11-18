@@ -1,4 +1,6 @@
 // src/services/pointsService.ts
+// REPLACE ENTIRE FILE WITH THIS
+
 import { supabase } from '@/integrations/supabase/client';
 
 export class PointsService {
@@ -18,14 +20,17 @@ export class PointsService {
     let points = 0;
     const breakdown: Array<{ type: string; points: number; label: string }> = [];
 
-    // A. Base Points
+    // Ensure user points record exists
+    await this.ensureUserPointsExist(userId);
+
     if (isCorrect) {
+      // A. Base Points
       const basePoints = this.getBasePoints(difficulty);
       points += basePoints;
       breakdown.push({
         type: 'base',
         points: basePoints,
-        label: `${difficulty.toUpperCase()} question`
+        label: `${difficulty} question`
       });
 
       // B. Answer Streak Bonus
@@ -37,16 +42,17 @@ export class PointsService {
           points: streakBonus.points,
           label: `${streakBonus.streak} answer streak! 🔥`
         });
-
-        // Award badge if milestone reached
-        if (streakBonus.badgeEarned) {
-          breakdown.push({
-            type: 'badge',
-            points: 0,
-            label: `🏆 ${streakBonus.badgeName} Badge Earned!`
-          });
-        }
       }
+
+      // C. Badge milestone
+      if (streakBonus.badgeEarned) {
+        breakdown.push({
+          type: 'badge',
+          points: 0,
+          label: `🏆 ${streakBonus.badgeName} Badge Unlocked!`
+        });
+      }
+
     } else {
       // Wrong answer penalty
       points = -2;
@@ -67,15 +73,42 @@ export class PointsService {
   }
 
   /**
+   * Ensure user has points record (create if missing)
+   */
+  private static async ensureUserPointsExist(userId: string) {
+    const { data: existing } = await supabase
+      .from('jeenius_points')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (!existing) {
+      console.log('Creating points record for user:', userId);
+      await supabase.from('jeenius_points').insert({
+        user_id: userId,
+        total_points: 0,
+        level: 'BEGINNER',
+        level_progress: 0,
+        answer_streak: 0,
+        longest_answer_streak: 0,
+        badges: []
+      });
+    }
+  }
+
+  /**
    * Get base points for difficulty
    */
   private static getBasePoints(difficulty: string): number {
     const difficultyMap: Record<string, number> = {
       easy: 5,
+      Easy: 5,
       medium: 10,
-      hard: 20
+      Medium: 10,
+      hard: 20,
+      Hard: 20
     };
-    return difficultyMap[difficulty.toLowerCase()] || 5;
+    return difficultyMap[difficulty] || 5;
   }
 
   /**
@@ -92,20 +125,21 @@ export class PointsService {
       .from('jeenius_points')
       .select('answer_streak, badges, longest_answer_streak')
       .eq('user_id', userId)
-      .maybeSingle();
+      .single();
 
     if (!pointsData) {
       return { points: 0, streak: 0, badgeEarned: false };
     }
 
-    const newStreak = ((pointsData?.answer_streak as number) || 0) + 1;
+    const currentStreak = (pointsData.answer_streak as number) || 0;
+    const newStreak = currentStreak + 1;
 
     // Update answer streak
     await supabase
       .from('jeenius_points')
       .update({
         answer_streak: newStreak,
-        longest_answer_streak: Math.max(newStreak, (pointsData?.longest_answer_streak as number) || 0)
+        longest_answer_streak: Math.max(newStreak, (pointsData.longest_answer_streak as number) || 0)
       })
       .eq('user_id', userId);
 
@@ -120,7 +154,7 @@ export class PointsService {
     for (const milestone of milestones) {
       if (newStreak === milestone.streak) {
         // Award badge if not already earned
-        const badges = (pointsData?.badges as string[]) || [];
+        const badges = (pointsData.badges as string[]) || [];
         const badgeEarned = !badges.includes(milestone.badge);
         
         if (badgeEarned) {
@@ -161,19 +195,15 @@ export class PointsService {
       .from('jeenius_points')
       .select('total_points')
       .eq('user_id', userId)
-      .maybeSingle();
+      .single();
 
     if (!pointsData) {
-      // Create points record
-      await supabase.from('jeenius_points').insert({
-        user_id: userId,
-        total_points: Math.max(0, pointsToAdd),
-        level: 'BEGINNER'
-      });
+      console.error('Points data not found for user:', userId);
       return;
     }
 
-    const newTotal = Math.max(0, ((pointsData?.total_points as number) || 0) + pointsToAdd);
+    const currentPoints = (pointsData.total_points as number) || 0;
+    const newTotal = Math.max(0, currentPoints + pointsToAdd);
 
     // Calculate level
     const level = this.calculateLevel(newTotal);
@@ -247,6 +277,7 @@ export class PointsService {
       .maybeSingle();
 
     if (!pointsData) {
+      // Return default values
       return {
         totalPoints: 0,
         level: 'BEGINNER',
@@ -259,30 +290,25 @@ export class PointsService {
     }
 
     return {
-      totalPoints: (pointsData?.total_points as number) || 0,
-      level: (pointsData?.level as string) || 'BEGINNER',
-      levelProgress: (pointsData?.level_progress as number) || 0,
-      answerStreak: (pointsData?.answer_streak as number) || 0,
-      longestAnswerStreak: (pointsData?.longest_answer_streak as number) || 0,
-      badges: (pointsData?.badges as string[]) || [],
-      levelInfo: this.calculateLevel((pointsData?.total_points as number) || 0)
+      totalPoints: (pointsData.total_points as number) || 0,
+      level: (pointsData.level as string) || 'BEGINNER',
+      levelProgress: (pointsData.level_progress as number) || 0,
+      answerStreak: (pointsData.answer_streak as number) || 0,
+      longestAnswerStreak: (pointsData.longest_answer_streak as number) || 0,
+      badges: (pointsData.badges as string[]) || [],
+      levelInfo: this.calculateLevel((pointsData.total_points as number) || 0)
     };
   }
 
   /**
    * Get leaderboard
    */
-  static async getLeaderboard(limit: number = 100, timeframe: 'weekly' | 'monthly' | 'all-time' = 'all-time') {
-    let query = supabase
+  static async getLeaderboard(limit: number = 100) {
+    const { data } = await supabase
       .from('jeenius_points')
       .select('*, profiles(email)')
       .order('total_points', { ascending: false })
       .limit(limit);
-
-    // For weekly/monthly, we'd need to track points earned in that period
-    // For now, showing all-time leaderboard
-
-    const { data } = await query;
 
     return (data || []).map((entry: any, index: number) => ({
       rank: index + 1,
@@ -307,69 +333,6 @@ export class PointsService {
 
     const rank = allUsers.findIndex(u => u.user_id === userId) + 1;
     return rank;
-  }
-
-  /**
-   * Award custom points (for special events, bonuses, etc.)
-   */
-  static async awardCustomPoints(
-    userId: string,
-    points: number,
-    reason: string
-  ) {
-    await this.updateUserPoints(userId, points);
-
-    // Log the award
-    console.log(`Awarded ${points} points to user ${userId} for: ${reason}`);
-  }
-
-  /**
-   * Award badge manually
-   */
-  static async awardBadge(userId: string, badgeName: string) {
-    const { data: pointsData } = await supabase
-      .from('jeenius_points')
-      .select('badges')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (pointsData) {
-      const badges = (pointsData.badges as string[]) || [];
-      if (!badges.includes(badgeName)) {
-        badges.push(badgeName);
-        await supabase
-          .from('jeenius_points')
-          .update({ badges: badges as any })
-          .eq('user_id', userId);
-      }
-    }
-  }
-
-  /**
-   * Get all available badges with descriptions
-   */
-  static getAllBadges() {
-    return [
-      // Answer Streak Badges
-      { name: 'Hot Streak', description: '5 correct answers in a row', emoji: '🔥', category: 'streak' },
-      { name: 'On Fire', description: '10 correct answers in a row', emoji: '🔥🔥', category: 'streak' },
-      { name: 'Unstoppable', description: '20 correct answers in a row', emoji: '🔥🔥🔥', category: 'streak' },
-      { name: 'BEAST MODE', description: '50 correct answers in a row', emoji: '👹', category: 'streak' },
-      
-      // Daily Streak Badges
-      { name: '7-Day Warrior', description: '7 consecutive days', emoji: '⚔️', category: 'daily' },
-      { name: '15-Day Champion', description: '15 consecutive days', emoji: '🏆', category: 'daily' },
-      { name: 'Monthly Master', description: '30 consecutive days', emoji: '📅', category: 'daily' },
-      { name: 'Consistent Learner', description: '60 consecutive days', emoji: '💪', category: 'daily' },
-      { name: 'Quarter Master', description: '90 consecutive days', emoji: '⭐', category: 'daily' },
-      { name: 'Half Year Legend', description: '180 consecutive days', emoji: '💎', category: 'daily' },
-      { name: 'YEARLY CHAMPION', description: '365 consecutive days', emoji: '👑', category: 'daily' },
-      
-      // Achievement Badges
-      { name: 'Fast Learner', description: 'High accuracy from start', emoji: '⚡', category: 'achievement' },
-      { name: 'Comeback King', description: 'Returned after long break', emoji: '💪', category: 'achievement' },
-      { name: 'Topic Master', description: 'Mastered first topic', emoji: '🎯', category: 'achievement' }
-    ];
   }
 }
 
