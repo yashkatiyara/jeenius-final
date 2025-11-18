@@ -403,89 +403,140 @@ const StudyNowPage = () => {
     }
   };
 
-  const handleAnswer = async (answer) => {
-    if (isSubmitting || showResult) return;
+  // Find this function in StudyNowPage.tsx (around line 450)
+// DELETE the old handleAnswer function completely
+// PASTE this new one:
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+const handleAnswer = async (answer: string) => {
+  if (isSubmitting || showResult) return;
 
-    const canSolve = await UserLimitsService.canSolveMore(user.id);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
 
-    if (!canSolve.canSolve) {
-      toast.error('Daily limit reached! Upgrade to PRO for unlimited questions.');
-      setShowUpgradeModal(true);
-      setUpgradePromptType('daily_limit_reached');
+  // Check daily limit FIRST (fast fail)
+  const canSolve = await UserLimitsService.canSolveMore(user.id);
+  if (!canSolve.canSolve) {
+    toast.error('Daily limit reached! Upgrade to PRO for unlimited questions.');
+    setShowUpgradeModal(true);
+    setUpgradePromptType('daily_limit_reached');
+    return;
+  }
+
+  // INSTANT UI feedback - NO WAIT
+  setIsSubmitting(true);
+  setSelectedAnswer(answer);
+  setShowResult(true);
+
+  const question = practiceQuestions[currentQuestionIndex];
+  const correctLetter = question.correct_option.replace('option_', '').toUpperCase();
+  const isCorrect = answer === correctLetter;
+  const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+
+  // Update session stats immediately
+  setSessionStats(prev => ({
+    correct: prev.correct + (isCorrect ? 1 : 0),
+    total: prev.total + 1,
+    streak: isCorrect ? prev.streak + 1 : 0
+  }));
+
+  try {
+    // Check for duplicate attempt
+    const { data: existingAttempt } = await supabase
+      .from('question_attempts')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('question_id', question.id)
+      .maybeSingle();
+
+    if (existingAttempt) {
+      console.log('⚠️ Already attempted - skipping');
+      setIsSubmitting(false);
+      setTimeout(() => nextQuestion(), 800);
       return;
     }
 
-    setIsSubmitting(true);
-    setSelectedAnswer(answer);
-    setShowResult(true);
-
-    const question = practiceQuestions[currentQuestionIndex];
-    const correctLetter = question.correct_option.replace('option_', '').toUpperCase();
-    const isCorrect = answer === correctLetter;
-    const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
-
-    setSessionStats(prev => ({
-      correct: prev.correct + (isCorrect ? 1 : 0),
-      total: prev.total + 1,
-      streak: isCorrect ? prev.streak + 1 : 0
-    }));
-
-    try {
-      const { data: existingAttempt } = await supabase
-        .from('question_attempts')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('question_id', question.id)
-        .maybeSingle();
-
-      if (existingAttempt) {
-        console.log('⚠️ Already attempted');
-        setIsSubmitting(false);
-        setTimeout(() => nextQuestion(), 800);
-        return;
-      }
-
-      await supabase
-        .from('question_attempts')
-        .insert({
-          user_id: user.id,
-          question_id: question.id,
-          selected_option: `option_${answer.toLowerCase()}`,
-          is_correct: isCorrect,
-          time_taken: timeSpent,
-          mode: 'study'
-        });
-
-      // Calculate and display actual points earned
-      const { points, breakdown } = await PointsService.calculatePoints(
+    // PARALLEL execution - faster!
+    const [, pointsResult] = await Promise.all([
+      // Insert attempt
+      supabase.from('question_attempts').insert({
+        user_id: user.id,
+        question_id: question.id,
+        selected_option: `option_${answer.toLowerCase()}`,
+        is_correct: isCorrect,
+        time_taken: timeSpent,
+        mode: 'study'
+      }),
+      
+      // Calculate points
+      PointsService.calculatePoints(
         user.id,
         question.difficulty,
         isCorrect,
         timeSpent
-      );
+      )
+    ]);
 
+    // Display points with detailed breakdown
+    const { points, breakdown } = pointsResult;
+    
+    console.log('✅ Points Earned:', points);
+    console.log('📊 Breakdown:', breakdown);
+
+    if (points !== 0) {
+      setPointsEarned(points);
+      setShowPointsAnimation(true);
+      setTimeout(() => setShowPointsAnimation(false), 2000);
+      
+      // Show detailed breakdown in console
+      breakdown.forEach(b => {
+        console.log(`  ${b.label}: ${b.points > 0 ? '+' : ''}${b.points}`);
+      });
+      
+      // Show toast with breakdown
       if (points > 0) {
-        setPointsEarned(points);
-        setShowPointsAnimation(true);
-        setTimeout(() => setShowPointsAnimation(false), 2000);
-        console.log('Points breakdown:', breakdown);
+        const details = breakdown
+          .filter(b => b.type !== 'badge')
+          .map(b => `${b.label}`)
+          .join(' • ');
+        
+        const badges = breakdown
+          .filter(b => b.type === 'badge')
+          .map(b => b.label);
+        
+        if (badges.length > 0) {
+          // Show badge toast separately
+          badges.forEach(badge => {
+            setTimeout(() => {
+              toast.success(badge, { duration: 4000 });
+            }, 500);
+          });
+        }
+        
+        toast.success(`+${points} Points! ${details}`, { duration: 3000 });
+      } else {
+        toast.error(`${points} points - Keep trying! 💪`, { duration: 2000 });
       }
-
-      // Update progress and streak
-      await StreakService.updateProgress(user.id);
-      await loadGamificationData();
-
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setIsSubmitting(false);
-      setTimeout(() => nextQuestion(), 800);
     }
-  };
 
+    // Update streak in background (non-blocking)
+    setTimeout(() => {
+      Promise.all([
+        StreakService.updateProgress(user.id),
+        loadGamificationData()
+      ]).catch(err => console.error('Background update error:', err));
+    }, 500);
+
+  } catch (error) {
+    console.error('❌ Error in handleAnswer:', error);
+    toast.error('Something went wrong!');
+  } finally {
+    setIsSubmitting(false);
+    // Auto-advance to next question
+    setTimeout(() => nextQuestion(), 1200);
+  }
+};
+
+  
   const nextQuestion = () => {
     if (currentQuestionIndex < practiceQuestions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
