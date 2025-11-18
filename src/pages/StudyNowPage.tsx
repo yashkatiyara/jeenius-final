@@ -459,8 +459,8 @@ const StudyNowPage = () => {
           mode: 'study'
         });
 
-      // Calculate and display actual points earned
-      const { points, breakdown } = await PointsService.calculatePoints(
+      // 🚀 Calculate and award points
+      const { points } = await PointsService.calculatePoints(
         user.id,
         question.difficulty,
         isCorrect,
@@ -471,10 +471,9 @@ const StudyNowPage = () => {
         setPointsEarned(points);
         setShowPointsAnimation(true);
         setTimeout(() => setShowPointsAnimation(false), 2000);
-        console.log('Points breakdown:', breakdown);
       }
 
-      // Update progress and streak
+      // 🚀 Update progress and streak
       await StreakService.updateProgress(user.id);
       await loadGamificationData();
 

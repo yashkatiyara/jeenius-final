@@ -73,7 +73,10 @@ export const initializePayment = async (
       'create-razorpay-order',
       {
         body: {
-          planId // Server controls amount, duration, and user ID
+          amount: plan.price * 100, // Convert to paise
+          currency: 'INR',
+          planId,
+          userId
         }
       }
     );
@@ -135,7 +138,9 @@ export const initializePayment = async (
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                planId // Server controls duration and user ID
+                userId,
+                planId,
+                duration: plan.duration
               }
             }
           );
