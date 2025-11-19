@@ -95,19 +95,54 @@ ${question.option_a ? `A) ${question.option_a}\n` : ""}${
     audio.play().catch(() => {});
   };
 
-  // ✅ Supabase Edge Function call
+  // ✅ Supabase Edge Function call with improved error handling
   const callEdgeFunction = async (prompt: string): Promise<string> => {
     try {
+      console.log("🚀 Calling JEEnie edge function...");
       const response = await supabase.functions.invoke("jeenie", {
         body: { contextPrompt: prompt },
       });
-      if (response.error) throw new Error("BACKEND_ERROR");
-      if (!response.data || !response.data.content)
-        throw new Error("EMPTY_RESPONSE");
+      
+      console.log("📥 Response received:", response);
+      
+      // Handle function invocation errors
+      if (response.error) {
+        console.error("❌ Function invocation error:", response.error);
+        throw new Error(response.error.message || "BACKEND_ERROR");
+      }
+      
+      // Handle API error responses
+      if (response.data?.error) {
+        console.error("❌ API error:", response.data.error);
+        const errorType = response.data.error;
+        
+        if (errorType === "RATE_LIMIT") {
+          throw new Error("JEEnie is a bit busy! Please wait a moment and try again.");
+        } else if (errorType === "SAFETY_BLOCK") {
+          throw new Error("Please rephrase your question in a different way.");
+        } else if (errorType === "EMPTY_RESPONSE") {
+          throw new Error("JEEnie couldn't generate a response. Try rephrasing your question.");
+        } else {
+          throw new Error(response.data.message || "Something went wrong. Please try again.");
+        }
+      }
+      
+      // Validate response content
+      if (!response.data || !response.data.content) {
+        console.error("❌ Empty response data:", response.data);
+        throw new Error("No response received. Please try again.");
+      }
+      
+      console.log("✅ Valid response received, length:", response.data.content.length);
       return response.data.content.trim();
+      
     } catch (error) {
       console.error("❌ Error calling Edge Function:", error);
-      throw error;
+      // Re-throw with user-friendly message
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Failed to connect to JEEnie. Please check your internet connection.");
     }
   };
 
@@ -154,12 +189,18 @@ Student's doubt: "${userMsg.content}". Answer in Hinglish within 5-7 lines.`;
       playSound("receive");
       setMessages((prev) => [...prev, { role: "assistant", content: formatted }]);
     } catch (error: any) {
+      console.error("💥 Error in handleSendMessage:", error);
+      
+      // Display user-friendly error message from the thrown error
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "❌ Oops! Network ya backend issue ho gaya. Please try again later.";
+      
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content:
-            "❌ Oops! Network ya backend issue ho gaya. Please try again later.",
+          content: errorMessage,
         },
       ]);
     } finally {
