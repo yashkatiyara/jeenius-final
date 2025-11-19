@@ -85,7 +85,7 @@ const Leaderboard: React.FC = () => {
       // Calculate stats
       const userStats: LeaderboardUser[] = [];
       
-      userStats.forEach(profile => {
+      profiles.forEach(profile => {
         const attempts = attemptsByUser.get(profile.id) || [];
         if (attempts.length === 0 && timeFilter !== 'alltime') return; // Skip users with no attempts for time-filtered views
 

@@ -417,7 +417,7 @@ const EnhancedDashboard = () => {
                             const badge = getProgressBadge(accuracy);
 
                             return (
-                              <div key={subject} className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-shadow">
+                              <div key={subject} className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
                                 <div className="flex justify-between items-start mb-2 sm:mb-3">
                                   <div>
                                     <h4 className="text-xs sm:text-sm font-bold text-slate-900 mb-1">{subject}</h4>
@@ -426,11 +426,26 @@ const EnhancedDashboard = () => {
                                     </Badge>
                                   </div>
                                   <div className="text-right">
-                                    <h3 className="text-xl sm:text-2xl font-bold text-slate-900">{accuracy}%</h3>
+                                    <h3 className={`text-xl sm:text-2xl font-bold ${
+                                      accuracy >= 90 ? 'text-emerald-600' :
+                                      accuracy >= 80 ? 'text-green-600' :
+                                      accuracy >= 70 ? 'text-yellow-600' :
+                                      accuracy >= 60 ? 'text-orange-500' :
+                                      'text-red-500'
+                                    }`}>{accuracy}%</h3>
                                     <p className="text-xs text-slate-500">{data.correct}/{data.total}</p>
                                   </div>
                                 </div>
-                                <Progress className="h-2 sm:h-2.5 rounded-full bg-slate-100" value={accuracy} />
+                                <Progress 
+                                  className={`h-2 sm:h-2.5 rounded-full ${
+                                    accuracy >= 90 ? 'bg-emerald-100' :
+                                    accuracy >= 80 ? 'bg-green-100' :
+                                    accuracy >= 70 ? 'bg-yellow-100' :
+                                    accuracy >= 60 ? 'bg-orange-100' :
+                                    'bg-red-100'
+                                  }`} 
+                                  value={accuracy} 
+                                />
                               </div>
                             );
                           })}

@@ -248,7 +248,7 @@ const StudyNowPage = () => {
         const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
         const progress = attempted > 0 ? Math.min(100, Math.round((attempted / totalQuestions) * 100)) : 0;
 
-        const isLocked = !profile?.is_premium && index >= 2;
+        const isLocked = false; // All chapters are now free
 
         return {
           name: chapter,
