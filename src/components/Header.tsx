@@ -126,10 +126,10 @@ const Header = () => {
             className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group"
             onClick={() => navigate(isAuthenticated ? '/dashboard' : '/')}
           >
-            <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-1.5 sm:p-2 rounded-lg shadow-lg group-hover:shadow-xl transition-all group-hover:scale-105">
+            <div className="bg-gradient-to-br from-green-500 to-blue-600 p-1.5 sm:p-2 rounded-lg shadow-lg group-hover:shadow-2xl transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
               <Brain className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-            <span className="font-bold text-lg sm:text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent drop-shadow-sm">
+            <span className="font-bold text-lg sm:text-xl bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent drop-shadow-sm">
               JEEnius
             </span>
           </div>
