@@ -344,6 +344,27 @@ const StudyNowPage = () => {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      
+      // ✅ CHECK DAILY LIMIT BEFORE STARTING PRACTICE
+      if (!isPremium) {
+        const today = new Date().toISOString().split('T')[0];
+        const { count } = await supabase
+          .from('question_attempts')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .gte('created_at', `${today}T00:00:00.000Z`)
+          .lte('created_at', `${today}T23:59:59.999Z`);
+
+        const questionsToday = count || 0;
+        
+        if (questionsToday >= 15) {
+          toast.error('Daily limit reached! You\'ve solved 15 questions today.');
+          setShowUpgradeModal(true);
+          setUpgradePromptType('daily_limit_reached');
+          setLoading(false);
+          return;
+        }
+      }
 
       // Get user's current level for this topic (starts at easy/1)
       const userLevel = await AdaptiveLevelService.getTopicLevel(
@@ -454,15 +475,31 @@ const StudyNowPage = () => {
     }
   };
 
-  // Find this function in StudyNowPage.tsx (around line 450)
-// DELETE the old handleAnswer function completely
-// PASTE this new one:
-
 const handleAnswer = async (answer: string) => {
   if (isSubmitting || showResult) return;
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
+  
+  // ✅ CHECK DAILY LIMIT BEFORE ALLOWING ANSWER (for non-premium users)
+  if (!isPremium) {
+    const today = new Date().toISOString().split('T')[0];
+    const { count } = await supabase
+      .from('question_attempts')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', `${today}T00:00:00.000Z`)
+      .lte('created_at', `${today}T23:59:59.999Z`);
+
+    const questionsToday = count || 0;
+    
+    if (questionsToday >= 15) {
+      toast.error('Daily limit reached! You\'ve solved 15 questions today.');
+      setShowUpgradeModal(true);
+      setUpgradePromptType('daily_limit_reached');
+      return;
+    }
+  }
 
   // ✅ INSTANT UI feedback - NO BLOCKING CHECKS
   setIsSubmitting(true);

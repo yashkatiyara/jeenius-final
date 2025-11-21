@@ -42,20 +42,20 @@ const SubscriptionPlans = () => {
   const currentPlan = billingCycle === 'monthly' ? SUBSCRIPTION_PLANS.monthly : SUBSCRIPTION_PLANS.yearly;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-green-50 overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-50 to-green-50 overflow-hidden flex flex-col">
       <Header />
-      <div className="pt-20 pb-12 px-4 max-h-screen overflow-y-auto">
+      <div className="flex-1 pt-16 pb-4 px-4 overflow-hidden flex flex-col">
         {/* Hero Section */}
-        <section className="py-3">
+        <section className="py-2 flex-shrink-0">
           <div className="container mx-auto px-4 text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-3">Unlock Your Full Potential</h1>
-            <p className="text-base text-gray-600 mb-6">Choose the plan that works best for you</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Unlock Your Full Potential</h1>
+            <p className="text-sm text-gray-600 mb-4">Choose the plan that works best for you</p>
             
             {/* Billing Toggle */}
-            <div className="flex items-center justify-center gap-4">
+            <div className="flex items-center justify-center gap-3">
               <button
                 onClick={() => setBillingCycle('monthly')}
-                className={`px-6 py-3 rounded-lg font-semibold transition-all hover:scale-105 duration-300 ${
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                   billingCycle === 'monthly'
                     ? 'bg-green-600 text-white shadow-lg'
                     : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -65,7 +65,7 @@ const SubscriptionPlans = () => {
               </button>
               <button
                 onClick={() => setBillingCycle('yearly')}
-                className={`px-6 py-3 rounded-lg font-semibold transition-all relative hover:scale-105 duration-300 ${
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all relative ${
                   billingCycle === 'yearly'
                     ? 'bg-green-600 text-white shadow-lg'
                     : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -73,7 +73,7 @@ const SubscriptionPlans = () => {
               >
                 Yearly
                 {currentPlan.savings > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                  <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs px-1.5 py-0.5 rounded-full">
                     Save ₹{currentPlan.savings}
                   </span>
                 )}
@@ -83,54 +83,54 @@ const SubscriptionPlans = () => {
         </section>
 
         {/* Pricing Card */}
-        <section className="py-3">
-          <div className="container mx-auto px-4">
-            <div className="max-w-md mx-auto">
+        <section className="flex-1 py-2 flex items-center overflow-hidden">
+          <div className="container mx-auto px-4 w-full">
+            <div className="max-w-lg mx-auto">
               {/* Pro Plan */}
-              <Card className="border-2 border-green-500 relative hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-white to-green-50">
+              <Card className="border-2 border-green-500 relative bg-gradient-to-br from-white to-green-50">
                 {(currentPlan.popular || currentPlan.bestValue) && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-2 text-sm font-semibold shadow-lg">
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-1 text-xs font-semibold shadow-lg">
                       {currentPlan.popular && '🚀 Most Popular'}
                       {currentPlan.bestValue && '💎 Best Value'}
                     </Badge>
                   </div>
                 )}
-                <CardHeader className="text-center pb-8 pt-8">
-                  <div className="mx-auto w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mb-4 shadow-lg transition-transform hover:scale-110 duration-300">
-                    <Crown className="w-8 h-8 text-white" />
+                <CardHeader className="text-center pb-4 pt-6">
+                  <div className="mx-auto w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mb-3 shadow-lg">
+                    <Crown className="w-6 h-6 text-white" />
                   </div>
-                  <CardTitle className="text-2xl mb-2">{currentPlan.name}</CardTitle>
-                  <div className="space-y-2">
+                  <CardTitle className="text-xl mb-2">{currentPlan.name}</CardTitle>
+                  <div className="space-y-1">
                     {currentPlan.originalPrice && (
-                      <div className="text-lg text-gray-400 line-through">
+                      <div className="text-sm text-gray-400 line-through">
                         ₹{currentPlan.originalPrice}
                       </div>
                     )}
-                    <div className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                    <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                       ₹{currentPlan.price}
-                      <span className="text-lg text-gray-500 font-normal">
+                      <span className="text-base text-gray-500 font-normal">
                         /{currentPlan.displayDuration.replace('per ', '')}
                       </span>
                     </div>
                     {currentPlan.savings > 0 && (
                       <div className="flex items-center justify-center space-x-2">
-                        <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-orange-300">
+                        <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-orange-300 text-xs">
                           Save ₹{currentPlan.savings}
                         </Badge>
                       </div>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 mt-2">{currentPlan.tagline}</p>
+                  <p className="text-xs text-gray-600 mt-1">{currentPlan.tagline}</p>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <ul className="space-y-3">
+                <CardContent className="space-y-4">
+                  <ul className="space-y-2 max-h-[200px] overflow-y-auto">
                     {currentPlan.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-start space-x-3 hover:bg-green-50 p-2 rounded-lg transition-colors duration-200">
+                      <li key={idx} className="flex items-start space-x-2 p-1.5 rounded-lg">
                         <div className="mt-0.5 text-green-600 flex-shrink-0">
-                          <Check className="w-5 h-5" />
+                          <Check className="w-4 h-4" />
                         </div>
-                        <span className="text-gray-700">
+                        <span className="text-sm text-gray-700">
                           {feature}
                         </span>
                       </li>
@@ -139,11 +139,11 @@ const SubscriptionPlans = () => {
                   <Button
                     onClick={() => handleSelectPlan(billingCycle)}
                     disabled={loading === billingCycle}
-                    className="w-full h-12 text-base bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                    className="w-full h-10 text-sm bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-lg"
                   >
                     {loading === billingCycle ? (
                       <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                         Processing...
                       </>
                     ) : (
@@ -157,17 +157,18 @@ const SubscriptionPlans = () => {
         </section>
 
         {/* Free tier info */}
-        <section className="py-6">
+        <section className="py-2 flex-shrink-0">
           <div className="container mx-auto px-4 text-center">
-            <div className="max-w-md mx-auto bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Free Tier Available</h3>
-              <p className="text-gray-600 mb-4">
-                Start with 15 questions per day and upgrade anytime
+            <div className="max-w-md mx-auto bg-white rounded-lg p-3 shadow-md">
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">Free Tier Available</h3>
+              <p className="text-xs text-gray-600 mb-2">
+                Start with 15 questions per day
               </p>
               <Button 
                 variant="outline" 
+                size="sm"
                 onClick={() => navigate('/dashboard')}
-                className="hover:bg-gray-50 transition-colors duration-200"
+                className="hover:bg-gray-50 h-8 text-xs"
               >
                 Continue with Free
               </Button>
