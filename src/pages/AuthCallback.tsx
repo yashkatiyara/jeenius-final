@@ -45,13 +45,14 @@ const AuthCallback = () => {
           .eq('id', sessionData.session.user.id)
           .maybeSingle();
         
+        // Always redirect to dashboard after login
         if (profile?.goals_set && profile?.target_exam && profile?.grade) {
           console.log('✅ Profile complete, redirecting to dashboard');
           navigate('/dashboard');
-          } else {
-            console.log('🎯 No goals found, redirecting to goal selection');
-            navigate('/goal-selection');
-          }
+        } else {
+          console.log('🎯 Incomplete profile, but redirecting to dashboard');
+          navigate('/dashboard');
+        }
         } else {
           console.log('⚠️ No session found, trying to establish session...');
           // Wait a bit for the session to be established by Supabase
