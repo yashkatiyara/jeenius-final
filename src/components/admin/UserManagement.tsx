@@ -4,7 +4,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Shield, ShieldCheck, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, Shield, User, Gift, Crown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -17,7 +18,9 @@ interface UserProfile {
   joined_at: string;
   grade?: number;
   target_exam?: string;
-  role?: 'student' | 'admin' | 'super_admin';
+  role?: 'user' | 'admin';
+  is_premium?: boolean;
+  subscription_end_date?: string | null;
 }
 
 export const UserManagement: React.FC = () => {
@@ -40,10 +43,10 @@ const fetchUsers = async () => {
   try {
     setLoading(true);
     
-    // Fetch users with their roles from user_roles table
+    // Fetch users with their profiles
     const { data: profilesData, error: profileError } = await supabase
       .from('profiles')
-      .select('id, email, full_name, created_at, grade, target_exam')
+      .select('id, email, full_name, created_at, grade, target_exam, is_premium, subscription_end_date')
       .order('created_at', { ascending: false });
 
     if (profileError) throw profileError;
@@ -66,7 +69,9 @@ const fetchUsers = async () => {
       joined_at: profile.created_at,
       grade: profile.grade,
       target_exam: profile.target_exam,
-      role: (rolesMap.get(profile.id) || 'user') as 'student' | 'admin' | 'super_admin'
+      role: (rolesMap.get(profile.id) || 'user') as 'user' | 'admin',
+      is_premium: profile.is_premium || false,
+      subscription_end_date: profile.subscription_end_date
     }));
     
     setUsers(formattedUsers);
@@ -101,16 +106,8 @@ const fetchUsers = async () => {
     setFilteredUsers(filtered);
   };
 
-  const updateUserRole = async (userId: string, newRole: 'student' | 'admin' | 'super_admin') => {
+  const updateUserRole = async (userId: string, newRole: 'user' | 'admin') => {
   try {
-    // Map UI role names to app_role enum values
-    const roleMapping: Record<string, string> = {
-      'student': 'user',
-      'admin': 'admin',
-      'super_admin': 'admin' // treat super_admin as admin for now
-    };
-    const dbRole = roleMapping[newRole] || 'user';
-
     // Delete existing roles for this user
     await supabase
       .from('user_roles')
@@ -120,7 +117,7 @@ const fetchUsers = async () => {
     // Insert new role
     const { error } = await supabase
       .from('user_roles')
-      .insert({ user_id: userId, role: dbRole });
+      .insert({ user_id: userId, role: newRole });
 
     if (error) throw error;
 
@@ -144,11 +141,49 @@ const fetchUsers = async () => {
     });
   }
 };
+
+const grantProMembership = async (userId: string, durationMonths: number = 1) => {
+  try {
+    const expiryDate = new Date();
+    expiryDate.setMonth(expiryDate.getMonth() + durationMonths);
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ 
+        is_premium: true,
+        subscription_end_date: expiryDate.toISOString()
+      })
+      .eq('id', userId);
+
+    if (error) throw error;
+
+    // Update local state
+    const updatedUsers = users.map(user => 
+      user.user_id === userId ? { 
+        ...user, 
+        is_premium: true, 
+        subscription_end_date: expiryDate.toISOString() 
+      } : user
+    );
+    
+    setUsers(updatedUsers);
+
+    toast({
+      title: "Success",
+      description: `Pro membership granted for ${durationMonths} month(s)`,
+    });
+  } catch (error) {
+    console.error('Error granting pro membership:', error);
+    toast({
+      title: "Error",
+      description: "Failed to grant pro membership",
+      variant: "destructive"
+    });
+  }
+};
   
   const getRoleIcon = (role?: string) => {
     switch (role) {
-      case 'super_admin':
-        return <ShieldCheck className="h-4 w-4" />;
       case 'admin':
         return <Shield className="h-4 w-4" />;
       default:
@@ -158,8 +193,6 @@ const fetchUsers = async () => {
 
   const getRoleBadgeVariant = (role?: string) => {
     switch (role) {
-      case 'super_admin':
-        return 'destructive';
       case 'admin':
         return 'secondary';
       default:
@@ -204,7 +237,6 @@ const fetchUsers = async () => {
                 <SelectItem value="all">All Roles</SelectItem>
                 <SelectItem value="user">Users</SelectItem>
                 <SelectItem value="admin">Admins</SelectItem>
-                <SelectItem value="super_admin">Super Admins</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -220,8 +252,9 @@ const fetchUsers = async () => {
                     <TableHead>Target Exam</TableHead>
                     <TableHead>Grade</TableHead>
                     <TableHead>Joined</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Role</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -246,24 +279,48 @@ const fetchUsers = async () => {
                         {new Date(user.joined_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
+                        <div className="flex items-center gap-2">
+                          {user.is_premium ? (
+                            <Badge variant="default" className="bg-gradient-to-r from-purple-600 to-blue-600">
+                              <Crown className="h-3 w-3 mr-1" />
+                              Pro
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">Free</Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
                         <Badge variant={getRoleBadgeVariant(user.role)}>
-                          {user.role || 'student'}
+                          {user.role || 'user'}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Select
-                          value={user.role || 'student'}
-                          onValueChange={(value) => updateUserRole(user.user_id, value as any)}
-                        >
-                          <SelectTrigger className="w-[120px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="student">Student</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="super_admin">Super Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="flex items-center justify-end gap-2">
+                          <Select
+                            value={user.role || 'user'}
+                            onValueChange={(value) => updateUserRole(user.user_id, value as any)}
+                          >
+                            <SelectTrigger className="w-[110px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="user">User</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {!user.is_premium && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => grantProMembership(user.user_id, 1)}
+                              className="whitespace-nowrap"
+                            >
+                              <Gift className="h-4 w-4 mr-1" />
+                              Grant Pro
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
