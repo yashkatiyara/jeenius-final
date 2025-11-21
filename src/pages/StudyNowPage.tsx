@@ -60,6 +60,11 @@ const StudyNowPage = () => {
 
   const { isPremium } = useAuth();
 
+  // Sync isPro state with isPremium from context
+  useEffect(() => {
+    setIsPro(isPremium);
+  }, [isPremium]);
+
   useEffect(() => {
     initializePage();
   }, []);
@@ -126,7 +131,8 @@ const StudyNowPage = () => {
 
       const { data: allQuestions, error } = await supabase
         .from('questions')
-        .select('subject, difficulty');
+        .select('subject, difficulty')
+        .limit(10000);
 
       if (error) throw error;
 
