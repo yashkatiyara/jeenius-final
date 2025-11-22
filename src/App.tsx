@@ -124,140 +124,141 @@ const DashboardRouter = () => {
   return userRole === 'admin' ? null : <EnhancedDashboard />;
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <AuthProvider>
-        <TooltipProvider>
-          {/* ✅ WRAPPED WITH ERROR BOUNDARY */}
-          <ErrorBoundary>
-            <Toaster />
-            <Sonner />
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/why-us" element={<WhyUsPage />} />
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <TooltipProvider>
+            <ErrorBoundary>
+              <Toaster />
+              <Sonner />
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/why-us" element={<WhyUsPage />} />
+                
+                {/* Authentication Routes */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Navigate to="/login" replace />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
+                
+                {/* Goal Selection */}
+                <Route path="/goal-selection" element={<GoalSelectionPage />} />
+                
+                {/* Dashboard */}
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardRouter />
+                    </ProtectedRoute>
+                  }
+                />
+                
+                {/* Test Routes */}
+                <Route path="/test-attempt/:testId" element={<TestAttemptPage />} />
+                <Route path="/test-attempt" element={<TestAttemptPage />} />
+                <Route path="/test-results" element={<TestResultsPage />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/subscription-plans" element={<SubscriptionPlans />} />
               
-              {/* Authentication Routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Navigate to="/login" replace />} />
-              <Route path="/auth/callback" element={<AuthCallback />} />
-              
-              {/* Goal Selection */}
-              <Route path="/goal-selection" element={<GoalSelectionPage />} />
-              
-              {/* Dashboard */}
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <DashboardRouter />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Test Routes */}
-              <Route path="/test-attempt/:testId" element={<TestAttemptPage />} />
-              <Route path="/test-attempt" element={<TestAttemptPage />} />
-              <Route path="/test-results" element={<TestResultsPage />} />
-              <Route path="/analytics" element={<AnalyticsPage />} />
-              <Route path="/subscription-plans" element={<SubscriptionPlans />} />
-            
-              {/* AI Study Planner */}
-              <Route
-                path="/ai-planner"
-                element={
-                  <ProtectedRoute>
-                    <AIStudyPlannerPage />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Study Routes */}
-              <Route
-                path="/study-now"
-                element={
-                  <ProtectedRoute>
-                    <StudyNowPage />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Test Management */}
-              <Route
-                path="/tests"
-                element={
-                  <ProtectedRoute>
-                    <TestPage />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Settings */}
-              <Route
-                path="/settings"
-                element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Profile */}
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Admin Routes */}
-              <Route
-                path="/admin"
-                element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="/admin/analytics"
-                element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="/admin/users"
-                element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="/admin/content"
-                element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                }
-              />
-              
-              <Route path="/pricing" element={<PricingPage />} />
+                {/* AI Study Planner */}
+                <Route
+                  path="/ai-planner"
+                  element={
+                    <ProtectedRoute>
+                      <AIStudyPlannerPage />
+                    </ProtectedRoute>
+                  }
+                />
+                
+                {/* Study Routes */}
+                <Route
+                  path="/study-now"
+                  element={
+                    <ProtectedRoute>
+                      <StudyNowPage />
+                    </ProtectedRoute>
+                  }
+                />
+                
+                {/* Test Management */}
+                <Route
+                  path="/tests"
+                  element={
+                    <ProtectedRoute>
+                      <TestPage />
+                    </ProtectedRoute>
+                  }
+                />
+                
+                {/* Settings */}
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  }
+                />
+                
+                {/* Profile */}
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+                
+                {/* Admin Routes */}
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/analytics"
+                  element={
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/users"
+                  element={
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/content"
+                  element={
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
+                  }
+                />
+                
+                <Route path="/pricing" element={<PricingPage />} />
 
-              {/* 404 */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <FloatingAIButton />
-          </ErrorBoundary>
-        </TooltipProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  </QueryClientProvider>
-);
+                {/* 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <FloatingAIButton />
+            </ErrorBoundary>
+          </TooltipProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
