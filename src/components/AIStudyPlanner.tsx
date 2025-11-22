@@ -100,6 +100,16 @@ const AIStudyPlanner = () => {
     }
   }, [topicData, totalQuestions]);
 
+  // Recalculate days to exam when exam date changes
+  useEffect(() => {
+    if (examDate) {
+      const examDateObj = new Date(examDate);
+      const today = new Date();
+      const days = Math.ceil((examDateObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      setDaysToExam(days);
+    }
+  }, [examDate]);
+
   useEffect(() => {
     if (user) {
       loadStudyData();
@@ -211,6 +221,7 @@ const AIStudyPlanner = () => {
 
   const updateSettings = async () => {
     try {
+      // Update profile
       await supabase
         .from('profiles')
         .update({
@@ -220,8 +231,16 @@ const AIStudyPlanner = () => {
         })
         .eq('id', user?.id);
 
-      toast.success('Settings updated!');
-      await loadStudyData();
+      // Calculate new days to exam
+      const examDateObj = new Date(examDate);
+      const today = new Date();
+      const days = Math.ceil((examDateObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      setDaysToExam(days);
+
+      // Regenerate plan with new settings
+      regeneratePlan();
+
+      toast.success('Settings updated! Plan regenerated.');
     } catch (error) {
       console.error('Error updating settings:', error);
       toast.error('Failed to update settings');
@@ -440,40 +459,63 @@ const AIStudyPlanner = () => {
           </CollapsibleTrigger>
           <CollapsibleContent>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">Daily Study Hours</label>
+                  <label className="text-sm font-medium text-slate-700 mb-2 block">
+                    Daily Study Hours: <span className="text-blue-600 font-bold">{dailyStudyHours}h</span>
+                  </label>
                   <input
-                    type="number"
+                    type="range"
                     value={dailyStudyHours}
                     onChange={(e) => setDailyStudyHours(Number(e.target.value))}
                     min="1"
                     max="12"
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                   />
+                  <div className="flex justify-between text-xs text-slate-500 mt-1">
+                    <span>1h</span>
+                    <span>6h</span>
+                    <span>12h</span>
+                  </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-slate-700 mb-2 block">Target Exam</label>
-                  <select
-                    value={targetExam}
-                    onChange={(e) => setTargetExam(e.target.value)}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="JEE">JEE Main & Advanced</option>
-                    <option value="NEET">NEET</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">Exam Date</label>
-                  <input
-                    type="date"
-                    value={examDate}
-                    onChange={(e) => setExamDate(e.target.value)}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => {
+                        setTargetExam('JEE');
+                        setExamDate('2026-05-24');
+                      }}
+                      className={`p-3 rounded-lg border-2 transition-all font-medium ${
+                        targetExam === 'JEE'
+                          ? 'border-blue-600 bg-blue-50 text-blue-700'
+                          : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                      }`}
+                    >
+                      JEE
+                    </button>
+                    <button
+                      onClick={() => {
+                        setTargetExam('NEET');
+                        setExamDate('2026-05-05');
+                      }}
+                      className={`p-3 rounded-lg border-2 transition-all font-medium ${
+                        targetExam === 'NEET'
+                          ? 'border-green-600 bg-green-50 text-green-700'
+                          : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                      }`}
+                    >
+                      NEET
+                    </button>
+                  </div>
+                  {examDate && (
+                    <p className="text-xs text-slate-600 mt-2">
+                      📅 {new Date(examDate).toLocaleDateString()} • {daysToExam} days remaining
+                    </p>
+                  )}
                 </div>
               </div>
-              <Button onClick={updateSettings} className="bg-blue-600 hover:bg-blue-700 w-full">
+              <Button onClick={updateSettings} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 w-full">
                 <Zap className="h-4 w-4 mr-2" />
                 Save & Regenerate Plan
               </Button>
