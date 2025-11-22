@@ -3,270 +3,157 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { 
-  TrendingUp, Target, Calendar, Clock, 
-  Sparkles, ChevronDown, ChevronUp, CheckCircle2,
-  Brain, Zap, Trophy, Star, Play, BookOpen, AlertCircle, 
-  Timer, TrendingDown, Award
+  Brain, 
+  Target, 
+  TrendingUp, 
+  AlertCircle, 
+  Calendar,
+  Clock,
+  Trophy,
+  Flame,
+  BookOpen,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  Zap,
+  Play
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { 
+  calculatePhaseAllocation, 
+  categorizeTopics, 
+  allocateDailyTime, 
+  generateWeeklyPlan,
+  predictRank,
+  generateSWOTAnalysis,
+  type TopicPriority,
+  type TimeAllocation,
+  type DailyPlan
+} from '@/lib/studyPlanAlgorithm';
+import { 
+  calculateEnergyScore, 
+  generateMotivationMessage 
+} from '@/lib/psychologyEngine';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
-interface TopicMastery {
-  subject: string;
-  chapter: string;
-  topic: string;
-  accuracy: number;
-  questions_attempted: number;
-}
-
-interface DailyTask {
-  subject: string;
-  chapter: string;
-  topic: string;
-  timeMinutes: number;
-  priority: 'high' | 'medium' | 'low';
-  status?: 'pending' | 'completed';
-}
-
-interface WeeklyPlan {
-  day: string;
-  tasks: DailyTask[];
-  totalMinutes: number;
-}
-
-interface AIInsights {
-  personalizedGreeting: string;
-  strengthAnalysis: string;
-  weaknessStrategy: string;
-  timeAllocation: {
-    weakTopics: string;
-    mediumTopics: string;
-    revision: string;
-    mockTests: string;
-  };
-  keyRecommendations: string[];
-  motivationalMessage: string;
-  rankPrediction: {
-    currentProjection: string;
-    targetProjection: string;
-    improvementPath: string;
-  };
-}
-
-export default function AIStudyPlanner() {
+const AIStudyPlanner = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [generatingPlan, setGeneratingPlan] = useState(false);
-  const [studyHours, setStudyHours] = useState(6);
-  const [strengths, setStrengths] = useState<TopicMastery[]>([]);
-  const [weaknesses, setWeaknesses] = useState<TopicMastery[]>([]);
-  const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan[]>([]);
-  const [expandedDay, setExpandedDay] = useState<string | null>(null);
-  const [hasData, setHasData] = useState(false);
-  const [totalQuestions, setTotalQuestions] = useState(0);
-  const [targetExam, setTargetExam] = useState<'JEE' | 'NEET'>('JEE');
-  const [targetExamDate, setTargetExamDate] = useState<string>('');
-  const [daysRemaining, setDaysRemaining] = useState<number>(0);
-  const [predictedRank, setPredictedRank] = useState<number>(0);
-  const [showSettings, setShowSettings] = useState(false);
-  const [aiInsights, setAiInsights] = useState<AIInsights | null>(null);
+  const [dailyStudyHours, setDailyStudyHours] = useState(4);
+  const [targetExam, setTargetExam] = useState('JEE');
+  const [examDate, setExamDate] = useState('2026-05-24');
+  const [daysToExam, setDaysToExam] = useState(0);
+  
+  const [weakTopics, setWeakTopics] = useState<TopicPriority[]>([]);
+  const [mediumTopics, setMediumTopics] = useState<TopicPriority[]>([]);
+  const [strongTopics, setStrongTopics] = useState<TopicPriority[]>([]);
+  const [timeAllocation, setTimeAllocation] = useState<TimeAllocation | null>(null);
+  const [weeklyPlan, setWeeklyPlan] = useState<DailyPlan[]>([]);
+  const [rankPrediction, setRankPrediction] = useState<any>(null);
+  const [swotAnalysis, setSWOTAnalysis] = useState<any>(null);
+  const [energyScore, setEnergyScore] = useState<any>(null);
+  const [motivationMessage, setMotivationMessage] = useState<any>(null);
+
   const [avgAccuracy, setAvgAccuracy] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(0);
+  const [streak, setStreak] = useState(0);
+
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [weekPlanOpen, setWeekPlanOpen] = useState(true);
+  const [swotOpen, setSWOTOpen] = useState(false);
 
   useEffect(() => {
-    loadStudyData();
-  }, []);
+    if (user) {
+      loadStudyData();
+    }
+  }, [user]);
 
   const loadStudyData = async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('Please login to continue');
-        return;
-      }
 
-      // Load profile preferences
+      // Fetch user profile
       const { data: profile } = await supabase
         .from('profiles')
-        .select('daily_study_hours, target_exam, target_exam_date')
-        .eq('id', user.id)
+        .select('daily_study_hours, target_exam, target_exam_date, current_streak, overall_accuracy, total_questions_solved')
+        .eq('id', user?.id)
         .single();
 
       if (profile) {
-        if (profile.daily_study_hours) setStudyHours(profile.daily_study_hours);
-        if (profile.target_exam) setTargetExam(profile.target_exam as 'JEE' | 'NEET');
-        if (profile.target_exam_date) {
-          setTargetExamDate(profile.target_exam_date);
-          const days = Math.ceil((new Date(profile.target_exam_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-          setDaysRemaining(days);
-        }
+        setDailyStudyHours(profile.daily_study_hours || 4);
+        setTargetExam(profile.target_exam || 'JEE');
+        setExamDate(profile.target_exam_date || '2026-05-24');
+        setStreak(profile.current_streak || 0);
+        setAvgAccuracy(profile.overall_accuracy || 0);
+        setTotalQuestions(profile.total_questions_solved || 0);
       }
 
-      // Load topic mastery data
-      const { data: masteryData } = await supabase
+      // Calculate days to exam
+      const examDateObj = new Date(profile?.target_exam_date || '2026-05-24');
+      const today = new Date();
+      const days = Math.ceil((examDateObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      setDaysToExam(days);
+
+      // Fetch topic mastery data
+      const { data: topicData } = await supabase
         .from('topic_mastery')
-        .select('subject, chapter, topic, accuracy, questions_attempted')
-        .eq('user_id', user.id)
-        .order('accuracy', { ascending: false });
+        .select('*')
+        .eq('user_id', user?.id);
 
-      if (masteryData && masteryData.length > 0) {
-        const total = masteryData.reduce((sum, t) => sum + t.questions_attempted, 0);
-        setTotalQuestions(total);
-        
-        if (total >= 10) {
-          setHasData(true);
-          const goodTopics = masteryData.filter(t => t.accuracy >= 70 && t.questions_attempted >= 5);
-          const weakTopics = masteryData.filter(t => t.accuracy < 70 && t.questions_attempted >= 5);
-          
-          setStrengths(goodTopics.slice(0, 5));
-          setWeaknesses(weakTopics.slice(0, 10));
-
-          // Calculate predicted rank based on performance
-          const calculatedAvgAccuracy = masteryData.reduce((sum, t) => sum + t.accuracy, 0) / masteryData.length;
-          setAvgAccuracy(calculatedAvgAccuracy);
-          const estimatedRank = Math.round(500000 * (1 - calculatedAvgAccuracy / 100));
-          setPredictedRank(estimatedRank);
-
-          if (profile?.daily_study_hours) {
-            generateWeeklyPlan(profile.daily_study_hours, masteryData);
-          }
-
-          // Generate AI insights
-          await generateAIInsights(
-            user.id,
-            profile?.daily_study_hours || 6,
-            profile?.target_exam || 'JEE',
-            daysRemaining,
-            goodTopics,
-            weakTopics,
-            calculatedAvgAccuracy
-          );
-        } else {
-          setHasData(false);
-        }
-      } else {
-        setHasData(false);
-        setTotalQuestions(0);
+      if (!topicData || topicData.length < 5) {
+        setLoading(false);
+        return;
       }
+
+      // Run algorithm - INSTANT
+      const categorized = categorizeTopics(topicData);
+      const phaseAlloc = calculatePhaseAllocation(days);
+      const allocated = allocateDailyTime(profile?.daily_study_hours || 4, phaseAlloc, categorized);
+      const weekly = generateWeeklyPlan(profile?.daily_study_hours || 4, allocated, phaseAlloc);
+      const rank = predictRank(profile?.overall_accuracy || 0, profile?.total_questions_solved || 0, profile?.target_exam || 'JEE');
+      const swot = generateSWOTAnalysis(categorized);
+
+      // Psychology engine
+      const energy = calculateEnergyScore([], profile?.overall_accuracy || 0, [], profile?.daily_study_hours || 4, 0, 0);
+      const motivation = generateMotivationMessage(profile?.current_streak || 0, profile?.overall_accuracy || 0, 0);
+
+      setWeakTopics(allocated.weak);
+      setMediumTopics(allocated.medium);
+      setStrongTopics(allocated.strong);
+      setTimeAllocation(phaseAlloc);
+      setWeeklyPlan(weekly);
+      setRankPrediction(rank);
+      setSWOTAnalysis(swot);
+      setEnergyScore(energy);
+      setMotivationMessage(motivation);
+
+      setLoading(false);
+      toast.success('Study plan generated instantly! ⚡');
     } catch (error) {
       console.error('Error loading study data:', error);
-      toast.error('Failed to load study plan');
-    } finally {
       setLoading(false);
-    }
-  };
-
-  const generateWeeklyPlan = (hours: number, masteryData: TopicMastery[]) => {
-    const dailyMinutes = hours * 60;
-    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    
-    const weakTopics = masteryData.filter(t => t.accuracy < 70 && t.questions_attempted >= 5);
-    const mediumTopics = masteryData.filter(t => t.accuracy >= 70 && t.accuracy < 85 && t.questions_attempted >= 5);
-    const strongTopics = masteryData.filter(t => t.accuracy >= 85 && t.questions_attempted >= 5);
-
-    const plan: WeeklyPlan[] = daysOfWeek.map((day, idx) => {
-      const tasks: DailyTask[] = [];
-      let remainingMinutes = dailyMinutes;
-
-      // 60% time to weak topics
-      const weakTime = Math.floor(dailyMinutes * 0.6);
-      if (weakTopics.length > 0) {
-        const topicsToday = weakTopics.slice(idx % weakTopics.length, (idx % weakTopics.length) + 2);
-        topicsToday.forEach(topic => {
-          if (remainingMinutes > 0) {
-            const time = Math.min(weakTime / topicsToday.length, remainingMinutes);
-            tasks.push({ ...topic, timeMinutes: Math.floor(time), priority: 'high' });
-            remainingMinutes -= time;
-          }
-        });
-      }
-
-      // 30% time to medium topics
-      const mediumTime = Math.floor(dailyMinutes * 0.3);
-      if (mediumTopics.length > 0 && remainingMinutes > 0) {
-        const topic = mediumTopics[idx % mediumTopics.length];
-        const time = Math.min(mediumTime, remainingMinutes);
-        tasks.push({ ...topic, timeMinutes: Math.floor(time), priority: 'medium' });
-        remainingMinutes -= time;
-      }
-
-      // 10% time to strong topics (revision)
-      if (strongTopics.length > 0 && remainingMinutes > 0) {
-        const topic = strongTopics[idx % strongTopics.length];
-        tasks.push({ ...topic, timeMinutes: Math.floor(remainingMinutes), priority: 'low' });
-      }
-
-      return { 
-        day, 
-        tasks,
-        totalMinutes: dailyMinutes 
-      };
-    });
-
-    setWeeklyPlan(plan);
-  };
-
-  const generateAIInsights = async (
-    userId: string,
-    hours: number,
-    exam: string,
-    days: number,
-    strengthsList: TopicMastery[],
-    weaknessList: TopicMastery[],
-    accuracy: number
-  ) => {
-    try {
-      setGeneratingPlan(true);
-      
-      const { data, error } = await supabase.functions.invoke('generate-study-plan', {
-        body: {
-          userId,
-          studyHours: hours,
-          targetExam: exam,
-          daysRemaining: days,
-          strengths: strengthsList,
-          weaknesses: weaknessList,
-          avgAccuracy: accuracy
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.success && data?.insights) {
-        setAiInsights(data.insights);
-        toast.success('AI Study Plan Generated! 🎯');
-      }
-    } catch (error) {
-      console.error('Error generating AI insights:', error);
-      toast.error('Could not generate AI insights. Using standard plan.');
-    } finally {
-      setGeneratingPlan(false);
     }
   };
 
   const updateSettings = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
+      await supabase
         .from('profiles')
-        .update({ 
-          daily_study_hours: studyHours,
+        .update({
+          daily_study_hours: dailyStudyHours,
           target_exam: targetExam,
-          target_exam_date: targetExamDate
+          target_exam_date: examDate
         })
-        .eq('id', user.id);
-
-      if (error) throw error;
+        .eq('id', user?.id);
 
       toast.success('Settings updated!');
-      setShowSettings(false);
-      loadStudyData();
+      await loadStudyData();
     } catch (error) {
       console.error('Error updating settings:', error);
       toast.error('Failed to update settings');
@@ -279,73 +166,44 @@ export default function AIStudyPlanner() {
         <div className="text-center space-y-4">
           <div className="relative">
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-24 h-24 bg-gradient-to-br from-purple-400 to-blue-400 rounded-full opacity-30 blur-2xl animate-pulse"></div>
+              <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-indigo-400 rounded-full opacity-30 blur-2xl animate-pulse"></div>
             </div>
-            <div className="relative animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-purple-600 mx-auto"></div>
+            <div className="relative animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto"></div>
           </div>
           <div className="space-y-2">
             <p className="text-lg font-semibold text-slate-900">Analyzing your performance...</p>
-            <p className="text-sm text-slate-600">JEEnius AI is creating your personalized plan</p>
+            <p className="text-sm text-slate-600">Algorithm processing in under 50ms</p>
           </div>
         </div>
       </div>
     );
   }
 
-  if (generatingPlan) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center space-y-4 max-w-md">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-32 h-32 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full opacity-20 blur-3xl animate-pulse"></div>
-            </div>
-            <div className="relative inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl shadow-lg animate-bounce">
-              <Sparkles className="h-10 w-10 text-white" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <p className="text-xl font-bold text-slate-900">✨ AI Magic in Progress...</p>
-            <p className="text-sm text-slate-600">
-              JEEnius is analyzing your strengths, weaknesses, and creating a personalized strategy just for you
-            </p>
-          </div>
-          <div className="flex justify-center gap-1 pt-4">
-            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!hasData) {
+  if (totalQuestions < 10) {
     return (
       <div className="min-h-[500px] flex items-center justify-center p-6">
-        <Card className="max-w-2xl w-full border-2 border-dashed border-slate-200 bg-gradient-to-br from-slate-50 to-blue-50">
+        <Card className="max-w-2xl w-full border-2 border-dashed border-slate-200 bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl shadow-sm">
           <CardContent className="p-8 text-center space-y-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-32 h-32 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full opacity-50 blur-2xl"></div>
+                <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full opacity-50 blur-2xl"></div>
               </div>
-              <div className="relative inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl shadow-lg">
+              <div className="relative inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg">
                 <Brain className="h-10 w-10 text-white" />
               </div>
             </div>
 
             <div className="space-y-3">
               <h3 className="text-2xl font-bold text-slate-900">
-                Start Your JEEnius Journey! 🎯
+                Build Your Foundation First 🎯
               </h3>
               <p className="text-slate-600 max-w-md mx-auto">
-                Your AI Study Planner needs at least <span className="font-bold text-purple-600">10 questions</span> to analyze your performance and create a personalized study plan.
+                Your AI Study Planner needs at least <span className="font-bold text-blue-600">10 questions</span> to analyze your performance and create a personalized study plan.
               </p>
               
               <div className="pt-4">
-                <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl border border-purple-200">
+                <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-purple-600" />
                     <span className="font-semibold text-slate-900">{totalQuestions}/10 questions</span>
                   </div>
                   <Progress value={(totalQuestions / 10) * 100} className="w-32 h-2" />
@@ -358,7 +216,7 @@ export default function AIStudyPlanner() {
                 <Button 
                   onClick={() => navigate('/study-now')}
                   size="lg"
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all"
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all"
                 >
                   <Play className="h-5 w-5 mr-2" />
                   Start Practicing Now
@@ -367,25 +225,11 @@ export default function AIStudyPlanner() {
                   onClick={() => loadStudyData()}
                   variant="outline"
                   size="lg"
-                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-50"
                 >
-                  🔄 Refresh Data
+                  <RefreshCw className="h-5 w-5 mr-2" />
+                  Refresh Data
                 </Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-slate-200">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">📊</div>
-                <p className="text-xs text-slate-600 mt-1">Personalized Analysis</p>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">🎯</div>
-                <p className="text-xs text-slate-600 mt-1">Smart Recommendations</p>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-indigo-600">⚡</div>
-                <p className="text-xs text-slate-600 mt-1">Weekly Schedule</p>
               </div>
             </div>
           </CardContent>
@@ -395,470 +239,352 @@ export default function AIStudyPlanner() {
   }
 
   return (
-    <div className="space-y-6 pb-6">
-      {/* AI Personalized Greeting */}
-      {aiInsights && (
-        <Card className="border-2 border-purple-300 bg-gradient-to-br from-purple-50 via-white to-blue-50 shadow-lg">
-          <CardContent className="p-6">
+    <div className="space-y-4">
+      {/* Header Banner */}
+      <Card className="rounded-xl bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white shadow-2xl border-none overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl"></div>
+        
+        <CardContent className="p-6 relative z-10">
+          <div className="flex items-start justify-between mb-4">
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl shadow-lg flex-shrink-0">
-                <Sparkles className="h-6 w-6 text-white" />
-              </div>
-              <div className="flex-1 space-y-3">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-bold text-slate-900">Your Personalized AI Insights</h3>
-                  <Badge className="bg-gradient-to-r from-purple-500 to-blue-500 text-white">AI Generated</Badge>
-                </div>
-                <p className="text-slate-700 leading-relaxed">{aiInsights.personalizedGreeting}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Hero Stats - No overlap */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-700 text-white border-0">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <Target className="h-5 w-5" />
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-lg">
+                <Brain className="h-7 w-7 text-white" />
               </div>
               <div>
-                <p className="text-xs opacity-90">Focus Areas</p>
-                <p className="text-2xl font-bold">{weaknesses.length}</p>
+                <h2 className="text-2xl font-bold mb-1 flex items-center gap-2">
+                  {motivationMessage?.emoji} Your Smart Study Plan
+                  <Badge className="bg-white/20 text-white border-white/30 text-xs">Algorithm-Powered</Badge>
+                </h2>
+                <p className="text-slate-200 text-sm">{motivationMessage?.message}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-500 to-emerald-700 text-white border-0">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <Trophy className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs opacity-90">Strengths</p>
-                <p className="text-2xl font-bold">{strengths.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-blue-500 to-indigo-700 text-white border-0">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <Calendar className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs opacity-90">Days to {targetExam}</p>
-                <p className="text-2xl font-bold">{daysRemaining > 0 ? daysRemaining : 'Set Date'}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-orange-500 to-red-700 text-white border-0">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <Award className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs opacity-90">Predicted Rank</p>
-                <p className="text-2xl font-bold">{predictedRank > 0 ? predictedRank.toLocaleString() : 'N/A'}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Settings Card */}
-      <Card className="border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-indigo-900">
-              <Timer className="h-5 w-5" />
-              Study Settings
-            </CardTitle>
-            <Button
-              onClick={() => setShowSettings(!showSettings)}
-              variant="ghost"
+            <Button 
+              onClick={loadStudyData}
               size="sm"
+              variant="outline"
+              className="bg-white/10 hover:bg-white/20 text-white border-white/20"
             >
-              {showSettings ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
             </Button>
           </div>
-        </CardHeader>
-        {showSettings && (
-          <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-3 gap-4">
-              <div>
-                <Label>Daily Study Hours</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  max="12"
-                  value={studyHours}
-                  onChange={(e) => setStudyHours(Number(e.target.value))}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label>Target Exam</Label>
-                <select
-                  value={targetExam}
-                  onChange={(e) => setTargetExam(e.target.value as 'JEE' | 'NEET')}
-                  className="w-full mt-1 px-3 py-2 border rounded-md"
-                >
-                  <option value="JEE">JEE</option>
-                  <option value="NEET">NEET</option>
-                </select>
-              </div>
-              <div>
-                <Label>Exam Date</Label>
-                <Input
-                  type="date"
-                  value={targetExamDate}
-                  onChange={(e) => {
-                    setTargetExamDate(e.target.value);
-                    const days = Math.ceil((new Date(e.target.value).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                    setDaysRemaining(days);
-                  }}
-                  className="mt-1"
-                />
-              </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4">
+            <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm border border-white/20">
+              <p className="text-xs text-slate-300 mb-1">Target Exam</p>
+              <p className="text-lg font-bold">{targetExam}</p>
+              <p className="text-xs text-slate-400">{new Date(examDate).toLocaleDateString()}</p>
             </div>
-            <Button onClick={updateSettings} className="w-full bg-gradient-to-r from-indigo-600 to-purple-600">
-              Save Settings
-            </Button>
-          </CardContent>
-        )}
+            <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm border border-white/20">
+              <p className="text-xs text-slate-300 mb-1">Days Remaining</p>
+              <p className="text-lg font-bold">{daysToExam}</p>
+              <p className="text-xs text-slate-400">Focus time left</p>
+            </div>
+            <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm border border-white/20">
+              <p className="text-xs text-slate-300 mb-1">Current Accuracy</p>
+              <p className="text-lg font-bold">{avgAccuracy.toFixed(0)}%</p>
+              <p className="text-xs text-slate-400">All-time average</p>
+            </div>
+            <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm border border-white/20">
+              <p className="text-xs text-slate-300 mb-1">Predicted Rank</p>
+              <p className="text-lg font-bold">{rankPrediction?.currentRank.toLocaleString()}</p>
+              <p className="text-xs text-slate-400">Based on current</p>
+            </div>
+          </div>
+        </CardContent>
       </Card>
 
-      {/* AI Insights Section */}
-      {aiInsights && (
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Strength Analysis */}
-          <Card className="border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-emerald-900">
-                <div className="p-2 bg-gradient-to-br from-emerald-500 to-green-500 text-white rounded-lg">
-                  <Trophy className="h-5 w-5" />
-                </div>
-                <span>Your Strengths</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-700 leading-relaxed mb-4">{aiInsights.strengthAnalysis}</p>
-              <div className="space-y-2">
-                {strengths.slice(0, 3).map((topic, idx) => (
-                  <div key={idx} className="bg-white rounded-lg p-3 shadow-sm border border-emerald-100">
-                    <div className="flex justify-between items-center">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-slate-900 text-sm truncate">{topic.topic}</p>
-                        <p className="text-xs text-slate-500">{topic.subject}</p>
-                      </div>
-                      <Badge className="bg-gradient-to-r from-emerald-500 to-green-500 text-white">
-                        {topic.accuracy}%
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+      {/* Hero Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card className="rounded-xl shadow-sm hover:shadow-md transition-all border-l-4 border-red-500 bg-red-50/80">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-2 mb-2">
+              <div className="p-2 bg-red-500 rounded-lg flex-shrink-0">
+                <AlertCircle className="h-4 w-4 text-white" />
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Weakness Strategy */}
-          <Card className="border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-red-50">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-orange-900">
-                <div className="p-2 bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-lg">
-                  <Target className="h-5 w-5" />
-                </div>
-                <span>Focus Strategy</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-700 leading-relaxed mb-4">{aiInsights.weaknessStrategy}</p>
-              <div className="space-y-2">
-                {weaknesses.slice(0, 3).map((topic, idx) => (
-                  <div key={idx} className="bg-white rounded-lg p-3 shadow-sm border border-orange-100">
-                    <div className="flex justify-between items-center">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-slate-900 text-sm truncate">{topic.topic}</p>
-                        <p className="text-xs text-slate-500">{topic.subject}</p>
-                      </div>
-                      <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white">
-                        {topic.accuracy}%
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Time Allocation */}
-      {aiInsights && (
-        <Card className="border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-indigo-900">
-              <Clock className="h-5 w-5" />
-              AI-Recommended Time Allocation
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-4 gap-4">
-              <div className="bg-white rounded-lg p-4 border-l-4 border-orange-500">
-                <p className="text-xs text-slate-600 mb-1">Focus Topics</p>
-                <p className="text-xl font-bold text-slate-900">{aiInsights.timeAllocation.weakTopics}</p>
-              </div>
-              <div className="bg-white rounded-lg p-4 border-l-4 border-blue-500">
-                <p className="text-xs text-slate-600 mb-1">Medium Topics</p>
-                <p className="text-xl font-bold text-slate-900">{aiInsights.timeAllocation.mediumTopics}</p>
-              </div>
-              <div className="bg-white rounded-lg p-4 border-l-4 border-emerald-500">
-                <p className="text-xs text-slate-600 mb-1">Revision</p>
-                <p className="text-xl font-bold text-slate-900">{aiInsights.timeAllocation.revision}</p>
-              </div>
-              <div className="bg-white rounded-lg p-4 border-l-4 border-purple-500">
-                <p className="text-xs text-slate-600 mb-1">Mock Tests</p>
-                <p className="text-xl font-bold text-slate-900">{aiInsights.timeAllocation.mockTests}</p>
-              </div>
+              <p className="text-xs font-medium text-slate-700">Focus Areas</p>
             </div>
+            <h3 className="text-3xl font-bold text-red-700 mb-1">{weakTopics.length}</h3>
+            <p className="text-xs text-slate-600 mb-2">Topics need attention</p>
+            <Badge className="bg-red-500 text-white text-xs">60% time allocation</Badge>
           </CardContent>
         </Card>
-      )}
 
-      {/* Key Recommendations */}
-      {aiInsights && (
-        <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-blue-900">
-              <Zap className="h-5 w-5" />
-              Personalized Recommendations
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {aiInsights.keyRecommendations.map((rec, idx) => (
-                <div key={idx} className="bg-white rounded-lg p-4 shadow-sm border border-blue-100 flex items-start gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                    {idx + 1}
-                  </div>
-                  <p className="text-slate-700 flex-1">{rec}</p>
-                </div>
-              ))}
+        <Card className="rounded-xl shadow-sm hover:shadow-md transition-all border-l-4 border-green-500 bg-green-50/80">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-2 mb-2">
+              <div className="p-2 bg-green-500 rounded-lg flex-shrink-0">
+                <Sparkles className="h-4 w-4 text-white" />
+              </div>
+              <p className="text-xs font-medium text-slate-700">Strengths</p>
             </div>
+            <h3 className="text-3xl font-bold text-green-700 mb-1">{strongTopics.length}</h3>
+            <p className="text-xs text-slate-600 mb-2">Mastered topics</p>
+            <Badge className="bg-green-500 text-white text-xs">10% maintenance</Badge>
           </CardContent>
         </Card>
-      )}
 
-      {/* Rank Prediction */}
-      {aiInsights && (
-        <Card className="border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-purple-900">
-              <Award className="h-5 w-5" />
-              Your Rank Prediction
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-lg p-4 border-l-4 border-orange-500">
-                <p className="text-xs text-slate-600 mb-1">Current Projection</p>
-                <p className="text-sm font-semibold text-slate-900">{aiInsights.rankPrediction.currentProjection}</p>
+        <Card className="rounded-xl shadow-sm hover:shadow-md transition-all border-l-4 border-blue-500 bg-blue-50/80">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-2 mb-2">
+              <div className="p-2 bg-blue-500 rounded-lg flex-shrink-0">
+                <Calendar className="h-4 w-4 text-white" />
               </div>
-              <div className="bg-white rounded-lg p-4 border-l-4 border-emerald-500">
-                <p className="text-xs text-slate-600 mb-1">Target Potential</p>
-                <p className="text-sm font-semibold text-slate-900">{aiInsights.rankPrediction.targetProjection}</p>
-              </div>
-              <div className="bg-white rounded-lg p-4 border-l-4 border-purple-500">
-                <p className="text-xs text-slate-600 mb-1">Improvement Path</p>
-                <p className="text-sm font-semibold text-slate-900">{aiInsights.rankPrediction.improvementPath}</p>
-              </div>
+              <p className="text-xs font-medium text-slate-700">Days to Exam</p>
             </div>
+            <h3 className="text-3xl font-bold text-blue-700 mb-1">{daysToExam}</h3>
+            <p className="text-xs text-slate-600 mb-2">Time remaining</p>
+            <Badge className="bg-blue-500 text-white text-xs">
+              {daysToExam > 90 ? 'Foundation' : (daysToExam > 30 ? 'Revision' : 'Mock Tests')}
+            </Badge>
           </CardContent>
         </Card>
-      )}
 
-      {/* Motivational Message */}
-      {aiInsights && (
-        <Card className="border-2 border-yellow-300 bg-gradient-to-br from-yellow-50 to-orange-50 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl shadow-lg flex-shrink-0">
-                <Star className="h-6 w-6 text-white" />
+        <Card className="rounded-xl shadow-sm hover:shadow-md transition-all border-l-4 border-purple-500 bg-purple-50/80">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-2 mb-2">
+              <div className="p-2 bg-purple-500 rounded-lg flex-shrink-0">
+                <Trophy className="h-4 w-4 text-white" />
               </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-slate-900 mb-2">Keep Going! 🚀</h3>
-                <p className="text-slate-700 leading-relaxed">{aiInsights.motivationalMessage}</p>
-              </div>
+              <p className="text-xs font-medium text-slate-700">Target Rank</p>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Focus Areas */}
-        <Card className="border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-red-50">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-orange-900">
-              <div className="p-2 bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-lg">
-                <AlertCircle className="h-5 w-5" />
-              </div>
-              <span>Priority Focus Areas</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {weaknesses.length > 0 ? (
-              weaknesses.map((topic, idx) => (
-                <div key={idx} className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all border border-orange-100">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-900 truncate">{topic.topic}</p>
-                      <p className="text-xs text-slate-500">{topic.subject} • {topic.chapter}</p>
-                    </div>
-                    <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs">
-                      {topic.accuracy}%
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Progress value={topic.accuracy} className="flex-1 h-2" />
-                    <span className="text-xs text-slate-500">{topic.questions_attempted}Q</span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-slate-500">
-                <Target className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                <p className="text-sm">No weak areas identified yet</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Strengths */}
-        <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-green-900">
-              <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-500 text-white rounded-lg">
-                <Star className="h-5 w-5" />
-              </div>
-              <span>Your Strengths</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {strengths.length > 0 ? (
-              strengths.map((topic, idx) => (
-                <div key={idx} className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all border border-green-100">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-900 truncate">{topic.topic}</p>
-                      <p className="text-xs text-slate-500">{topic.subject} • {topic.chapter}</p>
-                    </div>
-                    <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs">
-                      {topic.accuracy}%
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Progress value={topic.accuracy} className="flex-1 h-2" />
-                    <span className="text-xs text-slate-500">{topic.questions_attempted}Q</span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-slate-500">
-                <Trophy className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                <p className="text-sm">Keep practicing to build strengths!</p>
-              </div>
-            )}
+            <h3 className="text-3xl font-bold text-purple-700 mb-1">{rankPrediction?.targetRank.toLocaleString()}</h3>
+            <p className="text-xs text-slate-600 mb-2">At 90% accuracy</p>
+            <Badge className="bg-purple-500 text-white text-xs">{rankPrediction?.improvementWeeks} weeks to goal</Badge>
           </CardContent>
         </Card>
       </div>
 
-      {/* Weekly Plan */}
-      {weeklyPlan.length > 0 && (
-        <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-blue-900">
-              <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-500 text-white rounded-lg">
-                <Calendar className="h-5 w-5" />
+      {/* Study Settings */}
+      <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <Card className="rounded-xl shadow-sm hover:shadow-md transition-all">
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-slate-50 transition-colors">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-blue-600" />
+                  Study Settings
+                </CardTitle>
+                {settingsOpen ? <ChevronUp className="h-5 w-5 text-slate-600" /> : <ChevronDown className="h-5 w-5 text-slate-600" />}
               </div>
-              <span>Weekly Study Plan ({studyHours}h/day)</span>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-slate-700 mb-2 block">Daily Study Hours</label>
+                  <input
+                    type="number"
+                    value={dailyStudyHours}
+                    onChange={(e) => setDailyStudyHours(Number(e.target.value))}
+                    min="1"
+                    max="12"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700 mb-2 block">Target Exam</label>
+                  <select
+                    value={targetExam}
+                    onChange={(e) => setTargetExam(e.target.value)}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="JEE">JEE Main & Advanced</option>
+                    <option value="NEET">NEET</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700 mb-2 block">Exam Date</label>
+                  <input
+                    type="date"
+                    value={examDate}
+                    onChange={(e) => setExamDate(e.target.value)}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              <Button onClick={updateSettings} className="bg-blue-600 hover:bg-blue-700 w-full">
+                <Zap className="h-4 w-4 mr-2" />
+                Save & Regenerate Plan
+              </Button>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
+      {/* Time Allocation */}
+      {timeAllocation && (
+        <Card className="rounded-xl shadow-sm hover:shadow-md transition-all">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Clock className="h-5 w-5 text-blue-600" />
+              Daily Time Allocation
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {weeklyPlan.map((dayPlan, idx) => (
-              <div key={idx} className="bg-white rounded-xl border border-blue-100 overflow-hidden shadow-sm">
-                <button
-                  onClick={() => setExpandedDay(expandedDay === dayPlan.day ? null : dayPlan.day)}
-                  className="w-full flex items-center justify-between p-4 hover:bg-blue-50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg">
-                      <BookOpen className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-slate-900">{dayPlan.day}</p>
-                      <p className="text-xs text-slate-500">{dayPlan.tasks.length} topics • {dayPlan.totalMinutes} min</p>
-                    </div>
-                  </div>
-                  {expandedDay === dayPlan.day ? (
-                    <ChevronUp className="h-5 w-5 text-slate-400" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5 text-slate-400" />
-                  )}
-                </button>
-
-                {expandedDay === dayPlan.day && (
-                  <div className="px-4 pb-4 space-y-2">
-                    {dayPlan.tasks.map((task, taskIdx) => (
-                      <div
-                        key={taskIdx}
-                        className={`p-3 rounded-lg border ${
-                          task.priority === 'high'
-                            ? 'bg-orange-50 border-orange-200'
-                            : task.priority === 'medium'
-                            ? 'bg-blue-50 border-blue-200'
-                            : 'bg-green-50 border-green-200'
-                        }`}
-                      >
-                        <div className="flex justify-between items-start mb-1">
-                          <p className="font-medium text-sm text-slate-900">{task.topic}</p>
-                          <Badge
-                            className={`text-xs ${
-                              task.priority === 'high'
-                                ? 'bg-orange-500'
-                                : task.priority === 'medium'
-                                ? 'bg-blue-500'
-                                : 'bg-green-500'
-                            }`}
-                          >
-                            {task.priority}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-slate-500 mb-2">
-                          {task.subject} • {task.chapter}
-                        </p>
-                        <div className="flex items-center gap-2 text-xs text-slate-600">
-                          <Clock className="h-3 w-3" />
-                          <span>{task.timeMinutes} minutes</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-500">
+                <p className="text-xs text-slate-600 mb-1">Study Time</p>
+                <p className="text-2xl font-bold text-blue-700">
+                  {(dailyStudyHours * timeAllocation.studyTime).toFixed(1)}h
+                </p>
+                <Badge className="mt-2 bg-blue-500 text-white text-xs">
+                  {(timeAllocation.studyTime * 100).toFixed(0)}%
+                </Badge>
               </div>
-            ))}
+              <div className="bg-green-50 rounded-lg p-3 border-l-4 border-green-500">
+                <p className="text-xs text-slate-600 mb-1">Revision Time</p>
+                <p className="text-2xl font-bold text-green-700">
+                  {(dailyStudyHours * timeAllocation.revisionTime).toFixed(1)}h
+                </p>
+                <Badge className="mt-2 bg-green-500 text-white text-xs">
+                  {(timeAllocation.revisionTime * 100).toFixed(0)}%
+                </Badge>
+              </div>
+              <div className="bg-purple-50 rounded-lg p-3 border-l-4 border-purple-500">
+                <p className="text-xs text-slate-600 mb-1">Mock Tests</p>
+                <p className="text-2xl font-bold text-purple-700">
+                  {(dailyStudyHours * timeAllocation.mockTestTime).toFixed(1)}h
+                </p>
+                <Badge className="mt-2 bg-purple-500 text-white text-xs">
+                  {(timeAllocation.mockTestTime * 100).toFixed(0)}%
+                </Badge>
+              </div>
+              <div className="bg-orange-50 rounded-lg p-3 border-l-4 border-orange-500">
+                <p className="text-xs text-slate-600 mb-1">Rest Time</p>
+                <p className="text-2xl font-bold text-orange-700">
+                  {(dailyStudyHours * timeAllocation.restTime).toFixed(1)}h
+                </p>
+                <Badge className="mt-2 bg-orange-500 text-white text-xs">
+                  {(timeAllocation.restTime * 100).toFixed(0)}%
+                </Badge>
+              </div>
+            </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Weekly Plan */}
+      <Collapsible open={weekPlanOpen} onOpenChange={setWeekPlanOpen}>
+        <Card className="rounded-xl shadow-sm hover:shadow-md transition-all">
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-slate-50 transition-colors">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-blue-600" />
+                  7-Day Study Schedule
+                </CardTitle>
+                {weekPlanOpen ? <ChevronUp className="h-5 w-5 text-slate-600" /> : <ChevronDown className="h-5 w-5 text-slate-600" />}
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="space-y-3">
+              {weeklyPlan.map((day, index) => {
+                const dayName = new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                const isToday = new Date(day.date).toDateString() === new Date().toDateString();
+                
+                return (
+                  <div key={index} className={`rounded-lg p-4 transition-all ${isToday ? 'bg-blue-50 border-2 border-blue-500' : 'bg-slate-50 border border-slate-200'}`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-bold text-slate-800">{dayName}</h4>
+                      {isToday && <Badge className="bg-blue-500 text-white">Today</Badge>}
+                    </div>
+                    <div className="space-y-2">
+                      {day.tasks.map((task, taskIndex) => (
+                        <div key={taskIndex} className="flex items-center gap-3 text-sm">
+                          <Badge className={
+                            task.type === 'study' ? 'bg-blue-500 text-white' :
+                            task.type === 'revision' ? 'bg-green-500 text-white' :
+                            'bg-purple-500 text-white'
+                          }>
+                            {task.duration}m
+                          </Badge>
+                          <span className="text-slate-600 text-xs">{task.timeSlot}</span>
+                          <span className="font-medium text-slate-800 flex-1">{task.subject} - {task.topic}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
+      {/* SWOT Analysis */}
+      {swotAnalysis && (
+        <Collapsible open={swotOpen} onOpenChange={setSWOTOpen}>
+          <Card className="rounded-xl shadow-sm hover:shadow-md transition-all">
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-slate-50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Target className="h-5 w-5 text-blue-600" />
+                    SWOT Analysis
+                  </CardTitle>
+                  {swotOpen ? <ChevronUp className="h-5 w-5 text-slate-600" /> : <ChevronDown className="h-5 w-5 text-slate-600" />}
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-green-50 rounded-lg p-4 border-l-4 border-green-500">
+                    <h4 className="font-bold text-green-800 mb-2 flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      Strengths
+                    </h4>
+                    <ul className="space-y-1 text-sm text-slate-700">
+                      {swotAnalysis.strengths.slice(0, 3).map((s: string, i: number) => (
+                        <li key={i}>• {s}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="bg-red-50 rounded-lg p-4 border-l-4 border-red-500">
+                    <h4 className="font-bold text-red-800 mb-2 flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4" />
+                      Weaknesses
+                    </h4>
+                    <ul className="space-y-1 text-sm text-slate-700">
+                      {swotAnalysis.weaknesses.slice(0, 3).map((w: string, i: number) => (
+                        <li key={i}>• {w}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
+                    <h4 className="font-bold text-blue-800 mb-2 flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4" />
+                      Opportunities
+                    </h4>
+                    <ul className="space-y-1 text-sm text-slate-700">
+                      {swotAnalysis.opportunities.slice(0, 3).map((o: string, i: number) => (
+                        <li key={i}>• {o}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="bg-orange-50 rounded-lg p-4 border-l-4 border-orange-500">
+                    <h4 className="font-bold text-orange-800 mb-2 flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4" />
+                      Threats
+                    </h4>
+                    <ul className="space-y-1 text-sm text-slate-700">
+                      {swotAnalysis.threats.slice(0, 3).map((t: string, i: number) => (
+                        <li key={i}>• {t}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
       )}
     </div>
   );
-}
+};
+
+export default AIStudyPlanner;
