@@ -40,6 +40,9 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { useRealtimeProfile } from '@/hooks/useRealtimeProfile';
+import { useRealtimeQuestionAttempts } from '@/hooks/useRealtimeQuestionAttempts';
+import { useRealtimeTopicMastery } from '@/hooks/useRealtimeTopicMastery';
 
 const AIStudyPlanner = () => {
   const { user } = useAuth();
@@ -67,6 +70,35 @@ const AIStudyPlanner = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [weekPlanOpen, setWeekPlanOpen] = useState(true);
   const [swotOpen, setSWOTOpen] = useState(false);
+
+  // Real-time hooks
+  const { profileData } = useRealtimeProfile();
+  const { attemptCount } = useRealtimeQuestionAttempts();
+  const { topicData } = useRealtimeTopicMastery();
+
+  // Update when real-time data changes
+  useEffect(() => {
+    if (profileData) {
+      setDailyStudyHours(profileData.daily_study_hours || 4);
+      setTargetExam(profileData.target_exam || 'JEE');
+      setExamDate(profileData.target_exam_date || '2026-05-24');
+      setStreak(profileData.current_streak || 0);
+      setAvgAccuracy(profileData.overall_accuracy || 0);
+    }
+  }, [profileData]);
+
+  useEffect(() => {
+    if (attemptCount !== undefined) {
+      setTotalQuestions(attemptCount);
+    }
+  }, [attemptCount]);
+
+  // Regenerate plan when topic data or question count changes
+  useEffect(() => {
+    if (topicData && topicData.length >= 5 && totalQuestions >= 10) {
+      regeneratePlan();
+    }
+  }, [topicData, totalQuestions]);
 
   useEffect(() => {
     if (user) {
@@ -147,6 +179,34 @@ const AIStudyPlanner = () => {
       console.error('Error loading study data:', error);
       setLoading(false);
     }
+  };
+
+  const regeneratePlan = () => {
+    if (!topicData || topicData.length < 5 || !profileData) return;
+
+    const examDateObj = new Date(profileData.target_exam_date || '2026-05-24');
+    const today = new Date();
+    const days = Math.ceil((examDateObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    const categorized = categorizeTopics(topicData);
+    const phaseAlloc = calculatePhaseAllocation(days);
+    const allocated = allocateDailyTime(profileData.daily_study_hours || 4, phaseAlloc, categorized);
+    const weekly = generateWeeklyPlan(profileData.daily_study_hours || 4, allocated, phaseAlloc);
+    const rank = predictRank(profileData.overall_accuracy || 0, totalQuestions, profileData.target_exam || 'JEE');
+    const swot = generateSWOTAnalysis(categorized);
+    const energy = calculateEnergyScore([], profileData.overall_accuracy || 0, [], profileData.daily_study_hours || 4, 0, 0);
+    const motivation = generateMotivationMessage(profileData.current_streak || 0, profileData.overall_accuracy || 0, 0);
+
+    setWeakTopics(allocated.weak);
+    setMediumTopics(allocated.medium);
+    setStrongTopics(allocated.strong);
+    setTimeAllocation(phaseAlloc);
+    setWeeklyPlan(weekly);
+    setRankPrediction(rank);
+    setSWOTAnalysis(swot);
+    setEnergyScore(energy);
+    setMotivationMessage(motivation);
+    setDaysToExam(days);
   };
 
   const updateSettings = async () => {
