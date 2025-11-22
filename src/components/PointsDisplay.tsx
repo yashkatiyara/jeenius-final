@@ -1,91 +1,20 @@
 // src/components/PointsDisplay.tsx
-// ✅ ENHANCED VERSION - JEEnius Points with Level Display
+// ✅ REAL-TIME VERSION - Auto-updates with useRealtimePoints
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Trophy, Flame, Target, Sparkles } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 import { useStreakData } from '@/hooks/useStreakData';
-import PointsService from '@/services/pointsService';
+import { useRealtimePoints } from '@/hooks/useRealtimePoints';
+import { useRealtimeQuestionAttempts } from '@/hooks/useRealtimeQuestionAttempts';
 
 const PointsDisplay = () => {
-  const { user } = useAuth();
   const { streak } = useStreakData();
-  const [stats, setStats] = useState({
-    totalPoints: 0,
-    todayProgress: 0,
-    todayGoal: 15,
-    level: 'BEGINNER',
-    pointsToNext: 0
-  });
-  const [loading, setLoading] = useState(true);
+  const { pointsData, loading: pointsLoading } = useRealtimePoints();
+  const { attemptCount, loading: attemptsLoading } = useRealtimeQuestionAttempts();
 
-  useEffect(() => {
-    if (!user?.id) return;
+  const loading = pointsLoading || attemptsLoading;
 
-    loadStats();
-
-    // Real-time subscription to points and questions
-    const subscription = supabase
-      .channel('stats-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profiles',
-          filter: `id=eq.${user.id}`
-        },
-        () => loadStats()
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'question_attempts',
-          filter: `user_id=eq.${user.id}`
-        },
-        () => loadStats()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(subscription);
-    };
-  }, [user?.id]);
-
-  const loadStats = async () => {
-    if (!user?.id) return;
-
-    try {
-      // Get total points and level info
-      const levelInfo = await PointsService.getUserPoints(user.id);
-      
-      // Get today's progress
-      const today = new Date().toISOString().split('T')[0];
-      const { count } = await supabase
-        .from('question_attempts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .gte('created_at', `${today}T00:00:00.000Z`)
-        .lte('created_at', `${today}T23:59:59.999Z`);
-
-      setStats({
-        totalPoints: levelInfo.totalPoints,
-        todayProgress: count || 0,
-        todayGoal: 15,
-        level: levelInfo.level,
-        pointsToNext: levelInfo.levelInfo.pointsToNext
-      });
-    } catch (error) {
-      console.error('Error loading stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
+  if (loading || !pointsData) {
     return (
       <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-100 animate-pulse">
         <div className="h-4 w-4 bg-slate-200 rounded"></div>
@@ -108,10 +37,10 @@ const PointsDisplay = () => {
           </span>
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-purple-900">
-              {stats.totalPoints}
+              {pointsData.totalPoints}
             </span>
             <span className="text-xs font-semibold px-1.5 py-0.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded">
-              {stats.level}
+              {pointsData.level}
             </span>
           </div>
         </div>
@@ -130,9 +59,9 @@ const PointsDisplay = () => {
       <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100 hover:shadow-md transition-shadow">
         <Target className="h-4 w-4 text-green-600" />
         <span className="text-sm font-bold text-green-900">
-          {stats.todayProgress}/{stats.todayGoal}
+          {attemptCount}/15
         </span>
-        <span className="text-xs text-slate-500">goal</span>
+        <span className="text-xs text-slate-500">today</span>
       </div>
     </div>
   );

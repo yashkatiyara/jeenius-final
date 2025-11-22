@@ -34,8 +34,51 @@ const Leaderboard: React.FC = () => {
 
   useEffect(() => {
     fetchLeaderboard(true);
-    const interval = setInterval(() => fetchLeaderboard(false), 30000);
-    return () => clearInterval(interval);
+    
+    // Set up real-time subscription for leaderboard updates
+    const channel = supabase
+      .channel('leaderboard-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles'
+        },
+        () => {
+          console.log('Profile changed, updating leaderboard');
+          fetchLeaderboard(false);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'question_attempts'
+        },
+        () => {
+          console.log('New question attempt, updating leaderboard');
+          fetchLeaderboard(false);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'points_log'
+        },
+        () => {
+          console.log('Points changed, updating leaderboard');
+          fetchLeaderboard(false);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [timeFilter, user]);
 
   const fetchLeaderboard = async (showLoader = true) => {
