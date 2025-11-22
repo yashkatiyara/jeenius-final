@@ -43,13 +43,16 @@ import { useNavigate } from 'react-router-dom';
 import { useRealtimeProfile } from '@/hooks/useRealtimeProfile';
 import { useRealtimeQuestionAttempts } from '@/hooks/useRealtimeQuestionAttempts';
 import { useRealtimeTopicMastery } from '@/hooks/useRealtimeTopicMastery';
+import { useExamDates } from '@/hooks/useExamDates';
+import { Label } from '@/components/ui/label';
+import { Save } from 'lucide-react';
 
 const AIStudyPlanner = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [dailyStudyHours, setDailyStudyHours] = useState(4);
-  const [targetExam, setTargetExam] = useState('JEE');
+  const [targetExam, setTargetExam] = useState<'JEE' | 'NEET'>('JEE');
   const [examDate, setExamDate] = useState('2026-05-24');
   const [daysToExam, setDaysToExam] = useState(0);
   
@@ -75,12 +78,13 @@ const AIStudyPlanner = () => {
   const { profileData } = useRealtimeProfile();
   const { attemptCount } = useRealtimeQuestionAttempts();
   const { topicData } = useRealtimeTopicMastery();
+  const { getExamDate } = useExamDates();
 
   // Update when real-time data changes
   useEffect(() => {
     if (profileData) {
       setDailyStudyHours(profileData.daily_study_hours || 4);
-      setTargetExam(profileData.target_exam || 'JEE');
+      setTargetExam((profileData.target_exam as 'JEE' | 'NEET') || 'JEE');
       setExamDate(profileData.target_exam_date || '2026-05-24');
       setStreak(profileData.current_streak || 0);
       setAvgAccuracy(profileData.overall_accuracy || 0);
@@ -137,7 +141,7 @@ const AIStudyPlanner = () => {
 
       if (profile) {
         setDailyStudyHours(profile.daily_study_hours || 4);
-        setTargetExam(profile.target_exam || 'JEE');
+        setTargetExam((profile.target_exam as 'JEE' | 'NEET') || 'JEE');
         setExamDate(profile.target_exam_date || '2026-05-24');
         setStreak(profile.current_streak || 0);
         setAvgAccuracy(profile.overall_accuracy || 0);
@@ -221,23 +225,23 @@ const AIStudyPlanner = () => {
 
   const updateSettings = async () => {
     try {
-      // Update profile
+      const newExamDate = getExamDate(targetExam);
+      setExamDate(newExamDate);
+
+      const daysToExam = Math.ceil(
+        (new Date(newExamDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+      );
+
       await supabase
         .from('profiles')
         .update({
           daily_study_hours: dailyStudyHours,
           target_exam: targetExam,
-          target_exam_date: examDate
+          target_exam_date: newExamDate
         })
         .eq('id', user?.id);
 
-      // Calculate new days to exam
-      const examDateObj = new Date(examDate);
-      const today = new Date();
-      const days = Math.ceil((examDateObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      setDaysToExam(days);
-
-      // Regenerate plan with new settings
+      setDaysToExam(daysToExam);
       regeneratePlan();
 
       toast.success('Settings updated! Plan regenerated.');
@@ -484,7 +488,7 @@ const AIStudyPlanner = () => {
                     <button
                       onClick={() => {
                         setTargetExam('JEE');
-                        setExamDate('2026-05-24');
+                        setExamDate(getExamDate('JEE'));
                       }}
                       className={`p-3 rounded-lg border-2 transition-all font-medium ${
                         targetExam === 'JEE'
@@ -497,7 +501,7 @@ const AIStudyPlanner = () => {
                     <button
                       onClick={() => {
                         setTargetExam('NEET');
-                        setExamDate('2026-05-05');
+                        setExamDate(getExamDate('NEET'));
                       }}
                       className={`p-3 rounded-lg border-2 transition-all font-medium ${
                         targetExam === 'NEET'

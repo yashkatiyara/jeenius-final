@@ -246,6 +246,14 @@ function App() {
                     </AdminRoute>
                   }
                 />
+                <Route
+                  path="/admin/exam-config"
+                  element={
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
+                  }
+                />
                 
                 <Route path="/pricing" element={<PricingPage />} />
 

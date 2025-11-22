@@ -360,6 +360,30 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_config: {
+        Row: {
+          exam_date: string
+          exam_name: string
+          id: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          exam_date: string
+          exam_name: string
+          id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          exam_date?: string
+          exam_name?: string
+          id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       free_content_limits: {
         Row: {
           description: string | null

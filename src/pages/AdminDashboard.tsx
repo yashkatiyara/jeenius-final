@@ -15,6 +15,7 @@ import Header from '@/components/Header';
 import { AdminAnalytics } from '@/components/admin/AdminAnalytics';
 import { UserManagement } from '@/components/admin/UserManagement';
 import ChapterManager from '@/components/admin/ChapterManager';
+import ExamDateManager from '@/components/admin/ExamDateManager';
 
 interface QuickStat {
   title: string;
@@ -35,6 +36,8 @@ const AdminDashboard = () => {
       return <UserManagement />;
     } else if (location.pathname === '/admin/content') {
       return <ChapterManager />;
+    } else if (location.pathname === '/admin/exam-config') {
+      return <ExamDateManager />;
     } else {
       return <QuickStatsOverview />;
     }
@@ -44,6 +47,7 @@ const AdminDashboard = () => {
     if (location.pathname === '/admin/analytics') return 'Platform Analytics & Insights';
     if (location.pathname === '/admin/users') return 'User Management';
     if (location.pathname === '/admin/content') return 'Content Management';
+    if (location.pathname === '/admin/exam-config') return 'Exam Date Configuration';
     return 'Manage platform and monitor performance';
   };
 

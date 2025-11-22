@@ -22,9 +22,9 @@ export const useAdminAuth = () => {
           .select('role')
           .eq('user_id', user.id)
           .eq('role', 'admin')
-          .single();
+          .maybeSingle();
       
-        if (error) {
+        if (error && error.code !== 'PGRST116') {
           console.error('Error checking admin status:', error);
           setIsAdmin(false);
         } else {
