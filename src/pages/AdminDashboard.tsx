@@ -16,6 +16,7 @@ import { AdminAnalytics } from '@/components/admin/AdminAnalytics';
 import { UserManagement } from '@/components/admin/UserManagement';
 import ChapterManager from '@/components/admin/ChapterManager';
 import ExamDateManager from '@/components/admin/ExamDateManager';
+import { QuestionManager } from '@/components/admin/QuestionManager';
 
 interface QuickStat {
   title: string;
@@ -38,6 +39,8 @@ const AdminDashboard = () => {
       return <ChapterManager />;
     } else if (location.pathname === '/admin/exam-config') {
       return <ExamDateManager />;
+    } else if (location.pathname === '/admin/questions') {
+      return <QuestionManager />;
     } else {
       return <QuickStatsOverview />;
     }
@@ -48,6 +51,7 @@ const AdminDashboard = () => {
     if (location.pathname === '/admin/users') return 'User Management';
     if (location.pathname === '/admin/content') return 'Content Management';
     if (location.pathname === '/admin/exam-config') return 'Exam Date Configuration';
+    if (location.pathname === '/admin/questions') return 'Question Bank Management';
     return 'Manage platform and monitor performance';
   };
 
@@ -243,8 +247,17 @@ const QuickStatsOverview = () => {
               className="p-4 border-2 border-dashed border-slate-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left"
             >
               <BookOpen className="h-6 w-6 text-blue-600 mb-2" />
-              <h3 className="font-semibold text-slate-900">Add Content</h3>
-              <p className="text-sm text-slate-600">Upload new questions</p>
+              <h3 className="font-semibold text-slate-900">Manage Chapters</h3>
+              <p className="text-sm text-slate-600">Add/edit chapters & topics</p>
+            </button>
+            
+            <button 
+              onClick={() => navigate('/admin/questions')}
+              className="p-4 border-2 border-dashed border-slate-300 rounded-lg hover:border-amber-500 hover:bg-amber-50 transition-all text-left"
+            >
+              <BookOpen className="h-6 w-6 text-amber-600 mb-2" />
+              <h3 className="font-semibold text-slate-900">Question Bank</h3>
+              <p className="text-sm text-slate-600">Add/edit questions</p>
             </button>
             
             <button 
