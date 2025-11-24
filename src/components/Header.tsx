@@ -71,7 +71,7 @@ const Header = () => {
               alt="JEEnius" 
               className="w-9 h-9 object-contain transition-transform duration-300 group-hover:scale-110"
             />
-            <span className="font-semibold text-xl text-primary">
+            <span className="font-bold text-xl text-primary">
               JEEnius
             </span>
           </div>
@@ -139,7 +139,7 @@ const Header = () => {
               </DropdownMenu>
             ) : (
               <Button 
-                className="bg-primary hover:bg-primary/90 text-white px-6 h-9 rounded-lg font-medium shadow-apple transition-all duration-200 hover:shadow-apple-lg"
+                className="bg-primary hover:bg-primary/90 text-white px-6 h-9 rounded-lg font-semibold shadow-apple transition-all duration-200 hover:shadow-apple-lg"
                 onClick={() => navigate('/login')}
               >
                 Sign In
