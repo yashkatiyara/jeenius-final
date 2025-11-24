@@ -37,7 +37,7 @@ const FloatingAIButton = () => {
         onClick={() => setShowAI(true)}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className="fixed bottom-6 right-6 z-40 group"
+        className="fixed bottom-24 right-6 z-[9999] group"
         aria-label="AI Doubt Solver"
       >
         {/* Animated Background Circles */}
