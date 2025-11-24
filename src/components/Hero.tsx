@@ -33,7 +33,7 @@ const Hero = () => {
 
             {/* Headline */}
             <div className="space-y-6">
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-semibold tracking-tight text-foreground leading-[1.1]">
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-foreground leading-[1.1]">
                 Master JEE with
                 <span className="block text-primary mt-2">
                   Intelligent AI
@@ -66,7 +66,7 @@ const Hero = () => {
             <div className="flex items-center gap-4 pt-4">
               <Button 
                 size="lg"
-                className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg font-medium rounded-xl shadow-apple-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg font-semibold rounded-xl shadow-apple-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 onClick={handleStartLearning}
               >
                 Start Learning Free
