@@ -22,6 +22,7 @@ interface Question {
   subject: string;
   chapter: string;
   topic: string;
+  subtopic: string | null;
   difficulty: string;
   question_type: string;
   year: number | null;
@@ -48,6 +49,7 @@ export const QuestionManager = () => {
     subject: 'Physics',
     chapter: '',
     topic: '',
+    subtopic: '',
     difficulty: 'easy',
     question_type: 'single_correct',
     year: null as number | null
@@ -135,16 +137,50 @@ export const QuestionManager = () => {
     }
   };
 
-  const handleBulkUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const parseCSV = (text: string): any[] => {
+    const lines = text.split('\n').filter(line => line.trim());
+    if (lines.length < 2) throw new Error('CSV must have headers and at least one row');
+    
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const questions = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      const question: any = {};
+      
+      headers.forEach((header, index) => {
+        if (values[index]) {
+          if (header === 'year') {
+            question[header] = parseInt(values[index]) || null;
+          } else {
+            question[header] = values[index];
+          }
+        }
+      });
+      
+      if (question.question && question.subject) {
+        questions.push(question);
+      }
+    }
+    
+    return questions;
+  };
+
+  const handleBulkUpload = async (event: React.ChangeEvent<HTMLInputElement>, fileType: 'json' | 'csv') => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     try {
       const text = await file.text();
-      const data = JSON.parse(text);
+      let data: any[];
       
-      if (!Array.isArray(data)) {
-        throw new Error('Invalid JSON format. Expected an array of questions.');
+      if (fileType === 'json') {
+        data = JSON.parse(text);
+        if (!Array.isArray(data)) {
+          throw new Error('Invalid JSON format. Expected an array of questions.');
+        }
+      } else {
+        data = parseCSV(text);
       }
 
       const { error } = await supabase
@@ -155,9 +191,10 @@ export const QuestionManager = () => {
       
       toast.success(`Successfully uploaded ${data.length} questions`);
       fetchQuestions();
+      event.target.value = '';
     } catch (error) {
       console.error('Error uploading questions:', error);
-      toast.error('Failed to upload questions. Check file format.');
+      toast.error(`Failed to upload questions. Check ${fileType.toUpperCase()} format.`);
     }
   };
 
@@ -174,6 +211,7 @@ export const QuestionManager = () => {
       subject: question.subject,
       chapter: question.chapter,
       topic: question.topic,
+      subtopic: question.subtopic || '',
       difficulty: question.difficulty,
       question_type: question.question_type,
       year: question.year
@@ -193,6 +231,7 @@ export const QuestionManager = () => {
       subject: 'Physics',
       chapter: '',
       topic: '',
+      subtopic: '',
       difficulty: 'easy',
       question_type: 'single_correct',
       year: null
@@ -234,6 +273,11 @@ export const QuestionManager = () => {
       <div>
         <Label>Topic</Label>
         <Input value={formData.topic} onChange={(e) => setFormData({...formData, topic: e.target.value})} />
+      </div>
+
+      <div>
+        <Label>Subtopic (Optional)</Label>
+        <Input value={formData.subtopic} onChange={(e) => setFormData({...formData, subtopic: e.target.value})} />
       </div>
 
       <div>
@@ -337,19 +381,35 @@ export const QuestionManager = () => {
             </DialogContent>
           </Dialog>
 
-          <label htmlFor="bulk-upload">
+          <label htmlFor="bulk-upload-json">
             <Button variant="outline" asChild>
               <span>
                 <Upload className="w-4 h-4 mr-2" />
-                Bulk Upload JSON
+                Upload JSON
               </span>
             </Button>
             <input
-              id="bulk-upload"
+              id="bulk-upload-json"
               type="file"
               accept=".json"
               className="hidden"
-              onChange={handleBulkUpload}
+              onChange={(e) => handleBulkUpload(e, 'json')}
+            />
+          </label>
+
+          <label htmlFor="bulk-upload-csv">
+            <Button variant="outline" asChild>
+              <span>
+                <Upload className="w-4 h-4 mr-2" />
+                Upload CSV
+              </span>
+            </Button>
+            <input
+              id="bulk-upload-csv"
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={(e) => handleBulkUpload(e, 'csv')}
             />
           </label>
         </div>
@@ -399,6 +459,7 @@ export const QuestionManager = () => {
               <TableHead>Subject</TableHead>
               <TableHead>Chapter</TableHead>
               <TableHead>Topic</TableHead>
+              <TableHead>Subtopic</TableHead>
               <TableHead>Question</TableHead>
               <TableHead>Difficulty</TableHead>
               <TableHead>Correct</TableHead>
@@ -408,11 +469,11 @@ export const QuestionManager = () => {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">Loading questions...</TableCell>
+                <TableCell colSpan={8} className="text-center py-8">Loading questions...</TableCell>
               </TableRow>
             ) : filteredQuestions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">No questions found</TableCell>
+                <TableCell colSpan={8} className="text-center py-8">No questions found</TableCell>
               </TableRow>
             ) : (
               filteredQuestions.map((q) => (
@@ -420,6 +481,7 @@ export const QuestionManager = () => {
                   <TableCell>{q.subject}</TableCell>
                   <TableCell>{q.chapter}</TableCell>
                   <TableCell>{q.topic}</TableCell>
+                  <TableCell>{q.subtopic || '-'}</TableCell>
                   <TableCell className="max-w-[300px] truncate">{q.question}</TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded text-xs ${

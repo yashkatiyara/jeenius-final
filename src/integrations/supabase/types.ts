@@ -823,6 +823,7 @@ export type Database = {
           question: string
           question_type: string
           subject: string
+          subtopic: string | null
           topic: string
           year: number | null
         }
@@ -840,6 +841,7 @@ export type Database = {
           question: string
           question_type?: string
           subject: string
+          subtopic?: string | null
           topic: string
           year?: number | null
         }
@@ -857,6 +859,7 @@ export type Database = {
           question?: string
           question_type?: string
           subject?: string
+          subtopic?: string | null
           topic?: string
           year?: number | null
         }
