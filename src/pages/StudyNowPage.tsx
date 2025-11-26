@@ -694,41 +694,41 @@ const handleAnswer = async (answer: string) => {
     return (
       <div className="h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col">
         <Header />
-        <div className="flex-1 overflow-auto pt-16 sm:pt-20 pb-6">
-          <div className="container mx-auto px-4 max-w-3xl">
-            <div className="mb-3">
+        <div className="flex-1 overflow-auto pt-14 sm:pt-16 pb-4 sm:pb-6">
+          <div className="container mx-auto px-3 sm:px-4 max-w-3xl">
+            <div className="mb-2 sm:mb-3">
               <Button
                 variant="outline"
-                className="border-2 border-blue-600 text-sm px-3 py-2"
+                className="border-2 border-blue-600 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2"
                 onClick={() => setView('topics')}
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Topics
+                <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                Back
               </Button>
             </div>
 
             {!isPro && (
-              <Card className="mb-4 bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-200 shadow-lg">
-                <CardContent className="p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <Target className="w-4 h-4 text-orange-600" />
-                        <div className="text-sm font-bold text-orange-900">
+              <Card className="mb-3 sm:mb-4 bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-200 shadow-lg">
+                <CardContent className="p-2 sm:p-3">
+                  <div className="flex items-center justify-between gap-2 sm:gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        <Target className="w-3 h-3 sm:w-4 sm:h-4 text-orange-600 shrink-0" />
+                        <div className="text-xs sm:text-sm font-bold text-orange-900">
                           Daily: {dailyQuestionsUsed}/{dailyLimit}
                         </div>
                       </div>
-                      <div className="mt-2 w-full rounded-full bg-orange-200 h-2">
+                      <div className="mt-1 sm:mt-2 w-full rounded-full bg-orange-200 h-1.5 sm:h-2">
                         <div
-                          className="h-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 transition-all"
+                          className="h-1.5 sm:h-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 transition-all"
                           style={{ width: `${Math.min(100, (dailyQuestionsUsed / dailyLimit) * 100)}%` }}
                         />
                       </div>
-                      <div className="text-xs text-orange-700 mt-2">
+                      <div className="text-[10px] sm:text-xs text-orange-700 mt-1 sm:mt-2 truncate">
                         {dailyQuestionsUsed >= dailyLimit - 5 ? (
-                          <span className="font-semibold">⚠️ Almost at your limit! Upgrade for unlimited.</span>
+                          <span className="font-semibold">⚠️ Almost at limit!</span>
                         ) : (
-                          <span>Upgrade to Pro for unlimited questions + AI features!</span>
+                          <span>Upgrade for unlimited!</span>
                         )}
                       </div>
                     </div>
@@ -736,10 +736,10 @@ const handleAnswer = async (answer: string) => {
                     <div className="shrink-0">
                       <Button
                         onClick={() => setShowUpgradeModal(true)}
-                        className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-3 py-2 text-sm shadow-lg"
+                        className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-sm shadow-lg"
                       >
-                        <Sparkles className="w-4 h-4 mr-2 inline" />
-                        Upgrade
+                        <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Upgrade</span>
                       </Button>
                     </div>
                   </div>
@@ -755,54 +755,54 @@ const handleAnswer = async (answer: string) => {
               </div>
             )}
 
-            <Card className="mb-4 border border-slate-200 shadow-2xl bg-white/90">
-              <CardContent className="p-3">
+            <Card className="mb-3 sm:mb-4 border border-slate-200 shadow-2xl bg-white/90">
+              <CardContent className="p-2 sm:p-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs">
+                  <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap">
+                    <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] sm:text-xs">
                       {`Q ${currentQuestionIndex + 1}/${practiceQuestions.length}`}
                     </Badge>
-                    <Badge className={`text-xs font-semibold ${
+                    <Badge className={`text-[10px] sm:text-xs font-semibold ${
                       currentLevel === 1 ? 'bg-green-100 text-green-700 border-green-300' :
                       currentLevel === 2 ? 'bg-yellow-100 text-yellow-700 border-yellow-300' :
                       'bg-red-100 text-red-700 border-red-300'
                     }`}>
-                      {currentLevel === 1 ? '🟢 Easy' : currentLevel === 2 ? '🟡 Medium' : '🔴 Hard'}
+                      {currentLevel === 1 ? '🟢 Easy' : currentLevel === 2 ? '🟡 Med' : '🔴 Hard'}
                     </Badge>
-                    <div className="text-sm text-slate-500 hidden sm:block">
+                    <div className="text-[10px] sm:text-sm text-slate-500 hidden sm:block">
                       {selectedSubject} • {selectedChapter}
                     </div>
                   </div>
 
                   <div className="text-right">
-                    <div className="text-lg font-bold text-gray-900">
+                    <div className="text-sm sm:text-lg font-bold text-gray-900">
                       {sessionStats.correct}/{sessionStats.total}
                     </div>
-                    <div className="text-xs text-gray-500">
-                      {sessionStats.total > 0 ? Math.round((sessionStats.correct / sessionStats.total) * 100) : 0}% Accurate
+                    <div className="text-[10px] sm:text-xs text-gray-500">
+                      {sessionStats.total > 0 ? Math.round((sessionStats.correct / sessionStats.total) * 100) : 0}%
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="mb-4 border border-slate-200 shadow-2xl bg-white">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold">
+            <Card className="mb-3 sm:mb-4 border border-slate-200 shadow-2xl bg-white">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-start gap-2 sm:gap-3 mb-3 sm:mb-4">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm sm:text-base shrink-0">
                     {currentQuestionIndex + 1}
                   </div>
-                  <h2 className="text-lg sm:text-xl font-extrabold text-slate-900">{question.question}</h2>
+                  <h2 className="text-sm sm:text-lg md:text-xl font-extrabold text-slate-900">{question.question}</h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-2 sm:gap-3">
                   {['option_a','option_b','option_c','option_d'].map((key, idx) => {
                     const letter = String.fromCharCode(65 + idx);
                     const isSelected = selectedAnswer === letter;
                     const correctLetter = question.correct_option.replace('option_', '').toUpperCase();
                     const isCorrect = letter === correctLetter;
 
-                    let baseClass = 'w-full text-left p-3 rounded-xl border-2 transition-all';
+                    let baseClass = 'w-full text-left p-2 sm:p-3 rounded-lg sm:rounded-xl border-2 transition-all touch-target';
                     if (showResult) {
                       if (isCorrect) {
                         baseClass += ' border-green-500 bg-gradient-to-r from-green-50 to-emerald-50';
@@ -814,7 +814,7 @@ const handleAnswer = async (answer: string) => {
                     } else {
                       baseClass += isSelected
                         ? ' border-blue-600 bg-gradient-to-r from-blue-50 to-indigo-50'
-                        : ' border-gray-300 hover:border-blue-500 hover:bg-blue-50/30';
+                        : ' border-gray-300 hover:border-blue-500 hover:bg-blue-50/30 active:bg-blue-100';
                     }
 
                     return (
@@ -825,20 +825,20 @@ const handleAnswer = async (answer: string) => {
                         className={baseClass}
                       >
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3 flex-1">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm shadow ${
+                          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                            <div className={`w-7 h-7 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center font-bold text-xs sm:text-sm shadow shrink-0 ${
                               showResult && isCorrect ? 'bg-green-500 text-white' : 
                               showResult && isSelected && !isCorrect ? 'bg-red-500 text-white' : 
                               isSelected ? 'bg-blue-600 text-white' : 'bg-gray-100 text-slate-700'
                             }`}>
                               {letter}
                             </div>
-                            <div className="text-sm font-medium text-slate-900">{question[key]}</div>
+                            <div className="text-xs sm:text-sm font-medium text-slate-900 truncate">{question[key]}</div>
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            {showResult && isCorrect && <CheckCircle2 className="w-5 h-5 text-green-600" />}
-                            {showResult && isSelected && !isCorrect && <XCircle className="w-5 h-5 text-red-600" />}
+                          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                            {showResult && isCorrect && <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />}
+                            {showResult && isSelected && !isCorrect && <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />}
                           </div>
                         </div>
                       </button>
@@ -846,23 +846,23 @@ const handleAnswer = async (answer: string) => {
                   })}
                 </div>
 
-                <div className="mt-4 flex justify-center">
+                <div className="mt-3 sm:mt-4 flex justify-center">
                   <Button 
                     onClick={() => setShowAIModal(true)} 
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2.5 text-sm shadow-lg"
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm shadow-lg"
                   >
-                    <Sparkles className="w-4 h-4 mr-2 inline" />
+                    <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 inline" />
                     Ask AI
                   </Button>
                 </div>
 
                 {showResult && question.explanation && (
-                  <div className="mt-4 p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-600">
-                    <div className="flex items-start gap-3">
-                      <Lightbulb className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <div className="mt-3 sm:mt-4 p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-600">
+                    <div className="flex items-start gap-2 sm:gap-3">
+                      <Lightbulb className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 mt-0.5 shrink-0" />
                       <div>
-                        <p className="font-bold text-blue-900 mb-1">Explanation</p>
-                        <p className="text-sm text-slate-700 leading-relaxed">{question.explanation}</p>
+                        <p className="font-bold text-blue-900 mb-1 text-sm">Explanation</p>
+                        <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">{question.explanation}</p>
                       </div>
                     </div>
                   </div>
@@ -892,29 +892,29 @@ const handleAnswer = async (answer: string) => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
         <Header />
-        <div className="pt-20 sm:pt-24 pb-10">
-          <div className="container mx-auto px-4 max-w-7xl">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="pt-16 sm:pt-20 pb-6 md:pb-10">
+          <div className="container mx-auto px-3 sm:px-4 max-w-7xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {subjects.map((subject) => (
                 <Card
                   key={subject.name}
                   onClick={() => loadChapters(subject.name)}
                   className={`group cursor-pointer transform hover:scale-105 transition-all border-2 ${subject.borderColor} shadow-xl overflow-hidden`}
                 >
-                  <div className={`p-5 text-center bg-gradient-to-br ${subject.bgColor}`}>
-                    <div className="text-5xl mb-2">{subject.emoji}</div>
-                    <h3 className="text-2xl font-bold text-slate-900 mb-2">{subject.name}</h3>
-                    <Badge className="bg-white/80 text-slate-700 text-sm">AI Powered</Badge>
+                  <div className={`p-3 sm:p-5 text-center bg-gradient-to-br ${subject.bgColor}`}>
+                    <div className="text-3xl sm:text-5xl mb-1 sm:mb-2">{subject.emoji}</div>
+                    <h3 className="text-lg sm:text-2xl font-bold text-slate-900 mb-1 sm:mb-2">{subject.name}</h3>
+                    <Badge className="bg-white/80 text-slate-700 text-xs sm:text-sm">AI Powered</Badge>
                   </div>
 
-                  <CardContent className="p-4">
-                    <div className="text-center mb-4">
-                      <div className="text-3xl font-extrabold text-slate-900">{subject.totalQuestions}</div>
-                      <div className="text-xs text-slate-500">Total Questions</div>
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="text-center mb-3 sm:mb-4">
+                      <div className="text-xl sm:text-3xl font-extrabold text-slate-900">{subject.totalQuestions}</div>
+                      <div className="text-[10px] sm:text-xs text-slate-500">Total Questions</div>
                     </div>
 
-                    <div className="mb-4 p-3 bg-slate-50 rounded-lg">
-                      <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-slate-50 rounded-lg">
+                      <div className="grid grid-cols-3 gap-1 sm:gap-2 text-center text-[10px] sm:text-xs">
                         <div>
                           <div className="font-bold text-green-600">{subject.difficulties.easy}</div>
                           <div className="text-slate-500">Easy</div>
@@ -931,10 +931,10 @@ const handleAnswer = async (answer: string) => {
                     </div>
 
                     <Button
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 font-semibold"
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold"
                       onClick={() => loadChapters(subject.name)}
                     >
-                      <Play className="w-4 h-4 mr-2 inline" />
+                      <Play className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 inline" />
                       Start Practicing
                     </Button>
                   </CardContent>
@@ -952,24 +952,24 @@ const handleAnswer = async (answer: string) => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
         <Header />
-        <div className="pt-20 sm:pt-24 pb-10">
-          <div className="container mx-auto px-4 max-w-6xl">
-            <div className="mb-6">
+        <div className="pt-16 sm:pt-20 pb-6 md:pb-10">
+          <div className="container mx-auto px-3 sm:px-4 max-w-6xl">
+            <div className="mb-4 md:mb-6">
               <Button
                 variant="outline"
                 onClick={() => setView('subjects')}
-                className="border-2 border-blue-600 text-sm px-3 py-2"
+                className="border-2 border-blue-600 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Subjects
+                <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                Back
               </Button>
             </div>
 
-            <div className="text-center mb-6">
-              <Badge className="bg-blue-600 text-white text-base px-3 py-1.5">{selectedSubject}</Badge>
+            <div className="text-center mb-4 md:mb-6">
+              <Badge className="bg-blue-600 text-white text-sm md:text-base px-2 sm:px-3 py-1 sm:py-1.5">{selectedSubject}</Badge>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {chapters.map((chapter) => {
                 if (chapter.isLocked) {
                   return (
@@ -1090,26 +1090,26 @@ const handleAnswer = async (answer: string) => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
         <Header />
-        <div className="pt-20 sm:pt-24 pb-10">
-          <div className="container mx-auto px-4 max-w-6xl">
-            <div className="mb-6">
+        <div className="pt-16 sm:pt-20 pb-6 md:pb-10">
+          <div className="container mx-auto px-3 sm:px-4 max-w-6xl">
+            <div className="mb-4 md:mb-6">
               <Button
                 variant="outline"
                 onClick={() => setView('chapters')}
-                className="border-2 border-blue-600 text-sm px-3 py-2"
+                className="border-2 border-blue-600 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Chapters
+                <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                Back
               </Button>
             </div>
 
-            <div className="text-center mb-6">
-              <Badge className="bg-blue-600 text-white text-sm px-3 py-1.5">
+            <div className="text-center mb-4 md:mb-6">
+              <Badge className="bg-blue-600 text-white text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1.5">
                 {selectedSubject} • {selectedChapter}
               </Badge>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {topics.map((topic) => (
                 <Card
                   key={topic.name}

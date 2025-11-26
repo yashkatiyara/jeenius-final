@@ -222,6 +222,72 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Mobile-first responsive utilities */
+@layer utilities {
+  /* Safe area padding for iOS notch/home indicator */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+  }
+  
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  
+  /* Touch-friendly tap targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Mobile text sizing */
+  .text-mobile-xs {
+    font-size: 0.65rem;
+    line-height: 1rem;
+  }
+  
+  .text-mobile-sm {
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+  }
+  
+  /* Prevent text selection on UI elements */
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  
+  /* Hardware acceleration for smooth animations */
+  .gpu {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+}
+
+/* Mobile-specific overrides */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  /* Smaller base font on mobile */
+  html {
+    font-size: 15px;
+  }
+}
+
 /* Apple-inspired gradients */
 .gradient-primary {
   background: linear-gradient(135deg, #013062 0%, #0147a3 100%);

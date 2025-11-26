@@ -332,39 +332,39 @@ const Settings = () => {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#e9e9e9' }}>
       <Header />
-      <div className="pt-24 pb-8">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2" style={{ color: '#013062' }}>Settings</h1>
-            <p className="text-gray-600">
-              Welcome {profile.firstName || 'Student'} • Manage your account and preferences
+      <div className="pt-20 pb-6 md:pt-24 md:pb-8">
+        <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-4xl">
+          <div className="mb-4 md:mb-8">
+            <h1 className="text-xl md:text-3xl font-bold mb-1 md:mb-2" style={{ color: '#013062' }}>Settings</h1>
+            <p className="text-gray-600 text-sm md:text-base">
+              Welcome {profile.firstName || 'Student'} • Manage your account
             </p>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             {/* Profile Settings */}
             <Card className="border-0 shadow-lg">
-              <CardHeader>
+              <CardHeader className="pb-2 md:pb-4 px-3 md:px-6">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center" style={{ color: '#013062' }}>
-                    <User className="w-5 h-5 mr-2" />
+                  <CardTitle className="flex items-center text-sm md:text-base" style={{ color: '#013062' }}>
+                    <User className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                     Profile Information
                   </CardTitle>
                   {saveStatus === 'success' && (
-                    <div className="flex items-center text-green-600 text-sm">
-                      <CheckCircle className="w-4 h-4 mr-1" />
+                    <div className="flex items-center text-green-600 text-xs md:text-sm">
+                      <CheckCircle className="w-3 h-3 md:w-4 md:h-4 mr-1" />
                       Saved!
                     </div>
                   )}
                   {saveStatus === 'error' && (
-                    <div className="flex items-center text-red-600 text-sm">
-                      <AlertCircle className="w-4 h-4 mr-1" />
+                    <div className="flex items-center text-red-600 text-xs md:text-sm">
+                      <AlertCircle className="w-3 h-3 md:w-4 md:h-4 mr-1" />
                       Failed
                     </div>
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 md:space-y-4 px-3 md:px-6">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name *</Label>

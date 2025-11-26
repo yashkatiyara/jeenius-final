@@ -172,73 +172,76 @@ const Profile = () => {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#e9e9e9' }}>
       <Header />
-      <div className="pt-24 pb-8">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
+      <div className="pt-20 pb-6 md:pt-24 md:pb-8">
+        <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-4xl">
           
           {/* Profile Header */}
-          <Card className="mb-6 border-0 shadow-lg">
-            <CardContent className="pt-6">
-              <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+          <Card className="mb-4 md:mb-6 border-0 shadow-lg">
+            <CardContent className="pt-4 md:pt-6 px-3 md:px-6">
+              <div className="flex flex-col items-center gap-4 md:gap-6">
+                {/* Avatar */}
                 <div className="relative">
-                  <Avatar className="w-24 h-24 ring-4 ring-white shadow-lg">
+                  <Avatar className="w-20 h-20 md:w-24 md:h-24 ring-4 ring-white shadow-lg">
                     <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
-                    <AvatarFallback className="text-xl font-bold" style={{ backgroundColor: '#013062', color: 'white' }}>
+                    <AvatarFallback className="text-lg md:text-xl font-bold" style={{ backgroundColor: '#013062', color: 'white' }}>
                       {getInitials(profile?.full_name || 'User')}
                     </AvatarFallback>
                   </Avatar>
                   {isPremium && (
                     <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-1">
-                      <Star className="w-4 h-4 text-white fill-white" />
+                      <Star className="w-3 h-3 md:w-4 md:h-4 text-white fill-white" />
                     </div>
                   )}
                 </div>
                 
-                <div className="flex-1 text-center md:text-left">
-                  <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                    <h1 className="text-3xl font-bold" style={{ color: '#013062' }}>
+                {/* Name & Info */}
+                <div className="flex-1 text-center w-full">
+                  <div className="flex items-center justify-center gap-2 mb-1 md:mb-2">
+                    <h1 className="text-xl md:text-3xl font-bold" style={{ color: '#013062' }}>
                       {profile?.full_name || 'Student'}
                     </h1>
                     {isPremium && (
-                      <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0">
+                      <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 text-[10px] md:text-xs">
                         PRO
                       </Badge>
                     )}
                   </div>
-                  <p className="text-gray-600 mb-4">{profile?.email}</p>
+                  <p className="text-gray-600 text-sm md:text-base mb-3 md:mb-4 truncate max-w-full">{profile?.email}</p>
                   
-                  <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                    <Badge variant="secondary" className="flex items-center gap-1" style={{ backgroundColor: '#e6eeff', color: '#013062' }}>
-                      <GraduationCap className="w-3 h-3" />
+                  <div className="flex flex-wrap gap-1.5 md:gap-2 justify-center mb-4">
+                    <Badge variant="secondary" className="flex items-center gap-1 text-[10px] md:text-xs" style={{ backgroundColor: '#e6eeff', color: '#013062' }}>
+                      <GraduationCap className="w-2.5 h-2.5 md:w-3 md:h-3" />
                       {getGradeDisplay(profile?.grade)}
                     </Badge>
-                    <Badge variant="secondary" className="flex items-center gap-1" style={{ backgroundColor: '#e6eeff', color: '#013062' }}>
-                      <Target className="w-3 h-3" />
+                    <Badge variant="secondary" className="flex items-center gap-1 text-[10px] md:text-xs" style={{ backgroundColor: '#e6eeff', color: '#013062' }}>
+                      <Target className="w-2.5 h-2.5 md:w-3 md:h-3" />
                       {profile?.target_exam || 'Not Set'}
                     </Badge>
                     {profile?.city && (
-                      <Badge variant="outline" className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
+                      <Badge variant="outline" className="flex items-center gap-1 text-[10px] md:text-xs">
+                        <MapPin className="w-2.5 h-2.5 md:w-3 md:h-3" />
                         {profile.city}
                       </Badge>
                     )}
                   </div>
                 </div>
                 
-                <div className="flex gap-2">
+                {/* Action Buttons */}
+                <div className="flex gap-2 w-full sm:w-auto">
                   <Button 
                     onClick={() => navigate('/settings')}
                     variant="outline"
-                    className="flex items-center gap-2"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1 md:gap-2 text-xs md:text-sm h-9 md:h-10"
                   >
-                    <Settings className="w-4 h-4" />
+                    <Settings className="w-3 h-3 md:w-4 md:h-4" />
                     Settings
                   </Button>
                   <Button 
                     onClick={() => navigate('/settings')}
-                    className="flex items-center gap-2"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1 md:gap-2 text-xs md:text-sm h-9 md:h-10"
                     style={{ backgroundColor: '#013062' }}
                   >
-                    <Edit className="w-4 h-4" />
+                    <Edit className="w-3 h-3 md:w-4 md:h-4" />
                     Edit Profile
                   </Button>
                 </div>
@@ -246,40 +249,40 @@ const Profile = () => {
             </CardContent>
           </Card>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
             {/* Personal Information */}
             <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2" style={{ color: '#013062' }}>
-                  <User className="w-5 h-5" />
+              <CardHeader className="pb-2 md:pb-4 px-3 md:px-6">
+                <CardTitle className="flex items-center gap-2 text-sm md:text-base" style={{ color: '#013062' }}>
+                  <User className="w-4 h-4 md:w-5 md:h-5" />
                   Personal Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <Mail className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm">{profile?.email}</span>
+              <CardContent className="space-y-3 md:space-y-4 px-3 md:px-6">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <Mail className="w-3 h-3 md:w-4 md:h-4 text-gray-500 shrink-0" />
+                  <span className="text-xs md:text-sm truncate">{profile?.email}</span>
                 </div>
                 
                 {profile?.phone && (
-                  <div className="flex items-center gap-3">
-                    <Phone className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm">{profile.phone}</span>
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <Phone className="w-3 h-3 md:w-4 md:h-4 text-gray-500 shrink-0" />
+                    <span className="text-xs md:text-sm">{profile.phone}</span>
                   </div>
                 )}
                 
                 {profile?.city && (
-                  <div className="flex items-center gap-3">
-                    <MapPin className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm">
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <MapPin className="w-3 h-3 md:w-4 md:h-4 text-gray-500 shrink-0" />
+                    <span className="text-xs md:text-sm">
                       {profile.city}{profile?.state && `, ${profile.state}`}
                     </span>
                   </div>
                 )}
                 
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <Calendar className="w-3 h-3 md:w-4 md:h-4 text-gray-500 shrink-0" />
+                  <span className="text-xs md:text-sm">
                     Joined {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'Recently'}
                   </span>
                 </div>
