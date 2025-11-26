@@ -342,30 +342,15 @@ export const getUserUsageStats = async (userId: string): Promise<UsageStats> => 
 /**
  * Get list of accessible chapters for user
  */
+/**
+ * Get list of accessible chapters for user
+ * ✅ ALL CHAPTERS FREE FOR EVERYONE - No premium restrictions
+ */
 export const getAccessibleChapters = async (
   userId: string,
   subject?: string
 ) => {
   try {
-    // Get user subscription status
-    const isPremium = await isPremiumUser(userId);
-
-    if (isPremium) {
-      // Premium users get all chapters
-      const query = supabase
-        .from('chapters')
-        .select('*')
-        .order('chapter_number');
-
-      if (subject) {
-        query.eq('subject', subject);
-      }
-
-      const { data } = await query;
-      return data?.map(chapter => ({ ...chapter, locked: false })) || [];
-    }
-
-    // Free users
     const query = supabase
       .from('chapters')
       .select('*')
@@ -375,40 +360,9 @@ export const getAccessibleChapters = async (
       query.eq('subject', subject);
     }
 
-    const { data: allChapters } = (await query) as any;
-
-    // Get accessed chapters
-    const accessedChaptersResult = (await supabase
-      .from('user_content_access')
-      .select('content_identifier, subject')
-      .eq('user_id', userId)
-      .eq('content_type', 'chapter')) as any;
-    
-    const accessedChapters = accessedChaptersResult.data || [];
-
-    const accessedSet = new Set(
-      accessedChapters?.map(a => `${a.subject}-${a.content_identifier}`) || []
-    );
-
-    // Get free limit
-    const { data: freeLimit } = await supabase
-      .from('free_content_limits')
-      .select('limit_value')
-      .eq('limit_type', 'chapters')
-      .single();
-
-    const limitValue = freeLimit?.limit_value || 5;
-
-    return allChapters?.map(chapter => {
-      const key = `${chapter.subject}-${chapter.chapter_name}`;
-      const alreadyAccessed = accessedSet.has(key);
-      const canAccess = chapter.is_free || alreadyAccessed || accessedSet.size < limitValue;
-
-      return {
-        ...chapter,
-        locked: !canAccess
-      };
-    }) || [];
+    const { data } = await query;
+    // All chapters are unlocked for everyone
+    return data?.map(chapter => ({ ...chapter, locked: false })) || [];
 
   } catch (error) {
     console.error('Error fetching accessible chapters:', error);
