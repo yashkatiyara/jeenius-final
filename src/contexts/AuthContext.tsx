@@ -150,13 +150,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .insert({
             id: user.id,
             full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Student',
-            email: user.email,
+            email: user.email || '',
             avatar_url: user.user_metadata?.avatar_url,
             target_exam: null,
             grade: null,
             subjects: null,
             goals_set: false,
-            role: 'student',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });

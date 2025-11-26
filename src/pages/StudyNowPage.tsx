@@ -138,6 +138,19 @@ const StudyNowPage = () => {
       
       const targetExam = profileData?.target_exam || 'JEE';
 
+      // Define allowed subjects based on target exam
+      // JEE: Physics, Chemistry, Mathematics (PCM)
+      // NEET: Physics, Chemistry, Biology (PCB)
+      const allowedSubjects = {
+        'JEE': ['Physics', 'Chemistry', 'Mathematics'],
+        'JEE Main': ['Physics', 'Chemistry', 'Mathematics'],
+        'JEE Advanced': ['Physics', 'Chemistry', 'Mathematics'],
+        'NEET': ['Physics', 'Chemistry', 'Biology'],
+        'Foundation': ['Physics', 'Chemistry', 'Mathematics', 'Biology']
+      };
+
+      const examSubjects = allowedSubjects[targetExam] || allowedSubjects['JEE'];
+
       // Fetch unique subjects from chapters table
       const { data: chaptersData, error: chaptersError } = await supabase
         .from('chapters')
@@ -145,7 +158,9 @@ const StudyNowPage = () => {
 
       if (chaptersError) throw chaptersError;
 
-      const uniqueSubjects = [...new Set(chaptersData?.map(c => c.subject) || [])];
+      // Filter subjects based on target exam
+      const uniqueSubjects = [...new Set(chaptersData?.map(c => c.subject) || [])]
+        .filter(subject => examSubjects.includes(subject));
 
       // Get questions for counting
       const { data: allQuestions } = await supabase

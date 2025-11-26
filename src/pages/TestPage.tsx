@@ -61,6 +61,22 @@ const TestPage = () => {
 
   const fetchSubjectsAndChapters = async () => {
     try {
+      // Get user's target exam for subject filtering
+      const targetExam = profile?.target_exam || 'JEE';
+      
+      // Define allowed subjects based on target exam
+      // JEE: Physics, Chemistry, Mathematics (PCM)
+      // NEET: Physics, Chemistry, Biology (PCB)
+      const allowedSubjects = {
+        'JEE': ['Physics', 'Chemistry', 'Mathematics'],
+        'JEE Main': ['Physics', 'Chemistry', 'Mathematics'],
+        'JEE Advanced': ['Physics', 'Chemistry', 'Mathematics'],
+        'NEET': ['Physics', 'Chemistry', 'Biology'],
+        'Foundation': ['Physics', 'Chemistry', 'Mathematics', 'Biology']
+      };
+
+      const examSubjects = allowedSubjects[targetExam] || allowedSubjects['JEE'];
+
       // Fetch chapters from chapters table (properly linked)
       const { data: chaptersData, error: chaptersError } = await supabase
         .from('chapters')
@@ -69,7 +85,10 @@ const TestPage = () => {
       
       if (chaptersError) throw chaptersError;
 
-      const uniqueSubjects = [...new Set(chaptersData?.map(c => c.subject) || [])];
+      // Filter subjects based on target exam
+      const uniqueSubjects = [...new Set(chaptersData?.map(c => c.subject) || [])]
+        .filter(subject => examSubjects.includes(subject));
+
       const chaptersBySubject: Record<string, string[]> = {};
       
       uniqueSubjects.forEach(subject => {
