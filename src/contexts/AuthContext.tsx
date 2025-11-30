@@ -176,14 +176,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     console.log('🚀 Starting Google OAuth...');
 
-    // 🔹 Always use window.location.origin which includes protocol
     const redirectUrl = window.location.origin;
     console.log('🔗 Redirect URL:', redirectUrl);
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${redirectUrl}/auth/callback`, // ✅ Correct redirect path
+        redirectTo: `${redirectUrl}/auth/callback`,
+        skipBrowserRedirect: false, // Keep false for popup flow
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
