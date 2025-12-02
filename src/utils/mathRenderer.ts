@@ -113,37 +113,38 @@ export function renderMathText(text: string): string {
 }
 
 /**
- * Wraps raw LaTeX commands with $ delimiters
+ * Wraps raw LaTeX commands with $ delimiters for inline segments
+ * Handles mixed text with LaTeX commands
  */
 function wrapRawLatex(text: string): string {
   if (!text) return '';
   
-  // If already has $ delimiters, return as is
-  if (/\$/.test(text)) return text;
+  // If already has $ delimiters everywhere, return as is
+  if (/\$[^\$]+\$/.test(text)) return text;
   
-  // Check if the entire text is a LaTeX expression
-  const latexPatterns = [
-    /\\begin\{[\w*]+\}/,
-    /\\frac\{/,
-    /\\lim_\{[^}]+\}/,
-    /\\sqrt\[?\d*\]?\{/,
-    /\\(sum|int|max|min|prod)_/,
-    /\\left[\(\[\{]/,
-  ];
+  // Pattern to match common LaTeX commands that should be wrapped
+  const latexCommandPattern = /(\\(?:frac|lim|sum|int|sqrt|max|min|prod|begin|end|left|right|times|div|pm|neq|leq|geq|alpha|beta|gamma|delta|theta|lambda|infty|cdot|to|rightarrow|leftarrow)\b[^a-zA-Z])/g;
   
-  const hasLatexStart = latexPatterns.some(pattern => pattern.test(text));
-  
-  if (hasLatexStart) {
-    // Wrap the entire text in $...$ for inline or $$...$$ for display
-    const isDisplay = text.includes('\\begin{') || text.includes('\\frac{') || 
-                     text.includes('\\lim_') || text.includes('\\sum_') || 
-                     text.includes('\\int_');
+  // Check if text contains LaTeX commands
+  if (latexCommandPattern.test(text)) {
+    // For now, just wrap inline LaTeX segments
+    // This is a simple approach - wrap any segment with backslash commands
+    let processed = text;
     
-    if (isDisplay) {
-      return `$$${text}$$`;
-    } else {
-      return `$${text}$`;
-    }
+    // Find and wrap \frac{...}{...} patterns
+    processed = processed.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$\\frac{$1}{$2}$');
+    
+    // Find and wrap \lim_{...} patterns  
+    processed = processed.replace(/\\lim_\{([^}]+)\}/g, '$\\lim_{$1}$');
+    
+    // Find and wrap other common patterns
+    processed = processed.replace(/\\(sqrt|sum|int|max|min|prod)\{([^}]+)\}/g, '$\\$1{$2}$');
+    processed = processed.replace(/\\(sqrt|sum|int|max|min|prod)_\{([^}]+)\}/g, '$\\$1_{$2}$');
+    
+    // Wrap \left...\right pairs
+    processed = processed.replace(/\\left([(\[\{])([^\\]+)\\right([)\]\}])/g, '$\\left$1$2\\right$3$');
+    
+    return processed;
   }
   
   return text;
@@ -156,8 +157,7 @@ function wrapRawLatex(text: string): string {
 export function renderLatex(text: string): string {
   if (!text) return '';
   
-  // First, wrap any raw LaTeX
-  let processed = wrapRawLatex(text);
+  let processed = text;
   
   try {
     // Render display math $$...$$ first (to avoid conflicts with inline math)
@@ -169,10 +169,11 @@ export function renderLatex(text: string): string {
           throwOnError: false,
           output: 'html',
           strict: false,
-          trust: true
+          trust: true,
+          fleqn: false
         });
       } catch (e) {
-        console.warn('Display math rendering failed:', e);
+        console.warn('Display math rendering failed:', latex, e);
         return match;
       }
     });
@@ -189,12 +190,12 @@ export function renderLatex(text: string): string {
           trust: true
         });
       } catch (e) {
-        console.warn('Inline math rendering failed:', e);
+        console.warn('Inline math rendering failed:', latex, e);
         return match;
       }
     });
     
-    // Apply basic text conversions only to non-LaTeX parts
+    // Apply basic text conversions only if no KaTeX was rendered
     if (!processed.includes('<span class="katex">')) {
       processed = renderMathText(processed);
     }
