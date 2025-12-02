@@ -61,17 +61,22 @@ const AIDoubtSolver: React.FC<AIDoubtSolverProps> = ({
     const isGeneral =
       !question?.option_a || question?.question?.includes("koi bhi");
     if (isGeneral) {
-      return `🧞‍♂️ **Hey Genius! I'm JEEnie** —  
-Your magical AI mentor from **JEEnius 💙**.  
-Ask me any doubt in Physics, Chemistry or Maths! ⚡`;
+      return `**Hello Puttar!** 🧞‍♂️
+
+Main hoon **JEEnie** — tera personal AI mentor! 💙
+
+🎯 Physics, Chemistry, Maths — kuch bhi pucho!
+⚡ Seedha point pe answer dunga, no bakwaas!`;
     } else {
-      return `🧞‍♂️ **Let's decode this together!**  
-**Question:** ${question.question}  
-${question.option_a ? `A) ${question.option_a}\n` : ""}${
-        question.option_b ? `B) ${question.option_b}\n` : ""
-      }${question.option_c ? `C) ${question.option_c}\n` : ""}${
-        question.option_d ? `D) ${question.option_d}\n` : ""
-      }\n💬 Type your doubt below — I'll simplify it quickly!`;
+      return `**Hello Puttar!** 🧞‍♂️
+
+📌 **Question:** ${question.question}
+${question.option_a ? `**A)** ${question.option_a}` : ""}
+${question.option_b ? `**B)** ${question.option_b}` : ""}
+${question.option_c ? `**C)** ${question.option_c}` : ""}
+${question.option_d ? `**D)** ${question.option_d}` : ""}
+
+💬 Apna doubt likh — seedha solution dunga!`;
     }
   }, [question]);
 
@@ -182,10 +187,10 @@ ${question.option_a ? `A) ${question.option_a}\n` : ""}${
       const isGeneral =
         !question?.option_a || question?.question?.includes("koi bhi");
       const prompt = isGeneral
-        ? `You are JEEnie 🧞‍♂️, a friendly AI tutor for JEE students. Use Hinglish, be concise, motivating, and add emojis. Student's doubt: "${userMsg.content}"`
-        : `You are JEEnie 🧞‍♂️, helping with this JEE question: ${question.question}
+        ? `Student's doubt: "${userMsg.content}". Give direct, on-point answer. No unnecessary elaboration.`
+        : `Question: ${question.question}
 Options: A) ${question.option_a}, B) ${question.option_b}, C) ${question.option_c}, D) ${question.option_d}
-Student's doubt: "${userMsg.content}". Answer in Hinglish within 5-7 lines.`;
+Student's doubt: "${userMsg.content}". Give direct solution, explain only what's needed.`;
 
       setTyping(true);
       const aiResponse = await callEdgeFunction(prompt);
@@ -342,12 +347,69 @@ Student's doubt: "${userMsg.content}". Answer in Hinglish within 5-7 lines.`;
 };
 
 function cleanAndFormatJeenieText(text: string): string {
-  return text
-    .replace(/\$(.*?)\$/g, '<code class="bg-[#E8EEFF] px-2 py-1 rounded text-[#013062]">$1</code>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong class="text-[#4C6FFF]">$1</strong>')
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/\n/g, "<br>")
-    .trim();
+  let formatted = text
+    // Greek letters - convert text to proper Unicode symbols
+    .replace(/\\alpha|alpha/gi, 'α')
+    .replace(/\\beta|beta/gi, 'β')
+    .replace(/\\gamma|gamma/gi, 'γ')
+    .replace(/\\delta|delta/gi, 'δ')
+    .replace(/\\theta|theta/gi, 'θ')
+    .replace(/\\lambda|lambda/gi, 'λ')
+    .replace(/\\mu|mu(?![a-z])/gi, 'μ')
+    .replace(/\\sigma|sigma/gi, 'σ')
+    .replace(/\\pi|(?<![a-z])pi(?![a-z])/gi, 'π')
+    .replace(/\\omega|omega/gi, 'ω')
+    .replace(/\\Delta/g, 'Δ')
+    .replace(/\\Sigma/g, 'Σ')
+    .replace(/\\infty|infinity/gi, '∞')
+    .replace(/\\rho|rho/gi, 'ρ')
+    .replace(/\\epsilon|epsilon/gi, 'ε')
+    .replace(/\\phi|phi/gi, 'φ')
+    .replace(/\\psi|psi/gi, 'ψ')
+    .replace(/\\tau|tau/gi, 'τ')
+    .replace(/\\nu|(?<![a-z])nu(?![a-z])/gi, 'ν')
+    // Math symbols
+    .replace(/->/g, '→')
+    .replace(/<-/g, '←')
+    .replace(/<=>/g, '⇌')
+    .replace(/>=/g, '≥')
+    .replace(/<=/g, '≤')
+    .replace(/!=/g, '≠')
+    .replace(/~=/g, '≈')
+    .replace(/\^2(?![0-9])/g, '²')
+    .replace(/\^3(?![0-9])/g, '³')
+    .replace(/\+-/g, '±')
+    // Chemistry subscripts
+    .replace(/H2O/g, 'H₂O')
+    .replace(/CO2/g, 'CO₂')
+    .replace(/O2(?![0-9])/g, 'O₂')
+    .replace(/N2(?![0-9])/g, 'N₂')
+    .replace(/H2(?![0-9O])/g, 'H₂')
+    .replace(/SO4/g, 'SO₄')
+    .replace(/NO3/g, 'NO₃')
+    .replace(/NH3/g, 'NH₃')
+    .replace(/CH4/g, 'CH₄')
+    .replace(/H2SO4/g, 'H₂SO₄')
+    .replace(/HNO3/g, 'HNO₃')
+    // Format code/formulas with brand color background
+    .replace(/\$(.*?)\$/g, '<code class="bg-[#e6eeff] px-2 py-1 rounded text-[#013062] font-semibold">$1</code>')
+    // Bold text with brand color
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color: #013062;">$1</strong>')
+    // Italic
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // Line breaks
+    .replace(/\n/g, '<br>')
+    // Bullet points enhancement
+    .replace(/• /g, '<span style="color: #4C6FFF;">•</span> ')
+    .replace(/🎯/g, '<span style="font-size: 1.1em;">🎯</span>')
+    .replace(/💡/g, '<span style="font-size: 1.1em;">💡</span>')
+    .replace(/✨/g, '<span style="font-size: 1.1em;">✨</span>')
+    .replace(/⚡/g, '<span style="font-size: 1.1em;">⚡</span>')
+    .replace(/🔥/g, '<span style="font-size: 1.1em;">🔥</span>')
+    .replace(/📌/g, '<span style="font-size: 1.1em;">📌</span>')
+    .replace(/✅/g, '<span style="font-size: 1.1em;">✅</span>');
+  
+  return formatted.trim();
 }
 
 export default AIDoubtSolver;
