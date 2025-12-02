@@ -6,6 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import { toast } from 'sonner';
+import { MathDisplay } from '@/components/admin/MathDisplay';
+import 'katex/dist/katex.min.css';
 
 const PracticeSession = () => {
   const { isAuthenticated } = useAuth();
@@ -313,9 +315,9 @@ const PracticeSession = () => {
               {/* Question Content */}
               <div className="p-6">
                 <div className="mb-8">
-                  <p className="text-lg text-gray-900 leading-relaxed mb-6">
-                    {currentQ.question_text}
-                  </p>
+                  <div className="text-lg text-gray-900 leading-relaxed mb-6">
+                    <MathDisplay text={currentQ.question_text} />
+                  </div>
 
                   {/* Answer Options */}
                   <div className="space-y-3">
@@ -327,7 +329,9 @@ const PracticeSession = () => {
                         className={`w-full p-4 text-left border-2 rounded-lg transition-all duration-200 ${getAnswerStyle(optionKey)}`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-gray-900">{String(optionValue)}</span>
+                          <span className="text-gray-900">
+                            <MathDisplay text={String(optionValue)} />
+                          </span>
                           {showExplanation && validationResult && (
                             <div>
                               {optionKey === validationResult.correctAnswer ? (
@@ -347,9 +351,9 @@ const PracticeSession = () => {
                 {showExplanation && validationResult && (
                   <div className="mt-8 p-6 bg-gray-50 rounded-lg animate-fade-in">
                     <h4 className="font-semibold text-gray-900 mb-3">Explanation:</h4>
-                    <p className="text-gray-700 leading-relaxed">
-                      {validationResult.explanation}
-                    </p>
+                    <div className="text-gray-700 leading-relaxed">
+                      <MathDisplay text={validationResult.explanation} />
+                    </div>
                     
                     <div className="mt-6 flex justify-between items-center">
                       <div className="flex items-center space-x-4">

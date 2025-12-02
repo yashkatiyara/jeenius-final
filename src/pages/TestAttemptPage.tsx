@@ -21,6 +21,8 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { MathDisplay } from "@/components/admin/MathDisplay";
+import 'katex/dist/katex.min.css';
 
 interface Question {
   id: string;
@@ -391,7 +393,7 @@ const TestAttemptPage = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-sm sm:text-base leading-relaxed mb-4 sm:mb-6">
-                    {currentQuestion.question}
+                    <MathDisplay text={currentQuestion.question} />
                   </div>
 
                   {/* Options */}
@@ -422,7 +424,9 @@ const TestAttemptPage = () => {
                             >
                               {option}
                             </div>
-                            <span className="text-sm sm:text-base">{optionText}</span>
+                            <span className="text-sm sm:text-base">
+                              <MathDisplay text={optionText} />
+                            </span>
                           </div>
                         </button>
                       );
