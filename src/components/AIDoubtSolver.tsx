@@ -10,8 +10,6 @@ import {
   Wand2,
   Bot,
   User,
-  Mic,
-  MicOff,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -48,13 +46,9 @@ const AIDoubtSolver: React.FC<AIDoubtSolverProps> = ({
   const [lastRequestTime, setLastRequestTime] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isPro, setIsPro] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speakingMessageIndex, setSpeakingMessageIndex] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const navigate = useNavigate();
 
@@ -74,10 +68,9 @@ const AIDoubtSolver: React.FC<AIDoubtSolverProps> = ({
     if (isGeneral) {
       return `**Hello Puttar!** 🧞‍♂️
 
-Main hoon **JEEnie** — tera personal AI mentor! 💙
+Main hoon **JEEnie** — aapka personal AI mentor! 💙
 
-🎯 Physics, Chemistry, Maths — kuch bhi pucho!
-⚡ Seedha point pe answer dunga, no bakwaas!`;
+🎯 Physics, Chemistry, Maths — kuch bhi pucho!`;
     } else {
       return `**Hello Puttar!** 🧞‍♂️
 
@@ -87,7 +80,7 @@ ${question.option_b ? `**B)** ${question.option_b}` : ""}
 ${question.option_c ? `**C)** ${question.option_c}` : ""}
 ${question.option_d ? `**D)** ${question.option_d}` : ""}
 
-💬 Apna doubt likh — seedha solution dunga!`;
+💬 Apna doubt likho!`;
     }
   }, [question]);
 
@@ -271,107 +264,6 @@ Student's current doubt: "${userMsg.content}". Give direct solution, explain onl
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
-    }
-  };
-
-  // Voice recording functions
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        } 
-      });
-      
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      });
-      
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-      
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-      
-      mediaRecorder.onstop = async () => {
-        // Stop all tracks
-        stream.getTracks().forEach(track => track.stop());
-        
-        // Process audio
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await transcribeAudio(audioBlob);
-      };
-      
-      mediaRecorder.start();
-      setIsRecording(true);
-      setError(null);
-      console.log("🎤 Recording started");
-      
-    } catch (err) {
-      console.error("❌ Error accessing microphone:", err);
-      setError("🎤 Microphone access denied. Please allow mic access.");
-    }
-  };
-  
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      console.log("🛑 Recording stopped");
-    }
-  };
-  
-  const transcribeAudio = async (audioBlob: Blob) => {
-    setIsTranscribing(true);
-    setError(null);
-    
-    try {
-      console.log("📤 Sending audio for transcription...");
-      
-      // Convert blob to base64
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        reader.onloadend = () => {
-          const base64 = (reader.result as string).split(',')[1];
-          resolve(base64);
-        };
-        reader.onerror = reject;
-      });
-      reader.readAsDataURL(audioBlob);
-      
-      const base64Audio = await base64Promise;
-      
-      const response = await supabase.functions.invoke("voice-to-text", {
-        body: { audio: base64Audio },
-      });
-      
-      if (response.error) {
-        throw new Error(response.error.message || "Transcription failed");
-      }
-      
-      if (response.data?.error) {
-        throw new Error(response.data.error);
-      }
-      
-      const transcribedText = response.data?.text;
-      
-      if (transcribedText && transcribedText.trim()) {
-        console.log("✅ Transcription:", transcribedText);
-        setInput(transcribedText);
-      } else {
-        setError("🎤 Couldn't hear anything. Try again?");
-      }
-      
-    } catch (err) {
-      console.error("❌ Transcription error:", err);
-      setError("🎤 Voice recognition failed. Try typing instead.");
-    } finally {
-      setIsTranscribing(false);
     }
   };
 
@@ -574,37 +466,16 @@ Student's current doubt: "${userMsg.content}". Give direct solution, explain onl
         {/* Footer */}
         <div className="p-2.5 sm:p-3 border-t border-[#E3E8FF] bg-[#F8FAFF]">
           <div className="flex gap-1.5 sm:gap-2 items-center">
-            {/* Mic Button */}
-            <Button
-              onClick={isRecording ? stopRecording : startRecording}
-              disabled={loading || isTranscribing}
-              variant="outline"
-              className={`p-2 sm:p-3 rounded-lg sm:rounded-xl transition-all h-auto ${
-                isRecording 
-                  ? "bg-red-500 hover:bg-red-600 text-white border-red-500 animate-pulse" 
-                  : "bg-white hover:bg-[#e6eeff] text-[#013062] border-[#DDE5FF]"
-              }`}
-            >
-              {isTranscribing ? (
-                <Loader2 className="animate-spin" size={16} />
-              ) : isRecording ? (
-                <MicOff size={16} />
-              ) : (
-                <Mic size={16} />
-              )}
-            </Button>
-            
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={isRecording ? "🎤 Listening..." : isTranscribing ? "✨ Transcribing..." : "Type or speak your doubt... 💭"}
+              placeholder="Apna doubt likho... 💭"
               onKeyPress={handleKeyPress}
-              disabled={isRecording || isTranscribing}
-              className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-white border border-[#DDE5FF] rounded-lg sm:rounded-xl text-[#013062] placeholder:text-[#4C6FFF]/60 focus:ring-2 focus:ring-[#4C6FFF] outline-none text-xs sm:text-sm transition-all disabled:opacity-50"
+              className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-white border border-[#DDE5FF] rounded-lg sm:rounded-xl text-[#013062] placeholder:text-[#4C6FFF]/60 focus:ring-2 focus:ring-[#4C6FFF] outline-none text-xs sm:text-sm transition-all"
             />
             <Button
               onClick={handleSendMessage}
-              disabled={loading || !input.trim() || isRecording || isTranscribing}
+              disabled={loading || !input.trim()}
               className="bg-gradient-to-r from-[#4C6FFF] to-[#013062] hover:opacity-90 text-white px-3 sm:px-6 rounded-lg sm:rounded-xl transition-all shadow-md h-auto"
             >
               {loading ? (
@@ -615,7 +486,7 @@ Student's current doubt: "${userMsg.content}". Give direct solution, explain onl
             </Button>
           </div>
           <p className="text-center text-[10px] sm:text-[11px] text-[#4C6FFF]/70 mt-1.5 sm:mt-2">
-            🎤 Tap mic to speak • 💎 Powered by <strong>JEEnius AI</strong>
+            💎 Powered by <strong>JEEnius AI</strong>
           </p>
         </div>
       </div>
