@@ -32,8 +32,8 @@ serve(async (req) => {
       console.error("❌ Prompt too long or empty:", contextPrompt?.length || 0);
       return new Response(
         JSON.stringify({ 
-          error: "INVALID_PROMPT",
-          message: "Please ask a shorter question (max 4000 characters)"
+          error: "INVALID_PROMPT", 
+          message: "Please ask a shorter question (max 4000 characters)" 
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -49,34 +49,40 @@ serve(async (req) => {
       );
     }
 
-    console.log("🤖 Calling Gemini 2.5 Flash");
+    console.log("🤖 Calling Gemini 1.5 Flash (Upgraded Stability)");
 
-    // System prompt - JEEnie personality
-    const systemPrompt = `Tu "JEEnie" hai - JEE/NEET students ka AI mentor. 
+    // --- UPGRADED SYSTEM PROMPT (The "JEEnius" Brain) ---
+    const systemPrompt = `Tu "JEEnie" hai - 11th/12th students ka ultimate AI mentor aur friend.
 
-GREETING: Always start with "**Hello Puttar!** 🧞‍♂️"
+GREETING: 
+Always start with "**Hello Puttar!** 🧞‍♂️"
+Enhancement: Greet based on subject context:
+- Physics: "Newton ki kasam, aaj ye doubt solve karke hi rahenge!"
+- Math: "Equations se darna nahi, JEEnie hai na!"
+- SST/Humanities: "History aur Social Science ki ye kahani badi interesting hai, suno..."
+- General: "Batao aaj kya toofan machana hai?"
 
-RULES:
-1. Be DIRECT and ON-POINT - no unnecessary fluff
-2. Use Hinglish naturally
-3. Keep answers SHORT (3-5 lines max for simple doubts, elaborate ONLY if truly needed)
-4. Use emojis smartly: 🎯 💡 ✨ ⚡ 🔥 📌 ✅
-5. Make text visually appealing with **bold** for key terms
-6. For formulas, write Greek letters properly: α (alpha), β (beta), γ (gamma), δ (delta), θ (theta), λ (lambda), μ (mu), σ (sigma), π (pi), ω (omega), Δ (Delta), Σ (Sigma), ∞ (infinity)
-7. Use symbols: → (arrow), ≈ (approximately), ≠ (not equal), ≥ ≤ (greater/less equal), ² ³ (superscripts)
+PERSONALITY RULES:
+1. VERSATILITY: Tu sirf JEE/NEET ke liye nahi hai. Agar student SST, Boards, ya general life advice puche, toh respect se guide kar. Har bacche ko competitive exam ke liye force MAT kar. 11th/12th ke har student ka goal alag ho sakta hai.
+2. DIRECT & CRISP: Be on-point. No unnecessary fluff.
+3. LANGUAGE: Natural Hinglish (Mix of Hindi & English).
+4. LENGTH: Keep answers SHORT (3-5 lines for simple doubts, elaborate ONLY for complex concepts).
+5. VISUAL APPEAL: Use **bold** for key terms and emojis smartly: 🎯 💡 ✨ ⚡ 🔥 📌 ✅
+6. FORMULAS: Write Greek letters properly: α (alpha), β (beta), γ (gamma), δ (delta), θ (theta), λ (lambda), μ (mu), σ (sigma), π (pi), ω (omega), Δ (Delta), Σ (Sigma), ∞ (infinity).
+7. SYMBOLS: Use symbols: → (arrow), ≈ (approximately), ≠ (not equal), ≥ ≤ (greater/less equal), ² ³ (superscripts).
 
-FORMAT for explanations:
-**Hello Puttar!** 🧞‍♂️
+FORMATTING:
+**Hello Puttar!** 🧞‍♂️ [Subject Greeting]
 
 💡 **[Direct Answer/Concept]**
 • Key point 1
-• Key point 2 (if needed)
+• Key point 2
 
-✨ **Pro Tip:** [Quick trick if relevant]
+✨ **Pro Tip:** [Quick trick/logic if relevant]
 
-🎯 Ab samjha na? Kar de solve!
-
-NEVER give long paragraphs. Be the cool mentor who gets to the point fast.`;
+CLOSING:
+NEVER use repetitive phrases like "Kar de solve" or "Ab samjha na". 
+Be natural and encouraging: "Umeed hai clarity mil gayi!", "Ise try karo, maza aayega!", "All the best, phod dena!", "Koi aur doubt ho toh JEEnie yahi hai!"`;
 
     // Include conversation history for context memory
     const historyContext = conversationHistory 
@@ -85,15 +91,15 @@ NEVER give long paragraphs. Be the cool mentor who gets to the point fast.`;
     
     const fullPrompt = `${systemPrompt}${historyContext}\n\nCurrent question/doubt:\n${contextPrompt}\n\nAb answer do (remember previous context if any):`;
 
-    // Call Gemini API with retry logic - using Gemini 2.5 Flash
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    // Call Gemini API with retry logic
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
     console.log("🌐 API URL:", apiUrl.replace(GEMINI_API_KEY, "***"));
 
     let geminiResponse: Response | null = null;
     let retryCount = 0;
     const maxRetries = 2;
 
-    // Retry logic for transient failures
+    // Retry logic for transient failures (Full Original Logic)
     while (retryCount <= maxRetries) {
       try {
         const controller = new AbortController();
@@ -136,22 +142,20 @@ NEVER give long paragraphs. Be the cool mentor who gets to the point fast.`;
             console.error("❌ All retry attempts exhausted");
             return new Response(
               JSON.stringify({ 
-                error: "SERVICE_UNAVAILABLE",
+                error: "SERVICE_UNAVAILABLE", 
                 message: "JEEnie is temporarily overloaded. Please try again in a moment."
               }),
               { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
           }
           
-          // Exponential backoff: 2s, 4s, 8s
           const backoffMs = 2000 * Math.pow(2, retryCount - 1);
           console.log(`⏳ Waiting ${backoffMs}ms before retry ${retryCount}/${maxRetries}`);
           await new Promise(resolve => setTimeout(resolve, backoffMs));
-          continue; // Retry
+          continue; 
         }
         
-        // Success or non-retriable error, exit retry loop
-        break;
+        break; 
         
       } catch (fetchError) {
         retryCount++;
@@ -161,14 +165,13 @@ NEVER give long paragraphs. Be the cool mentor who gets to the point fast.`;
           console.error("❌ All retry attempts failed due to network errors");
           return new Response(
             JSON.stringify({ 
-              error: "SERVICE_TIMEOUT",
+              error: "SERVICE_TIMEOUT", 
               message: "JEEnie is taking too long to respond. Please try again."
             }),
             { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
         
-        // Exponential backoff: 1s, 2s, 4s
         const backoffMs = 1000 * Math.pow(2, retryCount - 1);
         console.log(`⏳ Waiting ${backoffMs}ms before retry ${retryCount}/${maxRetries}`);
         await new Promise(resolve => setTimeout(resolve, backoffMs));
@@ -180,7 +183,7 @@ NEVER give long paragraphs. Be the cool mentor who gets to the point fast.`;
       console.error("❌ No response received after retries");
       return new Response(
         JSON.stringify({ 
-          error: "SERVICE_ERROR",
+          error: "SERVICE_ERROR", 
           message: "JEEnie is temporarily unavailable. Please try again."
         }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -194,18 +197,9 @@ NEVER give long paragraphs. Be the cool mentor who gets to the point fast.`;
       console.error("❌ Gemini API error:", geminiResponse.status, errorText);
       
       if (geminiResponse.status === 429) {
-        console.error("🚫 Rate limit exceeded");
         return new Response(
-          JSON.stringify({ error: "RATE_LIMIT", message: "Too many requests. Please wait a moment." }),
+          JSON.stringify({ error: "RATE_LIMIT", message: "Too many requests. Please wait." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      
-      if (geminiResponse.status === 400) {
-        console.error("🚫 Bad request - check API key or model name");
-        return new Response(
-          JSON.stringify({ error: "INVALID_REQUEST", message: "Invalid API request. Check configuration." }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       
@@ -223,33 +217,27 @@ NEVER give long paragraphs. Be the cool mentor who gets to the point fast.`;
       console.warn("⚠️ Response blocked by safety filters");
       return new Response(
         JSON.stringify({ 
-          error: "SAFETY_BLOCK",
+          error: "SAFETY_BLOCK", 
           message: "Response was filtered for safety. Please rephrase your question."
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Check for other finish reasons
-    const finishReason = data.candidates?.[0]?.finishReason;
-    if (finishReason && finishReason !== "STOP") {
-      console.warn("⚠️ Unexpected finish reason:", finishReason);
-    }
-
     const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
     
     if (!content || content.trim() === "") {
-      console.error("❌ Empty response from Gemini. Full response:", JSON.stringify(data));
+      console.error("❌ Empty response from Gemini.");
       return new Response(
         JSON.stringify({ 
-          error: "EMPTY_RESPONSE",
-          message: "JEEnie couldn't generate a response. Please try asking in a different way."
+          error: "EMPTY_RESPONSE", 
+          message: "JEEnie couldn't generate a response. Please try again."
         }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Log success metrics for monitoring
+    // Log success metrics
     console.log("✅ Success - Content length:", content.length);
     console.log("📊 Tokens used:", data.usageMetadata?.totalTokenCount || 'N/A');
 
@@ -260,11 +248,10 @@ NEVER give long paragraphs. Be the cool mentor who gets to the point fast.`;
 
   } catch (error) {
     console.error("❌ Unhandled error in jeenie function:", error);
-    console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
     return new Response(
       JSON.stringify({ 
-        error: "INTERNAL_ERROR",
-        message: error instanceof Error ? error.message : "Unknown error occurred"
+        error: "INTERNAL_ERROR", 
+        message: error instanceof Error ? error.message : "Unknown error occurred" 
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
