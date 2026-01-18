@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Download, FileText, Search, TrendingUp, Target, Clock, Award } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 interface UserReport {
   id: string;
@@ -50,7 +51,7 @@ export const UserReports: React.FC = () => {
       if (error) throw error;
       setUsers(data || []);
     } catch (error) {
-      console.error('Error loading user reports:', error);
+      logger.error('Error loading user reports:', error);
       toast.error('Failed to load user reports');
     } finally {
       setLoading(false);

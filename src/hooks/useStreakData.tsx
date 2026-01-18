@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { logger } from '@/utils/logger';
 
 export const useStreakData = () => {
   const { user } = useAuth();
@@ -49,7 +50,7 @@ export const useStreakData = () => {
 
       setStreak(data?.current_streak || 0);
     } catch (error) {
-      console.error('Error loading streak:', error);
+      logger.error('Error loading streak:', error);
       setStreak(0);
     } finally {
       setLoading(false);

@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import PointsService from '@/services/pointsService';
+import { logger } from '@/utils/logger';
 
 const Profile = () => {
   const { user, isAuthenticated, isPremium } = useAuth();
@@ -65,7 +66,7 @@ const Profile = () => {
         .single();
 
       if (profileError) {
-        console.error('Profile error:', profileError);
+        logger.error('Profile error:', profileError);
         toast({
           title: "Error",
           description: "Failed to load profile data",
@@ -96,7 +97,7 @@ const Profile = () => {
       });
 
     } catch (error) {
-      console.error('Error loading profile:', error);
+      logger.error('Error loading profile:', error);
       toast({
         title: "Error",
         description: "Failed to load profile data",
@@ -126,7 +127,7 @@ const Profile = () => {
         description: `Daily goal updated to ${dailyGoal} questions`,
       });
     } catch (error) {
-      console.error('Error saving daily goal:', error);
+      logger.error('Error saving daily goal:', error);
       toast({
         title: "Error",
         description: "Failed to save daily goal",

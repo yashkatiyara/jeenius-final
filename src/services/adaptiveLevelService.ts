@@ -1,5 +1,6 @@
 // Adaptive Level Service - Progressive difficulty system
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 interface TopicLevel {
   userId: string;
@@ -35,7 +36,7 @@ class AdaptiveLevelService {
       // Return current level (default to 1 if not set)
       return data.current_level || 1;
     } catch (error) {
-      console.error('Error getting topic level:', error);
+      logger.error('Error getting topic level:', error);
       return 1; // Default to easy
     }
   }
@@ -114,12 +115,12 @@ class AdaptiveLevelService {
         });
 
       if (updateError) {
-        console.error('Error updating topic mastery:', updateError);
+        logger.error('Error updating topic mastery:', updateError);
       }
 
       return { newLevel, leveledUp, message };
     } catch (error) {
-      console.error('Error updating topic level:', error);
+      logger.error('Error updating topic level:', error);
       return { newLevel: 1, leveledUp: false };
     }
   }
@@ -153,7 +154,7 @@ class AdaptiveLevelService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching level-appropriate questions:', error);
+      logger.error('Error fetching level-appropriate questions:', error);
       return [];
     }
   }

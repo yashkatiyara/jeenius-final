@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import PointsService from '@/services/pointsService';
+import { logger } from '@/utils/logger';
 
 export const useRealtimePoints = () => {
   const { user } = useAuth();
@@ -32,7 +33,7 @@ export const useRealtimePoints = () => {
           filter: `user_id=eq.${user.id}`
         },
         async () => {
-          console.log('Points updated');
+          logger.log('Points updated');
           const data = await PointsService.getUserPoints(user.id);
           setPointsData(data);
         }
@@ -51,7 +52,7 @@ export const useRealtimePoints = () => {
           filter: `id=eq.${user.id}`
         },
         async (payload) => {
-          console.log('Profile points updated:', payload);
+          logger.log('Profile points updated:', payload);
           if (payload.new && 'total_points' in payload.new) {
             const data = await PointsService.getUserPoints(user.id);
             setPointsData(data);

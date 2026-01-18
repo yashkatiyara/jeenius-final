@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,31 +43,31 @@ const TestGeneratorModal: React.FC<TestGeneratorModalProps> = ({
       loadSubjects();
       loadChapters();
     }
-  }, [open]);
+  }, [open, loadSubjects, loadChapters]);
 
   useEffect(() => {
     updateQuestionCount();
-  }, [formData.subject, formData.chapter]);
+  }, [updateQuestionCount]);
 
-  const loadSubjects = async () => {
+  const loadSubjects = useCallback(async () => {
     const subjectList = await getAvailableSubjects();
     setSubjects(subjectList as string[]);
-  };
+  }, [getAvailableSubjects]);
 
-  const loadChapters = async () => {
+  const loadChapters = useCallback(async () => {
     const chapterList = await getAvailableChapters();
     // Convert string[] to expected format
     const formattedChapters = (chapterList as unknown as string[]).map(chapter => ({ chapter, subject: '' }));
     setChapters(formattedChapters);
-  };
+  }, [getAvailableChapters]);
 
-  const updateQuestionCount = async () => {
+  const updateQuestionCount = useCallback(async () => {
     const count = await getQuestionCount(
       formData.subject || undefined,
       formData.chapter || undefined
     );
     setAvailableQuestions(count);
-  };
+  }, [formData.subject, formData.chapter, getQuestionCount]);
 
   const handleTestTypeChange = (value: string) => {
     const testType = value as typeof formData.testType;

@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Upload, Plus, Edit, Trash2, Search, Download, Trash, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { logger } from '@/utils/logger';
 
 interface Question {
   id: string;
@@ -111,7 +112,7 @@ export const QuestionManager = () => {
       setChapters(chaptersRes.data || []);
       setTopics(topicsRes.data || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      logger.error('Error fetching data:', error);
       toast.error('Failed to fetch data');
     } finally {
       setLoading(false);
@@ -172,7 +173,7 @@ export const QuestionManager = () => {
       resetForm();
       fetchData();
     } catch (error) {
-      console.error('Error adding question:', error);
+      logger.error('Error adding question:', error);
       toast.error('Failed to add question');
     } finally {
       setFormSubmitting(false);
@@ -210,7 +211,7 @@ export const QuestionManager = () => {
       resetForm();
       fetchData();
     } catch (error) {
-      console.error('Error updating question:', error);
+      logger.error('Error updating question:', error);
       toast.error('Failed to update question');
     } finally {
       setFormSubmitting(false);
@@ -226,7 +227,7 @@ export const QuestionManager = () => {
       toast.success('Question deleted successfully');
       fetchData();
     } catch (error) {
-      console.error('Error deleting question:', error);
+      logger.error('Error deleting question:', error);
       toast.error('Failed to delete question');
     }
   };
@@ -246,7 +247,7 @@ export const QuestionManager = () => {
       setSelectedQuestions(new Set());
       fetchData();
     } catch (error) {
-      console.error('Error bulk deleting questions:', error);
+      logger.error('Error bulk deleting questions:', error);
       toast.error('Failed to delete questions');
     }
   };
@@ -366,7 +367,7 @@ export const QuestionManager = () => {
       fetchData();
       event.target.value = '';
     } catch (error) {
-      console.error('Error uploading questions:', error);
+      logger.error('Error uploading questions:', error);
       toast.error(`Failed to upload questions. Check ${fileType.toUpperCase()} format.`);
     }
   };

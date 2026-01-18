@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Search, Shield, User, Gift, Crown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 
 interface UserProfile {
@@ -76,7 +77,7 @@ const fetchUsers = async () => {
     
     setUsers(formattedUsers);
   } catch (error) {
-    console.error('Error fetching users:', error);
+    logger.error('Error fetching users:', error);
     toast({
       title: "Error",
       description: "Failed to fetch users",
@@ -133,7 +134,7 @@ const fetchUsers = async () => {
       description: `User role updated to ${newRole}`,
     });
   } catch (error) {
-    console.error('Error updating user role:', error);
+    logger.error('Error updating user role:', error);
     toast({
       title: "Error",
       description: "Failed to update user role",
@@ -173,7 +174,7 @@ const grantProMembership = async (userId: string, durationMonths: number = 1) =>
       description: `Pro membership granted for ${durationMonths} month(s)`,
     });
   } catch (error) {
-    console.error('Error granting pro membership:', error);
+    logger.error('Error granting pro membership:', error);
     toast({
       title: "Error",
       description: "Failed to grant pro membership",
@@ -299,7 +300,10 @@ const grantProMembership = async (userId: string, durationMonths: number = 1) =>
                         <div className="flex items-center justify-end gap-2">
                           <Select
                             value={user.role || 'user'}
-                            onValueChange={(value) => updateUserRole(user.user_id, value as any)}
+                            onValueChange={(value) => {
+                              const role: 'user' | 'admin' = value === 'admin' ? 'admin' : 'user';
+                              updateUserRole(user.user_id, role);
+                            }}
                           >
                             <SelectTrigger className="w-[110px]">
                               <SelectValue />

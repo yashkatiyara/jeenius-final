@@ -1,5 +1,6 @@
 // src/services/pointsService.ts
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 export class PointsService {
   
@@ -12,7 +13,7 @@ export class PointsService {
     points: number;
     breakdown: Array<{ type: string; points: number; label: string }>;
   }> {
-    console.log('🎯 calculatePoints:', { userId, difficulty, isCorrect });
+    logger.info('calculatePoints', { userId, difficulty, isCorrect });
     
     let points = 0;
     const breakdown: Array<{ type: string; points: number; label: string }> = [];
@@ -58,7 +59,7 @@ export class PointsService {
       await this.resetAnswerStreak(userId);
     }
 
-    console.log('💰 Total points to add:', points);
+    logger.info('Total points to add', { points });
     await this.updateUserPoints(userId, points);
 
     return { points, breakdown };
@@ -109,7 +110,7 @@ export class PointsService {
 
     for (const milestone of milestones) {
       if (newStreak === milestone.streak) {
-        const badges = (profile.badges as any[]) || [];
+        const badges: string[] = Array.isArray(profile.badges) ? profile.badges : [];
         const badgeEarned = !badges.includes(milestone.badge);
         
         if (badgeEarned) {
@@ -140,7 +141,7 @@ export class PointsService {
   }
 
   private static async updateUserPoints(userId: string, pointsToAdd: number): Promise<boolean> {
-    console.log('💾 Updating points in database...');
+    logger.info('Updating points in database...');
 
     try {
       const { data: profile } = await supabase
@@ -164,10 +165,10 @@ export class PointsService {
         })
         .eq('id', userId);
 
-      console.log('✅ Points updated successfully:', newTotal);
+      logger.info('Points updated successfully', { totalPoints: newTotal });
       return true;
     } catch (error) {
-      console.error('❌ Error updating points:', error);
+      logger.error('Error updating points:', error);
       return false;
     }
   }

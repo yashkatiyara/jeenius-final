@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { logger } from '@/utils/logger';
 
 export const useRealtimeTopicMastery = () => {
   const { user } = useAuth();
@@ -35,7 +36,7 @@ export const useRealtimeTopicMastery = () => {
           filter: `user_id=eq.${user.id}`
         },
         async () => {
-          console.log('Topic mastery updated');
+          logger.info('Topic mastery updated');
           // Refetch all data when any change occurs
           const { data } = await supabase
             .from('topic_mastery')

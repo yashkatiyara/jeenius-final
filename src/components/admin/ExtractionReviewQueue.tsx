@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MathDisplay } from "./MathDisplay";
+import { logger } from "@/utils/logger";
 
 interface ExtractedQuestion {
   id: string;
@@ -156,7 +157,7 @@ export function ExtractionReviewQueue() {
 
       setDuplicateCheck(bestMatch);
     } catch (error) {
-      console.error("Error checking duplicate:", error);
+      logger.error("Error checking duplicate:", error);
       setDuplicateCheck(null);
     } finally {
       setCheckingDuplicate(false);
@@ -182,7 +183,7 @@ export function ExtractionReviewQueue() {
       setQuestions(typedData);
       setCurrentIndex(0);
     } catch (error) {
-      console.error("Error fetching questions:", error);
+      logger.error("Error fetching questions:", error);
       toast.error("Failed to load questions");
     } finally {
       setLoading(false);
@@ -203,7 +204,7 @@ export function ExtractionReviewQueue() {
         rejected: rejected.count || 0
       });
     } catch (error) {
-      console.error("Error fetching stats:", error);
+      logger.error("Error fetching stats:", error);
     }
   };
 
@@ -220,7 +221,7 @@ export function ExtractionReviewQueue() {
   // Find best matching chapter from existing chapters - more lenient matching
   const findMatchingChapter = (subject: string, chapterName: string): Chapter | undefined => {
     if (!subject || !chapterName || chapters.length === 0) {
-      console.log("findMatchingChapter: Missing data", { subject, chapterName, chaptersCount: chapters.length });
+      logger.info("findMatchingChapter: Missing data", { subject, chapterName, chaptersCount: chapters.length });
       return undefined;
     }
 
@@ -234,7 +235,7 @@ export function ExtractionReviewQueue() {
     );
     
     if (match) {
-      console.log("findMatchingChapter: Exact match found", match.chapter_name);
+      logger.info("findMatchingChapter: Exact match found", match.chapter_name);
       return match;
     }
 
@@ -246,7 +247,7 @@ export function ExtractionReviewQueue() {
     );
     
     if (match) {
-      console.log("findMatchingChapter: Partial match found", match.chapter_name);
+      logger.info("findMatchingChapter: Partial match found", match.chapter_name);
       return match;
     }
 
@@ -260,18 +261,18 @@ export function ExtractionReviewQueue() {
     });
 
     if (match) {
-      console.log("findMatchingChapter: Word match found", match.chapter_name);
+      logger.info("findMatchingChapter: Word match found", match.chapter_name);
       return match;
     }
 
     // Fallback: return first chapter of the subject
     const subjectChapters = chapters.filter(c => c.subject.toLowerCase().trim() === normalizedSubject);
     if (subjectChapters.length > 0) {
-      console.log("findMatchingChapter: Using fallback chapter", subjectChapters[0].chapter_name);
+      logger.info("findMatchingChapter: Using fallback chapter", subjectChapters[0].chapter_name);
       return subjectChapters[0];
     }
 
-    console.log("findMatchingChapter: No match found for", { subject, chapterName });
+    logger.info("findMatchingChapter: No match found for", { subject, chapterName });
     return undefined;
   };
 
@@ -279,12 +280,12 @@ export function ExtractionReviewQueue() {
 
   const handleApprove = async (forceApprove: boolean = false, overwrite: boolean = false) => {
     if (!currentQuestion) {
-      console.log("handleApprove: No current question");
+      logger.info("handleApprove: No current question");
       toast.error("No question selected");
       return;
     }
     
-    console.log("handleApprove called:", { forceApprove, overwrite, questionId: currentQuestion.id });
+    logger.info("handleApprove called", { forceApprove, overwrite, questionId: currentQuestion.id });
     
     // Block if duplicate detected (unless force approve)
     if (!forceApprove && duplicateCheck?.isDuplicate) {
@@ -296,7 +297,7 @@ export function ExtractionReviewQueue() {
     
     try {
       const q = editedQuestion?.parsed_question || currentQuestion.parsed_question;
-      console.log("Processing question:", q.question?.slice(0, 50));
+      logger.info("Processing question", { preview: q.question?.slice(0, 50) });
       
       // Validate required fields
       if (!q.question || !q.option_a || !q.correct_option || !q.subject) {
@@ -312,19 +313,19 @@ export function ExtractionReviewQueue() {
       const chapterName = matchingChapter?.chapter_name || q.chapter || "General";
       const chapterId = matchingChapter?.id || null;
       
-      console.log("Using chapter:", { chapterName, chapterId, hasMatch: !!matchingChapter });
+      logger.info("Using chapter", { chapterName, chapterId, hasMatch: !!matchingChapter });
 
       // If overwriting duplicate, delete the existing question first
       if (overwrite && duplicateCheck?.existingQuestion?.id) {
-        console.log("Deleting existing duplicate:", duplicateCheck.existingQuestion.id);
+        logger.info("Deleting existing duplicate", { duplicateId: duplicateCheck.existingQuestion.id });
         const { error: deleteError } = await supabase.from("questions").delete().eq("id", duplicateCheck.existingQuestion.id);
         if (deleteError) {
-          console.error("Delete error:", deleteError);
+          logger.error("Delete error:", deleteError);
         }
       }
       
       // Insert into questions table
-      console.log("Inserting question with data:", { subject: q.subject, chapter: chapterName, topic: q.topic });
+      logger.info("Inserting question with data", { subject: q.subject, chapter: chapterName, topic: q.topic });
       const { error: insertError } = await supabase.from("questions").insert({
         question: q.question,
         option_a: q.option_a,
@@ -343,11 +344,11 @@ export function ExtractionReviewQueue() {
       });
 
       if (insertError) {
-        console.error("Insert error:", insertError);
+        logger.error("Insert error:", insertError);
         throw insertError;
       }
 
-      console.log("Question inserted successfully");
+      logger.info("Question inserted successfully");
 
       // Update status to approved
       const { error: updateError } = await supabase
@@ -356,11 +357,11 @@ export function ExtractionReviewQueue() {
         .eq("id", currentQuestion.id);
 
       if (updateError) {
-        console.error("Update status error:", updateError);
+        logger.error("Update status error:", updateError);
         throw updateError;
       }
 
-      console.log("Question status updated to approved");
+      logger.info("Question status updated to approved");
       toast.success(overwrite ? "Question overwritten!" : "Question approved and added to database!");
       
       // Move to next question
@@ -371,7 +372,7 @@ export function ExtractionReviewQueue() {
       fetchStats();
       
     } catch (error: any) {
-      console.error("Error approving:", error);
+      logger.error("Error approving:", error);
       toast.error(`Failed to approve: ${error?.message || "Unknown error"}`);
     } finally {
       setSaving(false);
@@ -397,7 +398,7 @@ export function ExtractionReviewQueue() {
       fetchStats();
       
     } catch (error) {
-      console.error("Error rejecting:", error);
+      logger.error("Error rejecting:", error);
       toast.error("Failed to reject question");
     } finally {
       setSaving(false);
@@ -429,7 +430,7 @@ export function ExtractionReviewQueue() {
 
       return { isDuplicate: false };
     } catch (error) {
-      console.error("Error checking duplicate:", error);
+      logger.error("Error checking duplicate:", error);
       return { isDuplicate: false };
     }
   };
@@ -441,7 +442,7 @@ export function ExtractionReviewQueue() {
       return;
     }
     
-    console.log("Starting bulk approve all for", questions.length, "questions");
+    logger.info("Starting bulk approve all", { total: questions.length });
     setBulkProcessing(true);
     setBulkProgress({ current: 0, total: questions.length, skipped: 0, approved: 0, overwritten: 0 });
     
@@ -457,7 +458,7 @@ export function ExtractionReviewQueue() {
         
         // Skip if missing required fields
         if (!q.question || !q.option_a || !q.correct_option || !q.subject) {
-          console.log("Skipping question - missing fields:", question.id);
+          logger.info("Skipping question - missing fields", { questionId: question.id });
           skipped++;
           await supabase
             .from("extracted_questions_queue")
@@ -495,9 +496,9 @@ export function ExtractionReviewQueue() {
             .update({ status: "approved" })
             .eq("id", question.id);
           approved++;
-          console.log("Approved question:", question.id);
+          logger.info("Approved question", { questionId: question.id });
         } else {
-          console.error("Insert error for question:", question.id, insertError);
+          logger.error("Insert error for question", { questionId: question.id, error: insertError });
           skipped++;
         }
 
@@ -509,7 +510,7 @@ export function ExtractionReviewQueue() {
       await fetchStats();
       
     } catch (error: any) {
-      console.error("Bulk approve all error:", error);
+      logger.error("Bulk approve all error:", error);
       toast.error(`Bulk approval failed: ${error?.message || "Unknown error"}`);
     } finally {
       setBulkProcessing(false);
@@ -523,7 +524,7 @@ export function ExtractionReviewQueue() {
       return;
     }
     
-    console.log("Starting bulk approve (skip duplicates) for", questions.length, "questions");
+    logger.info("Starting bulk approve (skip duplicates)", { total: questions.length });
     setBulkProcessing(true);
     setBulkProgress({ current: 0, total: questions.length, skipped: 0, approved: 0, overwritten: 0 });
     
@@ -539,7 +540,7 @@ export function ExtractionReviewQueue() {
         
         // Skip if missing required fields
         if (!q.question || !q.option_a || !q.correct_option || !q.subject) {
-          console.log("Skipping question - missing fields:", question.id);
+          logger.info("Skipping question - missing fields", { questionId: question.id });
           skipped++;
           continue;
         }
@@ -552,7 +553,7 @@ export function ExtractionReviewQueue() {
         // Check for duplicate - SKIP if found
         const duplicateResult = await checkDuplicateForQuestion(q.question);
         if (duplicateResult.isDuplicate) {
-          console.log("Skipping duplicate:", question.id);
+          logger.info("Skipping duplicate", { questionId: question.id });
           await supabase
             .from("extracted_questions_queue")
             .update({ status: "rejected", review_notes: "Skipped - Duplicate" })
@@ -585,9 +586,9 @@ export function ExtractionReviewQueue() {
             .update({ status: "approved" })
             .eq("id", question.id);
           approved++;
-          console.log("Approved question:", question.id);
+          logger.info("Approved question", { questionId: question.id });
         } else {
-          console.error("Insert error:", insertError);
+          logger.error("Insert error during bulk approve skip duplicates", insertError);
           skipped++;
         }
 
@@ -599,7 +600,7 @@ export function ExtractionReviewQueue() {
       await fetchStats();
       
     } catch (error: any) {
-      console.error("Bulk approve error:", error);
+      logger.error("Bulk approve error:", error);
       toast.error(`Bulk approval failed: ${error?.message || "Unknown error"}`);
     } finally {
       setBulkProcessing(false);
@@ -613,7 +614,7 @@ export function ExtractionReviewQueue() {
       return;
     }
     
-    console.log("Starting bulk approve (overwrite duplicates) for", questions.length, "questions");
+    logger.info("Starting bulk approve (overwrite duplicates)", { total: questions.length });
     setBulkProcessing(true);
     setBulkProgress({ current: 0, total: questions.length, skipped: 0, approved: 0, overwritten: 0 });
     
@@ -630,7 +631,7 @@ export function ExtractionReviewQueue() {
         
         // Skip if missing required fields
         if (!q.question || !q.option_a || !q.correct_option || !q.subject) {
-          console.log("Skipping question - missing fields:", question.id);
+          logger.info("Skipping question - missing fields", { questionId: question.id });
           skipped++;
           continue;
         }
@@ -643,7 +644,7 @@ export function ExtractionReviewQueue() {
         // Check for duplicate - OVERWRITE if found
         const duplicateResult = await checkDuplicateForQuestion(q.question);
         if (duplicateResult.isDuplicate && duplicateResult.existingId) {
-          console.log("Overwriting duplicate:", duplicateResult.existingId);
+          logger.info("Overwriting duplicate", { existingId: duplicateResult.existingId });
           await supabase.from("questions").delete().eq("id", duplicateResult.existingId);
           overwritten++;
         }
@@ -672,9 +673,9 @@ export function ExtractionReviewQueue() {
             .update({ status: "approved" })
             .eq("id", question.id);
           approved++;
-          console.log("Approved question:", question.id);
+          logger.info("Approved question", { questionId: question.id });
         } else {
-          console.error("Insert error:", insertError);
+          logger.error("Insert error during bulk approve overwrite", insertError);
           skipped++;
         }
 
@@ -686,7 +687,7 @@ export function ExtractionReviewQueue() {
       await fetchStats();
       
     } catch (error: any) {
-      console.error("Bulk approve error:", error);
+      logger.error("Bulk approve error:", error);
       toast.error(`Bulk approval failed: ${error?.message || "Unknown error"}`);
     } finally {
       setBulkProcessing(false);
@@ -785,7 +786,7 @@ export function ExtractionReviewQueue() {
                   <Button 
                     size="sm" 
                     onClick={() => {
-                      console.log("Approve All clicked");
+                      logger.info("Approve All clicked");
                       handleBulkApproveAll();
                     }} 
                     disabled={bulkProcessing}
@@ -798,7 +799,7 @@ export function ExtractionReviewQueue() {
                     size="sm" 
                     variant="outline"
                     onClick={() => {
-                      console.log("Skip All Duplicates clicked");
+                      logger.info("Skip All Duplicates clicked");
                       handleBulkApproveSkipDuplicates();
                     }} 
                     disabled={bulkProcessing}
@@ -811,7 +812,7 @@ export function ExtractionReviewQueue() {
                     size="sm" 
                     variant="outline"
                     onClick={() => {
-                      console.log("Overwrite All Duplicates clicked");
+                      logger.info("Overwrite All Duplicates clicked");
                       handleBulkApproveOverwriteDuplicates();
                     }} 
                     disabled={bulkProcessing}
@@ -1168,7 +1169,7 @@ export function ExtractionReviewQueue() {
                           <Button 
                             variant="outline" 
                             onClick={() => {
-                              console.log("Add Anyway clicked");
+                              logger.info("Add Anyway clicked");
                               handleApprove(true, false);
                             }} 
                             disabled={saving}
@@ -1185,7 +1186,7 @@ export function ExtractionReviewQueue() {
                       ) : (
                         <Button 
                           onClick={() => {
-                            console.log("Approve clicked");
+                            logger.info("Approve clicked");
                             handleApprove(false);
                           }} 
                           disabled={saving}

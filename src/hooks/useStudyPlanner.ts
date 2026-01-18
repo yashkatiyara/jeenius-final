@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useExamDates } from '@/hooks/useExamDates';
 import { toast } from 'sonner';
+import { logger } from '@/utils/logger';
 
 import type { StudyPlannerData, AIInsights } from '@/lib/studyPlannerTypes';
 import {
@@ -144,7 +145,7 @@ export function useStudyPlanner() {
       setData(planData);
 
     } catch (error) {
-      console.error('Error loading study planner data:', error);
+      logger.error('Error loading study planner data:', error);
       setData(prev => ({ ...prev, isLoading: false }));
       toast.error('Failed to load study plan');
     }
@@ -185,7 +186,7 @@ export function useStudyPlanner() {
         toast.success('AI insights loaded!');
       }
     } catch (error) {
-      console.error('Error fetching AI insights:', error);
+      logger.error('Error fetching AI insights:', error);
       toast.error('AI insights unavailable, using local algorithm');
     } finally {
       setAiLoading(false);
@@ -237,7 +238,7 @@ export function useStudyPlanner() {
 
       toast.success('Settings updated! Plan regenerated.');
     } catch (error) {
-      console.error('Error updating settings:', error);
+      logger.error('Error updating settings:', error);
       toast.error('Failed to update settings');
     }
   }, [user?.id, getExamDate, calculateDaysToExam]);

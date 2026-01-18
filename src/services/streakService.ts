@@ -1,5 +1,6 @@
 // src/services/streakService.ts
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 export class StreakService {
   
@@ -48,7 +49,7 @@ export class StreakService {
 
       return Math.max(newTarget, 15);
     } catch (error) {
-      console.error('Error calculating daily target:', error);
+      logger.error('Error calculating daily target:', error);
       return 15;
     }
   }

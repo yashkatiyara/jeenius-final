@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { logger } from "@/utils/logger";
 
 const Settings = () => {
   const [profile, setProfile] = useState({
@@ -69,7 +70,7 @@ const Settings = () => {
       const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser();
       
       if (authError || !currentUser) {
-        console.error('Authentication error:', authError);
+        logger.error('Authentication error:', authError);
         toast({
           title: "Authentication Error",
           description: "Please login again",
@@ -88,7 +89,7 @@ const Settings = () => {
         .single();
 
       if (profileError) {
-        console.error('Profile loading error:', profileError);
+        logger.error('Profile loading error:', profileError);
         const userMeta = currentUser.user_metadata || {};
         setProfile({
           firstName: userMeta.firstName || currentUser.email?.split('@')[0] || '',
@@ -121,10 +122,10 @@ const Settings = () => {
         });
       }
 
-      console.log('✅ Profile loaded successfully');
+      logger.info('Profile loaded successfully');
       
     } catch (error) {
-      console.error('❌ Error loading profile:', error);
+      logger.error('Error loading profile:', error);
       toast({
         title: "Error",
         description: "Failed to load profile data",
@@ -188,7 +189,7 @@ const Settings = () => {
       setTimeout(() => setSaveStatus('idle'), 3000);
 
     } catch (error: any) {
-      console.error('❌ Error saving profile:', error);
+      logger.error('Error saving profile:', error);
       setSaveStatus('error');
       toast({
         title: "Save Failed",
@@ -215,7 +216,7 @@ const Settings = () => {
       navigate('/login');
       
     } catch (error) {
-      console.error('❌ Sign out failed:', error);
+      logger.error('Sign out failed:', error);
       toast({
         title: "Error",
         description: "Failed to sign out",
@@ -243,7 +244,7 @@ const Settings = () => {
       setShowFarewellDialog(true);
       
     } catch (error) {
-      console.error('Error deactivating account:', error);
+      logger.error('Error deactivating account:', error);
       toast({
         title: "Error",
         description: "Failed to deactivate account. Please try again.",
@@ -299,7 +300,7 @@ const Settings = () => {
         description: "Your data export has been downloaded",
       });
     } catch (error) {
-      console.error('Export error:', error);
+      logger.error('Export error:', error);
       toast({
         title: "Export Failed",
         description: "Failed to export your data",
