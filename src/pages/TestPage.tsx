@@ -14,7 +14,6 @@ import {
   Brain, Sparkles, Crown, Award
 } from "lucide-react";
 import PricingModal from '@/components/PricingModal';
-import { logger } from '@/utils/logger';
 
 const TestPage = () => {
   const [loading, setLoading] = useState(false);
@@ -56,7 +55,7 @@ const TestPage = () => {
 
       setProfile(profileData);
     } catch (error) {
-      logger.error('Error loading profile:', error);
+      console.error('Error loading profile:', error);
     }
   };
 
@@ -102,7 +101,7 @@ const TestPage = () => {
       setSubjects(uniqueSubjects);
       setChapters(chaptersBySubject);
     } catch (error) {
-      logger.error('Error fetching subjects:', error);
+      console.error('Error fetching subjects:', error);
       toast.error('Failed to load subjects');
     }
   };
@@ -120,7 +119,7 @@ const TestPage = () => {
 
       // Test attempts tracking removed - no longer needed
     } catch (error) {
-      logger.error('Error while checking monthly usage:', error);
+      console.error('Error:', error);
     }
   };
   
@@ -219,7 +218,7 @@ const TestPage = () => {
         toast.success(`Full mock test started with ${selected.length} questions!`);
         navigate('/test-attempt');
       } catch (error) {
-        logger.error('Error starting test:', error);
+        console.error('Error starting test:', error);
         toast.dismiss();
         toast.error("Failed to start test");
         setLoading(false);
@@ -304,7 +303,7 @@ const TestPage = () => {
       toast.success(`Test started with ${selected.length} fresh questions!`);
       navigate('/test-attempt');
     } catch (error) {
-      logger.error('Error starting test:', error);
+      console.error('Error starting test:', error);
       toast.dismiss();
       toast.error("Failed to start test");
       setLoading(false);

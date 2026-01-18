@@ -2,7 +2,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import StreakService from './streakService';
 import { FREE_LIMITS } from '@/config/subscriptionPlans';
-import { logger } from '@/utils/logger';
 
 export class UserLimitsService {
   
@@ -201,7 +200,7 @@ export class UserLimitsService {
 
       return true;
     } catch (error) {
-      logger.error('Error upgrading to PRO:', error);
+      console.error('Error upgrading to PRO:', error);
       return false;
     }
   }
@@ -237,7 +236,7 @@ export class UserLimitsService {
 
       return true;
     } catch (error) {
-      logger.error('Error adding referral reward:', error);
+      console.error('Error adding referral reward:', error);
       return false;
     }
   }

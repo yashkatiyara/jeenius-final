@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { logger } from '@/utils/logger';
 
 export interface TestSeries {
   id: string;
@@ -107,7 +106,7 @@ export const useTestSeries = () => {
       
       setTests(mockTestSeries);
     } catch (err) {
-      logger.error('Error fetching test series:', err);
+      console.error('Error fetching test series:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch tests');
     } finally {
       setLoading(false);
@@ -122,7 +121,7 @@ export const useTestSeries = () => {
       const userAttempts = attempts.filter((attempt: TestAttempt) => attempt.user_id === user.id);
       setUserAttempts(userAttempts);
     } catch (err) {
-      logger.error('Error fetching user attempts:', err);
+      console.error('Error fetching user attempts:', err);
     }
   };
 
@@ -134,7 +133,7 @@ export const useTestSeries = () => {
       const userRegs = registrations.filter((reg: TestRegistration) => reg.user_id === user.id);
       setUserRegistrations(userRegs);
     } catch (err) {
-      logger.error('Error fetching user registrations:', err);
+      console.error('Error fetching user registrations:', err);
     }
   };
 
@@ -168,7 +167,7 @@ export const useTestSeries = () => {
       // Refresh registrations
       await fetchUserRegistrations();
     } catch (err) {
-      logger.error('Error registering for test:', err);
+      console.error('Error registering for test:', err);
       throw err;
     }
   };

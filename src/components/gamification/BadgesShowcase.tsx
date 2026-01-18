@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Lock, Award, Trophy, Star } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import { logger } from '@/utils/logger';
 
 interface BadgeType {
   id: string;
@@ -63,7 +62,7 @@ const BadgesShowcase = () => {
 
       setBadges(enrichedBadges);
     } catch (error) {
-      logger.error('Error fetching badges:', error);
+      console.error('Error fetching badges:', error);
     } finally {
       setLoading(false);
     }

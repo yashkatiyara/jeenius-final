@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import { ChevronRight, Calendar, BookOpen, Stethoscope, Calculator, Clock, Rocket, Trophy, Target, Sparkles } from 'lucide-react';
-import { logger } from '@/utils/logger';
 
 const GoalSelectionPage = () => {
   const navigate = useNavigate();
@@ -42,23 +41,23 @@ const GoalSelectionPage = () => {
           .single();
   
         if (error && error.code !== 'PGRST116') {
-          logger.error('Profile check error:', error);
+          console.error('Profile check error:', error);
           setIsLoading(false);
           return;
         }
   
         // If profile is complete (has grade and exam), redirect to dashboard
         if (profile?.goals_set && profile?.target_exam && profile?.grade) {
-          logger.info('Profile already complete, redirecting to dashboard');
+          console.log('✅ Profile already complete, redirecting to dashboard');
           navigate('/dashboard', { replace: true });
           return;
         }
   
         // Profile exists but incomplete - let them continue with goal selection
-        logger.info('User needs to complete goal selection');
+        console.log('📝 User needs to complete goal selection');
         setIsLoading(false);
       } catch (error) {
-        logger.error('Error checking user profile:', error);
+        console.error('Error checking user profile:', error);
         setIsLoading(false);
       }
     };
@@ -119,7 +118,7 @@ const GoalSelectionPage = () => {
   // Handle Start Journey button click
   const handleStartJourney = () => {
     if (!selectedGoal || !selectedGrade) {
-      logger.warn('Missing required selections');
+      console.error('Missing required selections');
       return;
     }
     setShowWelcomeDialog(true);
@@ -133,7 +132,7 @@ const GoalSelectionPage = () => {
     
     try {
       if (!user?.id) {
-        logger.error('No user found');
+        console.error('No user found');
         alert('Please login again');
         navigate('/login');
         return;
@@ -146,7 +145,7 @@ const GoalSelectionPage = () => {
         .eq('id', user.id)
         .single();
   
-      logger.info('User name from profile:', profile?.full_name);
+      console.log('👤 User name from profile:', profile?.full_name);
   
       // Update profile with grade, exam, and subjects
       const gradeNumber = parseInt(selectedGrade, 10) || 11;
@@ -163,13 +162,13 @@ const GoalSelectionPage = () => {
         .eq('id', user.id);
   
       if (profileError) {
-        logger.error('Profile update error:', profileError);
+        console.error('❌ Profile update error:', profileError);
         alert('Error saving profile. Please try again.');
         setIsStartingJourney(false);
         return;
       }
   
-      logger.info('Profile updated successfully');
+      console.log('✅ Profile updated successfully');
   
       // Optional: Save to localStorage as backup
       const userGoals = {
@@ -186,13 +185,13 @@ const GoalSelectionPage = () => {
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     // Navigate to dashboard
-    logger.info('Navigating to dashboard after goal setup');
+    console.log('🚀 Navigating to dashboard...');
     navigate('/dashboard', { replace: true });
     
     } catch (error) {
-      logger.error('Error saving goals:', error);
-      // Still navigate even if save fails
-      navigate('/dashboard', { replace: true });
+    console.error('Error saving goals:', error);
+    // Still navigate even if save fails
+    navigate('/dashboard', { replace: true });
     } finally {
     // Always reset loading state
     setIsStartingJourney(false);

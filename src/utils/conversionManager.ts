@@ -2,7 +2,6 @@
 // ✅ UPDATED WITH SAFE LOCALSTORAGE
 
 import { safeLocalStorage } from './safeStorage';
-import { logger } from '@/utils/logger';
 
 interface ConversionData {
   firstVisit: number;
@@ -54,7 +53,7 @@ export class ConversionManager {
     const success = safeLocalStorage.setJSON(this.storageKey, merged);
     
     if (!success) {
-      logger.warn('Failed to save conversion data - localStorage unavailable');
+      console.warn('⚠️ Failed to save conversion data - localStorage unavailable');
     }
   }
 
@@ -90,7 +89,7 @@ export class ConversionManager {
     try {
       if (sessionStorage.getItem(limitKey)) return false;
     } catch (error) {
-      logger.warn('sessionStorage unavailable', error);
+      console.warn('⚠️ sessionStorage unavailable', error);
     }
 
     return true;
@@ -113,7 +112,7 @@ export class ConversionManager {
     try {
       sessionStorage.setItem(`${limitType}_shown`, 'true');
     } catch (error) {
-      logger.warn('Failed to set sessionStorage', error);
+      console.warn('⚠️ Failed to set sessionStorage', error);
     }
   }
 

@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Header from '@/components/Header';
 import ReferralService from '@/services/referralService';
-import { logger } from '@/utils/logger';
 
 const SubscriptionPlans = () => {
   const { user } = useAuth();
@@ -31,7 +30,7 @@ const SubscriptionPlans = () => {
         user.user_metadata?.name || 'Student'
       );
     } catch (error) {
-      logger.error('Payment error:', error);
+      console.error('Payment error:', error);
       alert('Failed to initiate payment. Please try again.');
     } finally {
       setLoading(null);

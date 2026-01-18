@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, BookOpen, TrendingUp, Clock, Award, Target } from 'lucide-react';
-import { logger } from '@/utils/logger';
 
 interface PlatformStats {
   total_users: number;
@@ -88,7 +87,7 @@ export const AdminAnalytics: React.FC = () => {
 
         setPlatformStats(stats);
       } catch (error) {
-        logger.error('Error fetching platform stats:', error);
+        console.error('Error fetching platform stats:', error);
       }
     };
 
@@ -132,7 +131,7 @@ export const AdminAnalytics: React.FC = () => {
 
         setUserAnalytics(analyticsData);
       } catch (error) {
-        logger.error('User analytics fetch error:', error);
+        console.error('User analytics fetch error:', error);
       } finally {
         setLoading(false);
       }
@@ -165,7 +164,7 @@ export const AdminAnalytics: React.FC = () => {
           { name: 'Biology', questions: subjectCounts.Biology, color: '#F59E0B' }
         ]);
       } catch (error) {
-        logger.error('Error loading subject data:', error);
+        console.error('Error loading subject data:', error);
       }
     };
     

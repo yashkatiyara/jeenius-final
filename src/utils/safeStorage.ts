@@ -1,6 +1,5 @@
 // src/utils/safeStorage.ts
 // ✅ THIS PREVENTS APP CRASHES IN INCOGNITO MODE
-import { logger } from "@/utils/logger";
 
 /**
  * Safe wrapper around localStorage that handles errors gracefully
@@ -15,7 +14,7 @@ export const safeLocalStorage = {
     try {
       return localStorage.getItem(key);
     } catch (error) {
-      logger.warn(`⚠️ localStorage.getItem failed for key: ${key}`, error);
+      console.warn(`⚠️ localStorage.getItem failed for key: ${key}`, error);
       return null;
     }
   },
@@ -29,7 +28,7 @@ export const safeLocalStorage = {
       localStorage.setItem(key, value);
       return true;
     } catch (error) {
-      logger.warn(`⚠️ localStorage.setItem failed for key: ${key}`, error);
+      console.warn(`⚠️ localStorage.setItem failed for key: ${key}`, error);
       return false;
     }
   },
@@ -43,7 +42,7 @@ export const safeLocalStorage = {
       localStorage.removeItem(key);
       return true;
     } catch (error) {
-      logger.warn(`⚠️ localStorage.removeItem failed for key: ${key}`, error);
+      console.warn(`⚠️ localStorage.removeItem failed for key: ${key}`, error);
       return false;
     }
   },
@@ -57,7 +56,7 @@ export const safeLocalStorage = {
       localStorage.clear();
       return true;
     } catch (error) {
-      logger.warn('⚠️ localStorage.clear failed', error);
+      console.warn('⚠️ localStorage.clear failed', error);
       return false;
     }
   },
@@ -72,7 +71,7 @@ export const safeLocalStorage = {
       if (!item) return fallback;
       return JSON.parse(item);
     } catch (error) {
-      logger.warn(`⚠️ Failed to parse JSON for key: ${key}`, error);
+      console.warn(`⚠️ Failed to parse JSON for key: ${key}`, error);
       return fallback;
     }
   },
@@ -86,7 +85,7 @@ export const safeLocalStorage = {
       localStorage.setItem(key, JSON.stringify(value));
       return true;
     } catch (error) {
-      logger.warn(`⚠️ Failed to stringify JSON for key: ${key}`, error);
+      console.warn(`⚠️ Failed to stringify JSON for key: ${key}`, error);
       return false;
     }
   },
@@ -126,7 +125,7 @@ export const safeLocalStorage = {
 
       return item.value;
     } catch (error) {
-      logger.warn(`⚠️ getItemWithExpiry failed for key: ${key}`, error);
+      console.warn(`⚠️ getItemWithExpiry failed for key: ${key}`, error);
       return null;
     }
   },
@@ -145,7 +144,7 @@ export const safeLocalStorage = {
       localStorage.setItem(key, JSON.stringify(item));
       return true;
     } catch (error) {
-      logger.warn(`⚠️ setItemWithExpiry failed for key: ${key}`, error);
+      console.warn(`⚠️ setItemWithExpiry failed for key: ${key}`, error);
       return false;
     }
   },

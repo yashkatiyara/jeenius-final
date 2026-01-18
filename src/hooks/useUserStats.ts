@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import PointsService from '@/services/pointsService';
-import { logger } from '@/utils/logger';
 
 export interface UserStats {
   totalQuestions: number;
@@ -53,7 +52,7 @@ export const useUserStats = () => {
         .single();
 
       if (profileError) {
-        logger.error("Profile fetch error:", profileError);
+        console.error("Profile fetch error:", profileError);
         throw profileError;
       }
       setProfile(profileData);
@@ -67,7 +66,7 @@ export const useUserStats = () => {
         .neq("mode", "battle");
 
       if (attemptsError) {
-        logger.error("Attempts fetch error:", attemptsError);
+        console.error("Attempts fetch error:", attemptsError);
         throw attemptsError;
       }
 
@@ -222,7 +221,7 @@ export const useUserStats = () => {
           }
         }
       } catch (err) {
-        logger.error("Error computing leaderboard metrics:", err);
+        console.error("Error computing leaderboard metrics:", err);
       }
 
       // Points and level
@@ -266,7 +265,7 @@ export const useUserStats = () => {
         totalPoints,
       });
     } catch (err) {
-      logger.error("Error loading user data:", err);
+      console.error("Error loading user data:", err);
       setError(err instanceof Error ? err.message : "Failed to load stats");
     } finally {
       setLoading(false);

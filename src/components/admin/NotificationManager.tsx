@@ -12,7 +12,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Send, Plus, Bell, Users, Crown, UserCircle, Calendar, Trash2 } from 'lucide-react';
-import { logger } from '@/utils/logger';
 
 interface Notification {
   id: string;
@@ -53,7 +52,7 @@ export const NotificationManager: React.FC = () => {
       if (error) throw error;
       setNotifications(data || []);
     } catch (error) {
-      logger.error('Error loading notifications:', error);
+      console.error('Error loading notifications:', error);
       toast.error('Failed to load notifications');
     } finally {
       setLoading(false);
@@ -131,7 +130,7 @@ export const NotificationManager: React.FC = () => {
       
       loadNotifications();
     } catch (error) {
-      logger.error('Error sending notification:', error);
+      console.error('Error sending notification:', error);
       toast.error('Failed to send notification');
     } finally {
       setSending(false);
@@ -149,7 +148,7 @@ export const NotificationManager: React.FC = () => {
       toast.success('Notification deleted');
       loadNotifications();
     } catch (error) {
-      logger.error('Error deleting notification:', error);
+      console.error('Error deleting notification:', error);
       toast.error('Failed to delete notification');
     }
   };

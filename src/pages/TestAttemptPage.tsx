@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { logger } from "@/utils/logger";
 import { toast } from "sonner";
 import { MathDisplay } from "@/components/admin/MathDisplay";
 import 'katex/dist/katex.min.css';
@@ -146,9 +145,9 @@ const TestAttemptPage = () => {
             topic: currentQuestion.topic
           }
         });
-        logger.info('Topic mastery updated for test question');
+        console.log('✅ Topic mastery updated for test question');
       } catch (error) {
-        logger.error('Error updating mastery:', error);
+        console.error('Error updating mastery:', error);
       }
     }
   };
@@ -217,7 +216,7 @@ const TestAttemptPage = () => {
               _user_answer: userAnswer.selectedOption
             });
           } catch (validationError) {
-            logger.error('Error saving answer:', validationError);
+            console.error('Error saving answer:', validationError);
           }
         }
 
@@ -243,9 +242,9 @@ const TestAttemptPage = () => {
           completed_at: new Date().toISOString()
         }]);
 
-        logger.info('Test results saved to database');
+        console.log('✅ Test results saved to database');
       } catch (dbError) {
-        logger.error("Database save error:", dbError);
+        console.error("Database save error:", dbError);
         toast.error("Results saved locally. May sync later.");
       }
 
@@ -268,7 +267,7 @@ const TestAttemptPage = () => {
       navigate("/test-results");
 
     } catch (error) {
-      logger.error("Test submission failed:", error);
+      console.error("❌ Test submission failed:", error);
       toast.error("Failed to submit test. Please check your internet connection and try again.");
       setTestSubmitted(false);
     }

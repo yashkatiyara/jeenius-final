@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { GripVertical, Lock, Unlock, BookOpen, Plus, Edit, Trash2, Layers } from 'lucide-react';
-import { logger } from '@/utils/logger';
 
 interface Chapter {
   id: string;
@@ -107,7 +106,7 @@ const TopicManager = () => {
 
     if (error) {
       toast.error('Failed to add topic');
-      logger.error('Failed to add topic', error);
+      console.error(error);
       return;
     }
 
@@ -138,7 +137,7 @@ const TopicManager = () => {
 
     if (error) {
       toast.error('Failed to update topic');
-      logger.error('Failed to update topic', error);
+      console.error(error);
       return;
     }
 
@@ -159,7 +158,7 @@ const TopicManager = () => {
 
     if (error) {
       toast.error('Failed to delete topic');
-      logger.error('Failed to delete topic', error);
+      console.error(error);
       return;
     }
 

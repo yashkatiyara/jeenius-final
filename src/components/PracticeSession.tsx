@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Brain, Target, Clock, CheckCircle, XCircle, Lightbulb, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQuestions } from '@/hooks/useQuestions';
@@ -7,7 +7,6 @@ import { supabase } from '@/integrations/supabase/client';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import { toast } from 'sonner';
 import { MathDisplay } from '@/components/admin/MathDisplay';
-import { logger } from '@/utils/logger';
 import 'katex/dist/katex.min.css';
 
 const PracticeSession = () => {
@@ -33,9 +32,9 @@ const PracticeSession = () => {
       loadQuestions();
       fetchWeakAreas(); // ✅ Fetch real weakness data
     }
-  }, [isAuthenticated, loadQuestions, fetchWeakAreas]);
+  }, [isAuthenticated]);
 
-  const loadQuestions = useCallback(async () => {
+  const loadQuestions = async () => {
     const questionsData = await getRandomQuestions(null, null, null, 10);
 
     if (questionsData.length === 0) {
@@ -43,10 +42,10 @@ const PracticeSession = () => {
     }
     
     setQuestions(questionsData);
-  }, [getRandomQuestions]);
+  };
 
   // ✅ Fetch real weakness data from database
-  const fetchWeakAreas = useCallback(async () => {
+  const fetchWeakAreas = async () => {
     try {
       setLoadingWeakness(true);
       
@@ -64,19 +63,18 @@ const PracticeSession = () => {
         .limit(5);
 
       if (error) {
-        logger.error('Error fetching weakness:', error);
+        console.error('Error fetching weakness:', error);
         return;
       }
 
-      logger.info('Fetched weakness data', { weaknessData });
+      console.log('📊 Fetched weakness data:', weaknessData);
       setWeakAreas(weaknessData || []);
     } catch (error) {
-      logger.error('Error in fetchWeakAreas:', error);
+      console.error('Error in fetchWeakAreas:', error);
     } finally {
       setLoadingWeakness(false);
     }
-  }, []);
-
+  };
 
   const handleAnswerSelect = async (optionKey) => {
     if (!questions[currentQuestion]) return;
@@ -95,7 +93,7 @@ const PracticeSession = () => {
       try {
         const currentQ = questions[currentQuestion];
         
-        logger.info('Calling mastery function', {
+        console.log('🔍 Calling mastery function for:', {
           subject: currentQ.subject,
           chapter: currentQ.chapter || currentQ.topic,
           topic: currentQ.topic
@@ -110,9 +108,9 @@ const PracticeSession = () => {
         });
         
         if (error) {
-          logger.error('Mastery function error:', error);
+          console.error('❌ Mastery function error:', error);
         } else {
-          logger.info('Topic mastery response', { data });
+          console.log('✅ Topic mastery response:', data);
           
           // ✅ Refresh weakness data after mastery update
           if (data?.success) {
@@ -120,7 +118,7 @@ const PracticeSession = () => {
           }
         }
       } catch (masteryError) {
-        logger.error('Error updating mastery:', masteryError);
+        console.error('❌ Error updating mastery:', masteryError);
       }
       
       // Update session stats
@@ -130,7 +128,7 @@ const PracticeSession = () => {
         total: prev.total + 1
       }));
     } catch (error) {
-      logger.error('Error submitting answer:', error);
+      console.error('Error submitting answer:', error);
     }
   };
 

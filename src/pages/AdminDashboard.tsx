@@ -33,7 +33,6 @@ import { UserReports } from '@/components/admin/UserReports';
 import { PDFQuestionExtractor } from '@/components/admin/PDFQuestionExtractor';
 import { ExtractionReviewQueue } from '@/components/admin/ExtractionReviewQueue';
 import { cn } from '@/lib/utils';
-import { logger } from '@/utils/logger';
 
 interface QuickStat {
   title: string;
@@ -302,7 +301,7 @@ const QuickStatsOverview = () => {
         }
       ]);
     } catch (error: any) {
-      logger.error('Error fetching quick stats:', error);
+      console.error('Error fetching quick stats:', error);
       setError(error.message || 'Failed to load statistics');
     } finally {
       setLoading(false);

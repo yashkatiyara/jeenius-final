@@ -2,7 +2,6 @@
 import { supabase } from '@/integrations/supabase/client';
 const REFERRAL_MAX_REWARDS = 4; // Max 4 referrals = 1 month free
 import UserLimitsService from './userLimitsService';
-import { logger } from '@/utils/logger';
 
 export class ReferralService {
   
@@ -29,7 +28,7 @@ export class ReferralService {
         .single();
 
       if (existing) {
-        logger.info('Referral already exists');
+        console.log('Referral already exists');
         return false;
       }
 
@@ -42,7 +41,7 @@ export class ReferralService {
 
       return true;
     } catch (error) {
-      logger.error('Error creating referral:', error);
+      console.error('Error creating referral:', error);
       return false;
     }
   }
@@ -59,7 +58,7 @@ export class ReferralService {
         .single();
 
       if (!referral) {
-        logger.info('No pending referral found');
+        console.log('No pending referral found');
         return false;
       }
 
@@ -77,7 +76,7 @@ export class ReferralService {
 
       return true;
     } catch (error) {
-      logger.error('Error completing referral:', error);
+      console.error('Error completing referral:', error);
       return false;
     }
   }
@@ -93,7 +92,7 @@ export class ReferralService {
         .eq('reward_granted', true);
 
       if (count && count >= REFERRAL_MAX_REWARDS) {
-        logger.warn('Max referral rewards reached');
+        console.log('Max referral rewards reached');
         return false;
       }
 
@@ -110,7 +109,7 @@ export class ReferralService {
 
       return success;
     } catch (error) {
-      logger.error('Error granting referral reward:', error);
+      console.error('Error granting referral reward:', error);
       return false;
     }
   }

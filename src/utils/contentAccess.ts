@@ -1,7 +1,6 @@
 // src/utils/contentAccess.ts
 
 import { supabase } from '@/integrations/supabase/client';
-import { logger } from '@/utils/logger';
 
 interface AccessResult {
   allowed: boolean;
@@ -55,7 +54,7 @@ export const canAccessChapter = async (
     };
 
   } catch (error) {
-    logger.error('Error checking chapter access:', error);
+    console.error('Error checking chapter access:', error);
     return {
       allowed: false,
       reason: 'error',
@@ -121,7 +120,7 @@ export const canAttemptQuestion = async (userId: string): Promise<AccessResult> 
     };
 
   } catch (error) {
-    logger.error('Error checking question access:', error);
+    console.error('Error checking question access:', error);
     return {
       allowed: false,
       reason: 'error',
@@ -145,7 +144,7 @@ export const trackQuestionAttempt = async (
       subject: ''
     }]);
   } catch (error) {
-    logger.error('Error tracking question attempt:', error);
+    console.error('Error tracking question attempt:', error);
   }
 };
 
@@ -206,7 +205,7 @@ export const canUseAI = async (userId: string): Promise<AccessResult> => {
     };
 
   } catch (error) {
-    logger.error('Error checking AI access:', error);
+    console.error('Error checking AI access:', error);
     return {
       allowed: false,
       reason: 'error',
@@ -227,7 +226,7 @@ export const trackAIQuery = async (userId: string): Promise<void> => {
       subject: ''
     }]);
   } catch (error) {
-    logger.error('Error tracking AI query:', error);
+    console.error('Error tracking AI query:', error);
   }
 };
 
@@ -254,7 +253,7 @@ export const getUserSubscription = async (userId: string) => {
       end_date: profile.subscription_end_date
     };
   } catch (error) {
-    logger.error('Error fetching subscription:', error);
+    console.error('Error fetching subscription:', error);
     return null;
   }
 };
@@ -328,7 +327,7 @@ export const getUserUsageStats = async (userId: string): Promise<UsageStats> => 
     };
 
   } catch (error) {
-    logger.error('Error fetching usage stats:', error);
+    console.error('Error fetching usage stats:', error);
     return {
       chaptersAccessed: 0,
       chaptersLimit: 5,
@@ -366,7 +365,7 @@ export const getAccessibleChapters = async (
     return data?.map(chapter => ({ ...chapter, locked: false })) || [];
 
   } catch (error) {
-    logger.error('Error fetching accessible chapters:', error);
+    console.error('Error fetching accessible chapters:', error);
     return [];
   }
 };

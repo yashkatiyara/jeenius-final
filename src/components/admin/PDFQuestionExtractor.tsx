@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { Upload, FileText, Loader2, CheckCircle2, XCircle, Image as ImageIcon, Sparkles, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import * as pdfjsLib from "pdfjs-dist";
-import { logger } from "@/utils/logger";
 // @ts-ignore - Vite handles this URL import
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
@@ -151,7 +150,7 @@ export function PDFQuestionExtractor() {
           ));
 
         } catch (pageError) {
-          logger.error(`Error processing page ${pageNum}:`, pageError);
+          console.error(`Error processing page ${pageNum}:`, pageError);
           setLogs(prev => prev.map(log => 
             log.page === pageNum 
               ? { ...log, status: "error", message: pageError instanceof Error ? pageError.message : "Failed" }
@@ -167,7 +166,7 @@ export function PDFQuestionExtractor() {
       toast.success(`Extraction complete! Found ${extracted} questions total.`);
 
     } catch (error) {
-      logger.error("Extraction error:", error);
+      console.error("Extraction error:", error);
       toast.error(error instanceof Error ? error.message : "Extraction failed");
     } finally {
       setIsExtracting(false);

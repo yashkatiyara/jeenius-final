@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { logger } from "@/utils/logger";
 
 interface ExtractionStatus {
   isExtracting: boolean;
@@ -50,7 +49,7 @@ export function usePDFExtraction() {
       setQueuedQuestions(typedData);
       return typedData;
     } catch (error) {
-      logger.error("Error fetching queued questions:", error);
+      console.error("Error fetching queued questions:", error);
       toast.error("Failed to fetch queued questions");
       return [];
     }
@@ -71,7 +70,7 @@ export function usePDFExtraction() {
         total: (pending.count || 0) + (approved.count || 0) + (rejected.count || 0)
       };
     } catch (error) {
-      logger.error("Error fetching queue stats:", error);
+      console.error("Error fetching queue stats:", error);
       return { pending: 0, approved: 0, rejected: 0, total: 0 };
     }
   }, []);
@@ -119,7 +118,7 @@ export function usePDFExtraction() {
       toast.success("Question approved and connected to curriculum!");
       return true;
     } catch (error) {
-      logger.error("Error approving question:", error);
+      console.error("Error approving question:", error);
       toast.error("Failed to approve question");
       return false;
     }
@@ -137,7 +136,7 @@ export function usePDFExtraction() {
       toast.info("Question rejected");
       return true;
     } catch (error) {
-      logger.error("Error rejecting question:", error);
+      console.error("Error rejecting question:", error);
       toast.error("Failed to reject question");
       return false;
     }
@@ -155,7 +154,7 @@ export function usePDFExtraction() {
       toast.success("Question removed from queue");
       return true;
     } catch (error) {
-      logger.error("Error deleting question:", error);
+      console.error("Error deleting question:", error);
       toast.error("Failed to delete question");
       return false;
     }
@@ -173,7 +172,7 @@ export function usePDFExtraction() {
       toast.success("Cleared rejected questions");
       return true;
     } catch (error) {
-      logger.error("Error clearing rejected:", error);
+      console.error("Error clearing rejected:", error);
       toast.error("Failed to clear rejected questions");
       return false;
     }

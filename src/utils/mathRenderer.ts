@@ -1,5 +1,4 @@
 import katex from 'katex';
-import { logger } from '@/utils/logger';
 
 /**
  * Converts common text patterns to proper Unicode symbols
@@ -58,7 +57,7 @@ function renderWithKatex(latex: string, displayMode: boolean = false): string {
       output: 'html'
     });
   } catch (e) {
-    logger.error('KaTeX render error:', e, 'for:', latex.substring(0, 100));
+    console.error('KaTeX render error:', e, 'for:', latex.substring(0, 100));
     // Return the original text wrapped in a span so it's at least visible
     return `<span class="katex-error">${latex}</span>`;
   }

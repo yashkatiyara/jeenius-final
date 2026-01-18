@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { logger } from '@/utils/logger';
 
 export interface Question {
   id: string;
@@ -38,7 +37,7 @@ export const useQuestions = (filters?: {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchQuestions = useCallback(async () => {
+  const fetchQuestions = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -97,12 +96,12 @@ export const useQuestions = (filters?: {
 
       setQuestions(mappedQuestions);
     } catch (err) {
-      logger.error('Error fetching questions:', err);
+      console.error('Error fetching questions:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch questions');
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  };
 // Replace the getRandomQuestions function in useQuestions.tsx with this:
 
 const getRandomQuestions = async (
@@ -191,7 +190,7 @@ const getRandomQuestions = async (
     
     return [];
   } catch (err) {
-    logger.error('Error fetching random questions:', err);
+    console.error('Error fetching random questions:', err);
     setError(err instanceof Error ? err.message : 'Failed to fetch questions');
     return [];
   } finally {
@@ -218,12 +217,13 @@ const getRandomQuestions = async (
       });
 
       if (error) {
-        logger.error('Error validating answer:', error);
+        console.error('Error validating answer:', error);
         throw new Error('Failed to validate answer');
       }
 
       // Type cast the response data - RPC returns array
-      const typedResult = ((data as any)?.[0] || data) as {
+      const result = (data as any)?.[0] || data;
+      const typedResult = result as {
         attempt_id: string;
         is_correct: boolean;
         correct_option: string;
@@ -231,12 +231,12 @@ const getRandomQuestions = async (
       };
 
       return { 
-        isCorrect: typedResult.is_correct,
-        correctAnswer: typedResult.correct_option,
-        explanation: typedResult.explanation
+        isCorrect: result.is_correct,
+        correctAnswer: result.correct_option,
+        explanation: result.explanation
       };
     } catch (err) {
-      logger.error('Error submitting answer:', err);
+      console.error('Error submitting answer:', err);
       throw err;
     }
   };
@@ -245,7 +245,7 @@ const getRandomQuestions = async (
     if (filters) {
       fetchQuestions();
     }
-  }, [filters, fetchQuestions]);
+  }, [filters?.subject, filters?.topic, filters?.difficulty, filters?.limit]);
 
   return {
     questions,

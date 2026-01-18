@@ -3,7 +3,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { SUBSCRIPTION_PLANS } from '@/config/subscriptionPlans';
-import { logger } from '@/utils/logger';
 
 // Extend Window interface for Razorpay
 declare global {
@@ -27,7 +26,7 @@ export const loadRazorpay = (): Promise<any> => {
     
     script.onload = () => {
       if (window.Razorpay) {
-        logger.info('Razorpay loaded successfully');
+        console.log('✅ Razorpay loaded successfully');
         resolve(window.Razorpay);
       } else {
         reject(new Error('Razorpay failed to load'));
@@ -49,7 +48,7 @@ export const initializePayment = async (
   email: string,
   name: string
 ) => {
-  logger.info('Starting payment initialization...', { planId, userId });
+  console.log('🚀 Starting payment initialization...', { planId, userId });
 
   try {
     // 1. Validate plan
@@ -58,10 +57,10 @@ export const initializePayment = async (
       throw new Error('Invalid plan selected');
     }
 
-    logger.info('Plan validated', { plan: plan.name });
+    console.log('✅ Plan validated:', plan.name);
 
     // 2. Load Razorpay SDK
-    logger.info('Loading Razorpay SDK...');
+    console.log('📦 Loading Razorpay SDK...');
     const Razorpay = await loadRazorpay();
     
     if (!Razorpay) {
@@ -69,7 +68,7 @@ export const initializePayment = async (
     }
 
     // 3. Create order via Supabase Edge Function
-    logger.info('Creating Razorpay order...');
+    console.log('📝 Creating Razorpay order...');
     const { data: orderData, error: orderError } = await supabase.functions.invoke(
       'create-razorpay-order',
       {
@@ -80,16 +79,16 @@ export const initializePayment = async (
     );
 
     if (orderError) {
-      logger.error('Order creation error:', orderError);
+      console.error('❌ Order creation error:', orderError);
       throw new Error(`Order creation failed: ${orderError.message}`);
     }
 
     if (!orderData || !orderData.orderId) {
-      logger.error('Invalid order response:', orderData);
+      console.error('❌ Invalid order response:', orderData);
       throw new Error('Invalid order response from server');
     }
 
-    logger.info('Order created', { orderId: orderData.orderId });
+    console.log('✅ Order created:', orderData.orderId);
 
     // 4. Get Razorpay Key from environment
     const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
@@ -98,7 +97,7 @@ export const initializePayment = async (
       throw new Error('Razorpay Key ID not configured. Add VITE_RAZORPAY_KEY_ID to .env');
     }
 
-    logger.info('Using Razorpay Key', { keyPrefix: razorpayKey.substring(0, 10) });
+    console.log('🔑 Using Razorpay Key:', razorpayKey.substring(0, 10) + '...');
 
     // 5. Razorpay Checkout Options
     const options = {
@@ -124,11 +123,11 @@ export const initializePayment = async (
       
       // Payment success handler
       handler: async (response: any) => {
-        logger.info('Payment successful', response);
+        console.log('✅ Payment successful!', response);
         
         try {
           // Verify payment signature
-          logger.info('Verifying payment...');
+          console.log('🔐 Verifying payment...');
           const { data: verifyData, error: verifyError } = await supabase.functions.invoke(
             'verify-payment',
             {
@@ -142,11 +141,11 @@ export const initializePayment = async (
           );
 
           if (verifyError) {
-            logger.error('Verification error:', verifyError);
+            console.error('❌ Verification error:', verifyError);
             throw new Error(`Payment verification failed: ${verifyError.message}`);
           }
 
-          logger.info('Payment verified', verifyData);
+          console.log('✅ Payment verified:', verifyData);
 
           // Update local user state (optional - will refresh on page load)
           const endDate = new Date();
@@ -168,7 +167,7 @@ export const initializePayment = async (
           window.location.href = '/dashboard';
           
         } catch (err: any) {
-          logger.error('Payment verification failed:', err);
+          console.error('❌ Payment verification failed:', err);
           alert(`Payment verification failed: ${err.message}\nPlease contact support if money was deducted.`);
         }
       },
@@ -176,7 +175,7 @@ export const initializePayment = async (
       // Payment modal dismissed
       modal: {
         ondismiss: () => {
-          logger.warn('Payment cancelled by user');
+          console.log('⚠️ Payment cancelled by user');
           // Optional: Show a message or log analytics
         }
       },
@@ -188,7 +187,7 @@ export const initializePayment = async (
       }
     };
 
-    logger.info('Opening Razorpay checkout...');
+    console.log('💳 Opening Razorpay checkout...');
     
     // 6. Open Razorpay Checkout
     const razorpayInstance = new Razorpay(options);
@@ -196,12 +195,12 @@ export const initializePayment = async (
     
     // Handle payment failures
     razorpayInstance.on('payment.failed', (response: any) => {
-      logger.error('Payment failed:', response.error);
+      console.error('❌ Payment failed:', response.error);
       alert(`Payment Failed!\n\nReason: ${response.error.description}\nCode: ${response.error.code}`);
     });
 
   } catch (error: any) {
-    logger.error('Payment initialization error:', error);
+    console.error('❌ Payment initialization error:', error);
     
     // User-friendly error messages
     let errorMessage = 'Failed to initialize payment. ';
@@ -233,7 +232,7 @@ export const checkPaymentStatus = async (orderId: string) => {
     if (error) throw error;
     return data;
   } catch (error) {
-    logger.error('Error checking payment status:', error);
+    console.error('Error checking payment status:', error);
     return null;
   }
 };
