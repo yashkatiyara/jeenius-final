@@ -24,6 +24,7 @@ import StreakService from '@/services/streakService';
 import UserLimitsService from '@/services/userLimitsService';
 import PointsService from '@/services/pointsService';
 import { useStreakData } from '@/hooks/useStreakData';
+import { logger } from '@/utils/logger';
 
 const StudyNowPage = () => {
   const navigate = useNavigate();
@@ -79,7 +80,7 @@ const StudyNowPage = () => {
         loadGamificationData()
       ]);
     } catch (error) {
-      console.error('Error initializing page:', error);
+      logger.error('Error initializing page:', error);
     }
   };
 
@@ -104,7 +105,7 @@ const StudyNowPage = () => {
         setUpgradePromptData(shouldPrompt.data);
       }
     } catch (error) {
-      console.error('Error loading gamification data:', error);
+      logger.error('Error loading gamification data:', error);
     }
   };
 
@@ -121,7 +122,7 @@ const StudyNowPage = () => {
 
       setProfile(profileData);
     } catch (error) {
-      console.error('Error loading profile:', error);
+      logger.error('Error loading profile:', error);
     }
   };
 
@@ -242,7 +243,7 @@ const StudyNowPage = () => {
       setSubjects(subjectStats);
 
     } catch (error) {
-      console.error('Error fetching subjects:', error);
+      logger.error('Error fetching subjects:', error);
       toast.error('Failed to load subjects');
     } finally {
       setLoading(false);
@@ -317,7 +318,7 @@ const StudyNowPage = () => {
       setView('chapters');
 
     } catch (error) {
-      console.error('Error fetching chapters:', error);
+      logger.error('Error fetching chapters:', error);
       toast.error('Failed to load chapters');
     } finally {
       setLoading(false);
@@ -387,7 +388,7 @@ const StudyNowPage = () => {
       setTopics(topicStats);
       setView('topics');
     } catch (error) {
-      console.error('Error fetching topics:', error);
+      logger.error('Error fetching topics:', error);
       toast.error('Failed to load topics');
     } finally {
       setLoading(false);
@@ -530,7 +531,7 @@ const StudyNowPage = () => {
       setShowResult(false);
       setView('practice');
     } catch (error) {
-      console.error('Error starting practice:', error);
+      logger.error('Error starting practice:', error);
       toast.error('Failed to start practice');
     } finally {
       setLoading(false);
@@ -590,7 +591,7 @@ const handleAnswer = async (answer: string) => {
       .maybeSingle();
 
     if (existingAttempt) {
-      console.log('⚠️ Already attempted - skipping');
+      logger.warn('Already attempted - skipping');
       setIsSubmitting(false);
       setTimeout(() => nextQuestion(), 800);
       return;
@@ -629,7 +630,7 @@ const handleAnswer = async (answer: string) => {
         toast.success(levelResult.message, { duration: 3000 });
         setCurrentLevel(levelResult.newLevel);
       }
-    }).catch(error => console.log('Level update queued'));
+    }).catch(error => logger.error('Level update failed (queued)', error));
 
     // Update topic mastery for AI Study Planner (NON-BLOCKING)
     supabase.functions.invoke('calculate-topic-mastery', {
@@ -638,7 +639,7 @@ const handleAnswer = async (answer: string) => {
         chapter: question.chapter,
         topic: question.topic
       }
-    }).catch(error => console.log('Topic mastery update queued'));
+    }).catch(error => logger.error('Topic mastery update failed (queued)', error));
 
     // ✅ Check limits AFTER submission (non-blocking UX)
     UserLimitsService.canSolveMore(user.id).then(canSolve => {
@@ -646,18 +647,18 @@ const handleAnswer = async (answer: string) => {
         setShowUpgradeModal(true);
         setUpgradePromptType('daily_limit_reached');
       }
-    }).catch(e => console.error('Limit check error:', e));
+    }).catch(e => logger.error('Limit check error', e));
 
     // Update streak in background (non-blocking)
     setTimeout(() => {
       Promise.all([
         StreakService.updateProgress(user.id),
         loadGamificationData()
-      ]).catch(err => console.error('Background update error:', err));
+      ]).catch(err => logger.error('Background update error', err));
     }, 500);
 
   } catch (error) {
-    console.error('❌ Error in handleAnswer:', error);
+    logger.error('Error in handleAnswer', error);
     toast.error('Something went wrong!');
   } finally {
     setIsSubmitting(false);

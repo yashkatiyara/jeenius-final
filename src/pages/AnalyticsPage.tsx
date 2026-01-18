@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import {
 import Header from "@/components/Header";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { logger } from "@/utils/logger";
 
 const AnalyticsPage = () => {
   const { user } = useAuth();
@@ -30,13 +31,7 @@ const AnalyticsPage = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [analytics, setAnalytics] = useState<any>(null);
 
-  useEffect(() => {
-    if (user) {
-      loadAnalytics();
-    }
-  }, [user]);
-
-  const loadAnalytics = async () => {
+  const loadAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -48,15 +43,21 @@ const AnalyticsPage = () => {
       const stats = calculateAnalytics(attempts || []);
       setAnalytics(stats);
     } catch (error) {
-      console.error('Error loading analytics:', error);
+      logger.error('Error loading analytics:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user) {
+      loadAnalytics();
+    }
+  }, [user, loadAnalytics]);
 
   const calculateAnalytics = (attempts: any[]) => {
-    const subjectStats: any = {};
-    const topicStats: any = {};
+    const subjectStats: SubjectStats = {};
+    const topicStats: TopicStats = {};
 
     // STEP 1: First pass - collect basic stats
     attempts.forEach(attempt => {

@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import DOMPurify from "dompurify";
+import { logger } from "@/utils/logger";
 
 interface Message {
   role: "user" | "assistant";
@@ -117,7 +118,7 @@ ${question.option_d ? `**D)** ${question.option_d}` : ""}
   // ✅ Supabase Edge Function call with improved error handling
   const callEdgeFunction = async (prompt: string, conversationHistory: string): Promise<string> => {
     try {
-      console.log("🚀 Calling JEEnie edge function with history...");
+      logger.info("Calling JEEnie edge function with history...");
       const response = await supabase.functions.invoke("jeenie", {
         body: { 
           contextPrompt: prompt,
@@ -125,17 +126,17 @@ ${question.option_d ? `**D)** ${question.option_d}` : ""}
         },
       });
       
-      console.log("📥 Response received:", response);
+      logger.info("Response received from JEEnie edge function", response);
       
       // Handle function invocation errors
       if (response.error) {
-        console.error("❌ Function invocation error:", response.error);
+        logger.error("Function invocation error:", response.error);
         throw new Error(response.error.message || "BACKEND_ERROR");
       }
       
       // Handle API error responses
       if (response.data?.error) {
-        console.error("❌ API error:", response.data.error);
+        logger.error("API error from JEEnie:", response.data.error);
         const errorType = response.data.error;
         
         if (errorType === "RATE_LIMIT") {
@@ -155,15 +156,15 @@ ${question.option_d ? `**D)** ${question.option_d}` : ""}
       
       // Validate response content
       if (!response.data || !response.data.content) {
-        console.error("❌ Empty response data:", response.data);
+        logger.error("Empty response data:", response.data);
         throw new Error("No response received. Please try again.");
       }
       
-      console.log("✅ Valid response received, length:", response.data.content.length);
+      logger.info("Valid response received", { length: response.data.content.length });
       return response.data.content.trim();
       
     } catch (error) {
-      console.error("❌ Error calling Edge Function:", error);
+      logger.error("Error calling JEEnie Edge Function:", error);
       // Re-throw with user-friendly message
       if (error instanceof Error) {
         throw error;
@@ -219,7 +220,7 @@ Student's current doubt: "${userMsg.content}". Give direct solution, explain onl
       playSound("receive");
       setMessages((prev) => [...prev, { role: "assistant", content: formatted }]);
     } catch (error: any) {
-      console.error("💥 Error in handleSendMessage:", error);
+      logger.error("Error in handleSendMessage:", error);
       
       // Display user-friendly error message from the thrown error
       const errorMessage = error instanceof Error 

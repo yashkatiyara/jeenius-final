@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { logger } from '@/utils/logger';
 
 export const useRealtimeQuestionAttempts = () => {
   const { user } = useAuth();
@@ -35,7 +36,7 @@ export const useRealtimeQuestionAttempts = () => {
           filter: `user_id=eq.${user.id}`
         },
         () => {
-          console.log('New question attempt detected');
+          logger.info('New question attempt detected');
           setAttemptCount(prev => prev + 1);
         }
       )

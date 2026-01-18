@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { renderLatex, containsLatex, renderMathText } from '@/utils/mathRenderer';
+import { logger } from '@/utils/logger';
 import 'katex/dist/katex.min.css';
 
 interface MathDisplayProps {
@@ -18,7 +19,7 @@ export function MathDisplay({ text, className = '', block = false }: MathDisplay
     
     // Debug logging for development
     if (process.env.NODE_ENV === 'development' && containsLatex(text)) {
-      console.log('MathDisplay rendering:', text.substring(0, 100));
+      logger.info('MathDisplay rendering', { text: text.substring(0, 100) });
     }
     
     // Always try to render LaTeX if it looks like it has any
@@ -27,7 +28,7 @@ export function MathDisplay({ text, className = '', block = false }: MathDisplay
       
       // Debug: if rendering failed (no katex class), log it
       if (process.env.NODE_ENV === 'development' && text.includes('$') && !rendered.includes('class="katex"')) {
-        console.warn('LaTeX rendering may have failed for:', text.substring(0, 100));
+        logger.warn('LaTeX rendering may have failed', { text: text.substring(0, 100) });
       }
       
       return rendered;

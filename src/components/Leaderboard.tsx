@@ -1,7 +1,7 @@
 // src/components/Leaderboard.tsx
 // ✅ FIXED - Uses profiles.total_points + question_attempts
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { logger } from "@/utils/logger";
 
 interface LeaderboardUser {
   id: string;
@@ -32,56 +33,7 @@ const Leaderboard: React.FC = () => {
   const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'alltime'>('week');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchLeaderboard(true);
-    
-    // Set up real-time subscription for leaderboard updates
-    const channel = supabase
-      .channel('leaderboard-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profiles'
-        },
-        () => {
-          console.log('Profile changed, updating leaderboard');
-          fetchLeaderboard(false);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'question_attempts'
-        },
-        () => {
-          console.log('New question attempt, updating leaderboard');
-          fetchLeaderboard(false);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'points_log'
-        },
-        () => {
-          console.log('Points changed, updating leaderboard');
-          fetchLeaderboard(false);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [timeFilter, user]);
-
-  const fetchLeaderboard = async (showLoader = true) => {
+  const fetchLeaderboard = useCallback(async (showLoader = true) => {
     try {
       if (showLoader) setLoading(true);
       else setIsRefreshing(true);
@@ -92,17 +44,17 @@ const Leaderboard: React.FC = () => {
         .select('id, full_name, avatar_url, total_points');
 
       if (profileError) {
-        console.error('❌ Profile fetch error:', profileError);
+        logger.error('Profile fetch error:', profileError);
         return;
       }
 
       if (!profiles || profiles.length === 0) {
-        console.log('⚠️ No profiles found');
+        logger.info('No profiles found');
         setLoading(false);
         return;
       }
 
-      console.log(`✅ Fetched ${profiles.length} profiles`);
+      logger.info('Fetched profiles', { count: profiles.length });
 
       // Fetch question attempts
       const { data: allAttempts, error: attemptsError } = await supabase
@@ -110,10 +62,10 @@ const Leaderboard: React.FC = () => {
         .select('user_id, is_correct, created_at, mode');
 
       if (attemptsError) {
-        console.error('❌ Attempts fetch error:', attemptsError);
+        logger.error('Attempts fetch error:', attemptsError);
       }
 
-      console.log(`✅ Fetched ${allAttempts?.length || 0} attempts`);
+      logger.info('Fetched attempts', { count: allAttempts?.length || 0 });
 
       // Group attempts by user (exclude test/battle)
       const attemptsByUser = new Map<string, any[]>();
@@ -216,7 +168,7 @@ const Leaderboard: React.FC = () => {
       });
 
       if (userStats.length === 0) {
-        console.log('⚠️ No users with attempts');
+        logger.info('No users with attempts');
         setTopUsers([]);
         setCurrentUser(null);
         setLoading(false);
@@ -241,7 +193,7 @@ const Leaderboard: React.FC = () => {
       const current = userStats.find(u => u.id === user?.id);
       if (current) {
         setCurrentUser(current);
-        console.log(`✅ Your rank: ${current.rank} (${current.total_points} pts)`);
+        logger.info('Your rank', { rank: current.rank, points: current.total_points });
       } else {
         setCurrentUser(null);
       }
@@ -249,12 +201,61 @@ const Leaderboard: React.FC = () => {
       setTopUsers(userStats.slice(0, 10));
 
     } catch (error) {
-      console.error('❌ Error fetching leaderboard:', error);
+      logger.error('Error fetching leaderboard:', error);
     } finally {
       if (showLoader) setLoading(false);
       else setIsRefreshing(false);
     }
-  };
+  }, [timeFilter, user?.id]);
+
+  useEffect(() => {
+    fetchLeaderboard(true);
+    
+    // Set up real-time subscription for leaderboard updates
+    const channel = supabase
+      .channel('leaderboard-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles'
+        },
+        () => {
+          logger.info('Profile changed, updating leaderboard');
+          fetchLeaderboard(false);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'question_attempts'
+        },
+        () => {
+          logger.info('New question attempt, updating leaderboard');
+          fetchLeaderboard(false);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'points_log'
+        },
+        () => {
+          logger.info('Points changed, updating leaderboard');
+          fetchLeaderboard(false);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [timeFilter, user, fetchLeaderboard]);
 
   const getRankIcon = (rank: number) => {
     if (rank === 1) return <Crown className="h-5 w-5 text-yellow-500" />;

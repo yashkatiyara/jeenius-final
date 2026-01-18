@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Save } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 interface ExamConfig {
   id: string;
@@ -33,7 +34,7 @@ const ExamDateManager = () => {
       if (error) throw error;
       setExamDates(data || []);
     } catch (error) {
-      console.error('Error loading exam dates:', error);
+      logger.error('Error loading exam dates:', error);
       toast.error('Failed to load exam dates');
     } finally {
       setLoading(false);
@@ -64,7 +65,7 @@ const ExamDateManager = () => {
       if (error) throw error;
       toast.success(`${exam.exam_name} date updated successfully!`);
     } catch (error) {
-      console.error('Error saving exam date:', error);
+      logger.error('Error saving exam date:', error);
       toast.error('Failed to update exam date');
     } finally {
       setSaving(false);

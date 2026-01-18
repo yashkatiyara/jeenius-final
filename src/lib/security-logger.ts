@@ -4,6 +4,8 @@ interface LogEntry {
   timestamp?: number;
 }
 
+import { logger } from '@/utils/logger';
+
 class SecurityLogger {
   private logs: LogEntry[] = [];
   private readonly maxLogs = 1000;
@@ -25,7 +27,7 @@ class SecurityLogger {
 
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[SECURITY] ${action}:`, details);
+      logger.info(`[SECURITY] ${action}:`, details);
     }
 
     // In production, you might want to send to a logging service

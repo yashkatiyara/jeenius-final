@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { logger } from '@/utils/logger';
 
 export const useRealtimeProfile = () => {
   const { user } = useAuth();
@@ -36,7 +37,7 @@ export const useRealtimeProfile = () => {
           filter: `id=eq.${user.id}`
         },
         (payload) => {
-          console.log('Profile updated:', payload);
+          logger.info('Profile updated', payload);
           setProfileData(payload.new);
         }
       )

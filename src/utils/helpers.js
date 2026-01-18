@@ -1,6 +1,7 @@
 // utils/helpers.js - Helper Functions
 
 import { LEVEL_COLORS, ACCURACY_THRESHOLDS, MOTIVATIONAL_MESSAGES } from './constants';
+import { logger } from '@/utils/logger';
 
 // Format time in MM:SS format
 export const formatTime = (seconds) => {
@@ -228,7 +229,7 @@ export const storage = {
       const item = localStorage.getItem(key);
       return item ? JSON.parse(item) : defaultValue;
     } catch (error) {
-      console.error('Error getting from localStorage:', error);
+      logger.error('Error getting from localStorage:', error);
       return defaultValue;
     }
   },
@@ -238,7 +239,7 @@ export const storage = {
       localStorage.setItem(key, JSON.stringify(value));
       return true;
     } catch (error) {
-      console.error('Error setting to localStorage:', error);
+      logger.error('Error setting to localStorage:', error);
       return false;
     }
   },
@@ -248,7 +249,7 @@ export const storage = {
       localStorage.removeItem(key);
       return true;
     } catch (error) {
-      console.error('Error removing from localStorage:', error);
+      logger.error('Error removing from localStorage:', error);
       return false;
     }
   }

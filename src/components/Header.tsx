@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,7 +52,7 @@ const Header = () => {
       if (signOut) await signOut();
       window.location.href = '/';
     } catch (error) {
-      console.error('Logout error:', error);
+      logger.error('Logout error:', error);
       localStorage.clear();
       window.location.href = '/';
     }

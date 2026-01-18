@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 interface ExamConfig {
   exam_name: string;
@@ -49,7 +50,7 @@ export const useExamDates = () => {
       if (jee) setJeeDate(jee.exam_date);
       if (neet) setNeetDate(neet.exam_date);
     } catch (error) {
-      console.error('Error loading exam dates:', error);
+      logger.error('Error loading exam dates:', error);
     } finally {
       setLoading(false);
     }
