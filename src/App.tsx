@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import FloatingAIButton from '@/components/FloatingAIButton';
-import { AppDownloadBanner } from './components/AppDownloadBanner';
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
@@ -73,7 +72,6 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <AppDownloadBanner />
           <TooltipProvider>
             <ErrorBoundary>
               <Toaster />
