@@ -30,9 +30,22 @@ const GoalSelectionPage = lazy(() => import('@/pages/GoalSelectionPage'));
 const AIStudyPlannerPage = lazy(() => import('./pages/AIStudyPlannerPage'));
 const EnhancedDashboard = lazy(() => import("./pages/EnhancedDashboard"));
 const AnalyticsPage = lazy(() => import("@/pages/AnalyticsPage"));
-const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
 const SubscriptionPlans = lazy(() => import('@/pages/SubscriptionPlans'));
 const PricingPage = lazy(() => import('@/components/Pricing'));
+
+// NEW Admin Panel V2 - Lazy loaded components
+const AdminLayout = lazy(() => import("@/components/admin-v2/AdminLayout"));
+const AdminDashboard = lazy(() => import("@/components/admin-v2/AdminDashboard"));
+const AdminUsers = lazy(() => import("@/components/admin-v2/AdminUsers"));
+const AdminQuestions = lazy(() => import("@/components/admin-v2/AdminQuestions"));
+const AdminChapters = lazy(() => import("@/components/admin-v2/AdminChapters"));
+const AdminTopics = lazy(() => import("@/components/admin-v2/AdminTopics"));
+const AdminAnalytics = lazy(() => import("@/components/admin-v2/AdminAnalytics"));
+const AdminReports = lazy(() => import("@/components/admin-v2/AdminReports"));
+const AdminNotifications = lazy(() => import("@/components/admin-v2/AdminNotifications"));
+const AdminPDFExtractor = lazy(() => import("@/components/admin-v2/AdminPDFExtractor"));
+const AdminSettings = lazy(() => import("@/components/admin-v2/AdminSettings"));
+const AdminReviewQueue = lazy(() => import("@/components/admin-v2/AdminReviewQueue"));
 
 // Components
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -159,95 +172,27 @@ function App() {
                   }
                 />
                 
-                {/* Admin Routes */}
+                {/* NEW Admin Panel V2 Routes with Layout */}
                 <Route
                   path="/admin"
                   element={
                     <AdminRoute>
-                      <AdminDashboard />
+                      <AdminLayout />
                     </AdminRoute>
                   }
-                />
-                <Route
-                  path="/admin/analytics"
-                  element={
-                    <AdminRoute>
-                      <AdminDashboard />
-                    </AdminRoute>
-                  }
-                />
-                <Route
-                  path="/admin/users"
-                  element={
-                    <AdminRoute>
-                      <AdminDashboard />
-                    </AdminRoute>
-                  }
-                />
-                <Route
-                  path="/admin/content"
-                  element={
-                    <AdminRoute>
-                      <AdminDashboard />
-                    </AdminRoute>
-                  }
-                />
-                <Route
-                  path="/admin/topics"
-                  element={
-                    <AdminRoute>
-                      <AdminDashboard />
-                    </AdminRoute>
-                  }
-                />
-                <Route
-                  path="/admin/exam-config"
-                  element={
-                    <AdminRoute>
-                      <AdminDashboard />
-                    </AdminRoute>
-                  }
-                />
-                <Route
-                  path="/admin/questions"
-                  element={
-                    <AdminRoute>
-                      <AdminDashboard />
-                    </AdminRoute>
-                  }
-                />
-                <Route
-                  path="/admin/reports"
-                  element={
-                    <AdminRoute>
-                      <AdminDashboard />
-                    </AdminRoute>
-                  }
-                />
-                <Route
-                  path="/admin/notifications"
-                  element={
-                    <AdminRoute>
-                      <AdminDashboard />
-                    </AdminRoute>
-                  }
-                />
-                <Route
-                  path="/admin/pdf-extract"
-                  element={
-                    <AdminRoute>
-                      <AdminDashboard />
-                    </AdminRoute>
-                  }
-                />
-                <Route
-                  path="/admin/review-queue"
-                  element={
-                    <AdminRoute>
-                      <AdminDashboard />
-                    </AdminRoute>
-                  }
-                />
+                >
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="analytics" element={<AdminAnalytics />} />
+                  <Route path="users" element={<AdminUsers />} />
+                  <Route path="questions" element={<AdminQuestions />} />
+                  <Route path="chapters" element={<AdminChapters />} />
+                  <Route path="topics" element={<AdminTopics />} />
+                  <Route path="reports" element={<AdminReports />} />
+                  <Route path="notifications" element={<AdminNotifications />} />
+                  <Route path="pdf-extractor" element={<AdminPDFExtractor />} />
+                  <Route path="settings" element={<AdminSettings />} />
+                  <Route path="review-queue" element={<AdminReviewQueue />} />
+                </Route>
                 
                 <Route path="/pricing" element={<PricingPage />} />
 
